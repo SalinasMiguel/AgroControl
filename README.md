@@ -1,5 +1,5 @@
 # AgroControl 
-Sistema académico full-stack para la gestión de estacionamientos, reservas, accesos, ocupación e incidencias. 
+Sistema de gestion de lotes agricola, campañas labores insumos y cosechas 
 ## 1. Problema
 Existe una unidad agrícola administra parcelas, cabañas, cultivos,labores de campo, uso de insumos responsables y cosechas con registros manuales. Requiriendo trazabilidad operativa por lote agrícola y campaña, sin pretender sustituir asesoría agronómica profesional del cliente.
 ## 2. Objetivo del MVP 

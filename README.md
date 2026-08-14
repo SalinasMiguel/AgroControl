@@ -1,9 +1,9 @@
 # AgroControl 
 Sistema de gestion de lotes agricola, campañas labores insumos y cosechas 
 ## 1. Problema
-Existe una unidad agrícola administra parcelas, cabañas, cultivos,labores de campo, uso de insumos responsables y cosechas con registros manuales. Requiriendo trazabilidad operativa por lote agrícola y campaña, sin pretender sustituir asesoría agronómica profesional del cliente.
+Reemplazar el registro manual y disperso de la operación agrícola por un sistema digital que dé trazabilidad completa — quién hizo qué, cuándo, con qué insumos, y con qué resultado — a nivel de parcela y campaña, sin tomar decisiones agronómicas por el usuario.
 ## 2. Objetivo del MVP 
-Construir un sistema web y móvil que para planificar campañas, registrar labore e insumos, controlar responsables y capturar cosechas, ofreciendo una bitácora completa por parcela. 
+Desarrollar un sistema web/móvil para planificar campañas, registrar labores e insumos, controlar responsables y capturar cosechas, ofreciendo una bitácora completa por parcela. 
 ## 3. Actores principales
 - Administrador
 - Jefe de campo 

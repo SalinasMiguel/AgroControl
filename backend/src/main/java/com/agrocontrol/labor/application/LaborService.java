@@ -5,7 +5,6 @@ import com.agrocontrol.auth.domain.Roles;
 import com.agrocontrol.campana.domain.Campana;
 import com.agrocontrol.campana.domain.CampanaRepository;
 import com.agrocontrol.labor.domain.AsignacionLabor;
-import com.agrocontrol.labor.domain.EstadoLabor;
 import com.agrocontrol.labor.domain.Labor;
 import com.agrocontrol.labor.domain.LaborRepository;
 import com.agrocontrol.rol.domain.Rol;
@@ -55,8 +54,8 @@ public class LaborService {
     public Labor planificar(Long campanaId, String tipo, LocalDate fechaPlan) {
         Campana campana = campanaRepository.buscarPorId(campanaId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("No existe la campaña con id: " + campanaId));
-        if (campana.estaFinalizada()) {
-            throw new ConflictoException("No se pueden planificar labores en una campaña finalizada");
+        if (campana.estaCerrada()) {
+            throw new ConflictoException("No se pueden planificar labores en una campaña cerrada");
         }
         // La parcela se toma de la campaña: el cliente no puede enviar una parcela distinta
         return laborRepository.guardar(
@@ -67,9 +66,7 @@ public class LaborService {
     @Transactional
     public Labor iniciar(Long id) {
         Labor labor = obtener(id);
-        if (campanaDe(labor).estaFinalizada()) {
-            throw new ConflictoException("No se pueden iniciar labores de una campaña finalizada");
-        }
+        exigirCampanaAbierta(labor, "iniciar");
         labor.iniciar();
         return laborRepository.guardar(labor);
     }
@@ -78,10 +75,36 @@ public class LaborService {
     @Transactional
     public Labor ejecutar(Long id, LocalDate fechaEjecucion) {
         Labor labor = obtener(id);
-        if (campanaDe(labor).estaFinalizada()) {
-            throw new ConflictoException("No se pueden ejecutar labores de una campaña finalizada");
-        }
+        exigirCampanaAbierta(labor, "ejecutar");
         labor.ejecutar(fechaEjecucion);
+        return laborRepository.guardar(labor);
+    }
+
+    @Auditable(entidad = "LABOR", accion = "EDITAR")
+    @Transactional
+    public Labor editar(Long id, String tipo, LocalDate fechaPlan) {
+        Labor labor = obtener(id);
+        exigirCampanaAbierta(labor, "editar");
+        labor.reprogramar(tipo.trim().toUpperCase(), fechaPlan);
+        return laborRepository.guardar(labor);
+    }
+
+    @Auditable(entidad = "LABOR", accion = "CANCELAR")
+    @Transactional
+    public Labor cancelar(Long id, String motivo) {
+        Labor labor = obtener(id);
+        exigirCampanaAbierta(labor, "cancelar");
+        labor.cancelar(motivo);
+        return laborRepository.guardar(labor);
+    }
+
+    // El motivo no se guarda en la labor: AuditoriaAspect lo deja en el detalle de REABRIR.
+    @Auditable(entidad = "LABOR", accion = "REABRIR")
+    @Transactional
+    public Labor reabrir(Long id, String motivo) {
+        Labor labor = obtener(id);
+        exigirCampanaAbierta(labor, "reabrir");
+        labor.reabrir();
         return laborRepository.guardar(labor);
     }
 
@@ -106,8 +129,8 @@ public class LaborService {
     @Transactional
     public AsignacionLabor asignar(Long laborId, Long usuarioId) {
         Labor labor = obtener(laborId);
-        if (labor.getEstado() == EstadoLabor.EJECUTADA) {
-            throw new ConflictoException("La labor ya fue ejecutada: no se le asignan operarios");
+        if (!labor.estaPendiente()) {
+            throw new ConflictoException("La labor ya terminó o fue cancelada: no se le asignan operarios");
         }
         Usuario usuario = usuarioRepository.buscarPorId(usuarioId)
                 .orElseThrow(() -> new UsuarioNoEncontradoException(usuarioId));
@@ -121,12 +144,20 @@ public class LaborService {
         if (laborRepository.estaAsignada(laborId, usuarioId)) {
             throw new ConflictoException("El operario ya está asignado a esta labor");
         }
+        labor.marcarAsignada();
+        laborRepository.guardar(labor);
         return laborRepository.asignar(new AsignacionLabor(null, laborId, usuarioId));
     }
 
     @Transactional(readOnly = true)
     public List<AsignacionLabor> listarAsignaciones() {
         return laborRepository.listarAsignaciones();
+    }
+
+    private void exigirCampanaAbierta(Labor labor, String accion) {
+        if (campanaDe(labor).estaCerrada()) {
+            throw new ConflictoException("No se puede " + accion + " una labor de una campaña cerrada");
+        }
     }
 
     private Campana campanaDe(Labor labor) {

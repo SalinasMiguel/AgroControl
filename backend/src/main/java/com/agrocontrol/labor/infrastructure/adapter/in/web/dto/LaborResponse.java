@@ -12,7 +12,8 @@ public record LaborResponse(
         String tipo,
         LocalDate fechaPlan,
         LocalDate fechaEjecucion,
-        EstadoLabor estado
+        EstadoLabor estado,
+        String motivoCancelacion
 ) {
     public static LaborResponse desde(Labor labor) {
         return new LaborResponse(
@@ -22,7 +23,8 @@ public record LaborResponse(
                 labor.getTipo(),
                 labor.getFechaPlan(),
                 labor.getFechaEjecucion(),
-                labor.getEstado()
+                labor.getEstado(),
+                labor.getMotivoCancelacion()
         );
     }
 }

@@ -45,11 +45,15 @@ public class LaborJpaEntity {
     @Column(name = "creado_en", nullable = false, updatable = false)
     private LocalDateTime creadoEn;
 
+    @Column(name = "motivo_cancelacion", length = 200)
+    private String motivoCancelacion;
+
     protected LaborJpaEntity() {
     }
 
     public LaborJpaEntity(Long id, Long campanaId, Long parcelaId, String tipo, LocalDate fechaPlan,
-                          LocalDate fechaEjecucion, EstadoLabor estado, LocalDateTime creadoEn) {
+                          LocalDate fechaEjecucion, EstadoLabor estado, LocalDateTime creadoEn,
+                          String motivoCancelacion) {
         this.id = id;
         this.campanaId = campanaId;
         this.parcelaId = parcelaId;
@@ -58,6 +62,7 @@ public class LaborJpaEntity {
         this.fechaEjecucion = fechaEjecucion;
         this.estado = estado;
         this.creadoEn = creadoEn;
+        this.motivoCancelacion = motivoCancelacion;
     }
 
     public Long getId() { return id; }
@@ -68,4 +73,5 @@ public class LaborJpaEntity {
     public LocalDate getFechaEjecucion() { return fechaEjecucion; }
     public EstadoLabor getEstado() { return estado; }
     public LocalDateTime getCreadoEn() { return creadoEn; }
+    public String getMotivoCancelacion() { return motivoCancelacion; }
 }

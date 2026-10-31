@@ -144,4 +144,45 @@ class LaborServiceTest {
 
         assertThatThrownBy(() -> service.iniciar(9L)).isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void editarCancelarYReabrirExigenCampanaAbierta() {
+        laborPlanificada();
+        when(campanaRepository.buscarPorId(5L)).thenReturn(Optional.of(campanaFinalizada()));
+
+        assertThatThrownBy(() -> service.editar(9L, "RIEGO", LocalDate.now())).isInstanceOf(ConflictoException.class);
+        assertThatThrownBy(() -> service.cancelar(9L, "Llovió")).isInstanceOf(ConflictoException.class);
+        assertThatThrownBy(() -> service.reabrir(9L, "Faltó una pasada")).isInstanceOf(ConflictoException.class);
+        verify(laborRepository, never()).guardar(any());
+    }
+
+    @Test
+    void editarNormalizaElTipo() {
+        laborPlanificada();
+        when(campanaRepository.buscarPorId(5L)).thenReturn(Optional.of(new Campana(5L, 3L, 1L, LocalDate.now())));
+        when(laborRepository.guardar(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        Labor labor = service.editar(9L, " fumigacion ", LocalDate.now());
+
+        assertThat(labor.getTipo()).isEqualTo("FUMIGACION");
+    }
+
+    @Test
+    void noSeAsignaUnaLaborCancelada() {
+        laborPlanificada().cancelar("Llovió");
+
+        assertThatThrownBy(() -> service.asignar(9L, 7L)).isInstanceOf(ConflictoException.class);
+    }
+
+    @Test
+    void asignarDejaLaLaborAsignada() {
+        Labor labor = laborPlanificada();
+        usuarioConRol(7L, "OPERARIO", true);
+        when(laborRepository.estaAsignada(9L, 7L)).thenReturn(false);
+
+        service.asignar(9L, 7L);
+
+        assertThat(labor.getEstado()).isEqualTo(EstadoLabor.ASIGNADA);
+        verify(laborRepository).guardar(labor);
+    }
 }

@@ -6,10 +6,12 @@ import com.agrocontrol.labor.application.LaborService;
 import com.agrocontrol.labor.infrastructure.adapter.in.web.dto.AsignacionResponse;
 import com.agrocontrol.labor.infrastructure.adapter.in.web.dto.AsignarOperarioRequest;
 import com.agrocontrol.labor.infrastructure.adapter.in.web.dto.ConsumoResponse;
+import com.agrocontrol.labor.infrastructure.adapter.in.web.dto.EditarLaborRequest;
 import com.agrocontrol.labor.infrastructure.adapter.in.web.dto.EjecutarLaborRequest;
 import com.agrocontrol.labor.infrastructure.adapter.in.web.dto.LaborResponse;
 import com.agrocontrol.labor.infrastructure.adapter.in.web.dto.PlanificarLaborRequest;
 import com.agrocontrol.labor.infrastructure.adapter.in.web.dto.RegistrarConsumoRequest;
+import com.agrocontrol.shared.web.MotivoRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +20,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -68,6 +71,21 @@ public class LaborController {
                                                       @Valid @RequestBody AsignarOperarioRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(AsignacionResponse.desde(laborService.asignar(id, request.usuarioId())));
+    }
+
+    @PutMapping("/{id}")
+    public LaborResponse editar(@PathVariable Long id, @Valid @RequestBody EditarLaborRequest request) {
+        return LaborResponse.desde(laborService.editar(id, request.tipo(), request.fechaPlan()));
+    }
+
+    @PostMapping("/{id}/cancelar")
+    public LaborResponse cancelar(@PathVariable Long id, @Valid @RequestBody MotivoRequest request) {
+        return LaborResponse.desde(laborService.cancelar(id, request.motivo()));
+    }
+
+    @PostMapping("/{id}/reabrir")
+    public LaborResponse reabrir(@PathVariable Long id, @Valid @RequestBody MotivoRequest request) {
+        return LaborResponse.desde(laborService.reabrir(id, request.motivo()));
     }
 
     @PostMapping("/{id}/iniciar")

@@ -123,10 +123,13 @@ public class InventarioService {
     @Transactional
     public ConsumoLabor registrarConsumo(Long laborId, Long insumoId, BigDecimal cantidad, Long usuarioId) {
         Labor labor = obtenerLabor(laborId);
-        boolean campanaFinalizada = campanaRepository.buscarPorId(labor.getCampanaId())
-                .map(campana -> campana.estaFinalizada()).orElse(false);
-        if (campanaFinalizada) {
-            throw new ConflictoException("No se registran consumos en labores de una campaña finalizada");
+        boolean campanaCerrada = campanaRepository.buscarPorId(labor.getCampanaId())
+                .map(campana -> campana.estaCerrada()).orElse(false);
+        if (campanaCerrada) {
+            throw new ConflictoException("No se registran consumos en labores de una campaña cerrada");
+        }
+        if (labor.estaCancelada()) {
+            throw new ConflictoException("No se registran consumos en una labor cancelada");
         }
         Insumo insumo = obtenerInsumoParaActualizar(insumoId);
         verificarUsuario(usuarioId);

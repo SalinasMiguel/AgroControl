@@ -30,10 +30,10 @@ public class BitacoraService {
     @Transactional
     public BitacoraCampo registrar(Long laborId, Long usuarioId, String observacion) {
         Labor labor = obtenerLabor(laborId);
-        boolean campanaFinalizada = campanaRepository.buscarPorId(labor.getCampanaId())
-                .map(campana -> campana.estaFinalizada()).orElse(false);
-        if (campanaFinalizada) {
-            throw new ConflictoException("La campaña de esta labor ya está finalizada: su bitácora quedó cerrada");
+        boolean campanaCerrada = campanaRepository.buscarPorId(labor.getCampanaId())
+                .map(campana -> campana.estaCerrada()).orElse(false);
+        if (campanaCerrada) {
+            throw new ConflictoException("La campaña de esta labor ya está cerrada: su bitácora quedó cerrada");
         }
         return bitacoraRepository.guardar(new BitacoraCampo(null, laborId, usuarioId, observacion.trim()));
     }

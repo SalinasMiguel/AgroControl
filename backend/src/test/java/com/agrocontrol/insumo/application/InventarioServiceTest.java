@@ -150,4 +150,16 @@ class InventarioServiceTest {
         assertThat(salidas.get(0).cantidad()).isEqualByComparingTo("180");
         assertThat(salidas.get(0).movimientos()).isEqualTo(2);
     }
+
+    @Test
+    void noSeRegistraConsumoEnLaborCancelada() {
+        Labor labor = new Labor(9L, 5L, 3L, "RIEGO", LocalDate.now());
+        labor.cancelar("Llovió");
+        when(laborRepository.buscarPorId(9L)).thenReturn(Optional.of(labor));
+        when(campanaRepository.buscarPorId(5L)).thenReturn(Optional.of(new Campana(5L, 3L, 1L, LocalDate.now())));
+
+        assertThatThrownBy(() -> service.registrarConsumo(9L, 4L, BigDecimal.ONE, 1L)).isInstanceOf(ConflictoException.class);
+
+        verify(insumoRepository, never()).guardar(any());
+    }
 }

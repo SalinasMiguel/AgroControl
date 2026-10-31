@@ -51,13 +51,14 @@ public class Campana {
         this.estado = EstadoCampana.EN_CURSO;
     }
 
-    public boolean estaFinalizada() {
-        return estado == EstadoCampana.FINALIZADA;
+    // Una campaña cerrada ya no admite labores, consumos ni bitácora.
+    public boolean estaCerrada() {
+        return estado == EstadoCampana.FINALIZADA || estado == EstadoCampana.CANCELADA || estado == EstadoCampana.PERDIDA;
     }
 
     public void finalizar(LocalDate fechaFin) {
-        if (estaFinalizada()) {
-            throw new IllegalStateException("La campaña ya está finalizada");
+        if (estaCerrada()) {
+            throw new IllegalStateException("La campaña ya está cerrada");
         }
         if (fechaFin == null) {
             throw new IllegalArgumentException("La fecha de fin es obligatoria para finalizar la campaña");

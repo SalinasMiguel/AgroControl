@@ -20,7 +20,7 @@ class CampanaTest {
         assertThat(campana.getEstado()).isEqualTo(EstadoCampana.EN_CURSO);
 
         campana.finalizar(inicio.plusMonths(4));
-        assertThat(campana.estaFinalizada()).isTrue();
+        assertThat(campana.estaCerrada()).isTrue();
     }
 
     @Test

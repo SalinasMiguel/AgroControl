@@ -24,7 +24,7 @@ export type Cultivo = Readonly<{
   cicloDias: number | null; // días desde la siembra hasta la cosecha
 }>;
 
-export type EstadoCampana = "PLANIFICADA" | "EN_CURSO" | "FINALIZADA";
+export type EstadoCampana = "PLANIFICADA" | "EN_CURSO" | "FINALIZADA" | "CANCELADA" | "PERDIDA";
 
 export type Campana = Readonly<{
   id: number;
@@ -36,7 +36,7 @@ export type Campana = Readonly<{
 }>;
 
 // Espejo de Labor del backend: el trabajo planificado dentro de una campaña.
-export type EstadoLabor = "PLANIFICADA" | "EN_CURSO" | "EJECUTADA";
+export type EstadoLabor = "PLANIFICADA" | "ASIGNADA" | "EN_CURSO" | "EJECUTADA" | "CANCELADA";
 
 export type Labor = Readonly<{
   id: number;
@@ -54,7 +54,7 @@ export type Cosecha = Readonly<{
   unidadMedida: "t" | "kg";
 }>;
 
-export type EstadoIncidencia = "ABIERTA" | "EN_ATENCION" | "RESUELTA";
+export type EstadoIncidencia = "ABIERTA" | "EN_ATENCION" | "RESUELTA" | "ANULADA";
 
 export type Incidencia = Readonly<{
   id: number;

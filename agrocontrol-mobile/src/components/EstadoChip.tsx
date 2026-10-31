@@ -1,13 +1,12 @@
 import { StyleSheet, Text, View } from "react-native";
-import type { EstadoParcela } from "../models/agro";
-import { ESTADO_VISUAL } from "../theme/estados";
+import { visualParcela } from "../theme/estados";
 
 type Props = {
-  estado: EstadoParcela;
+  estado: string;
 };
 
 export function EstadoChip({ estado }: Props) {
-  const { texto, icono: Icono, color, fondo } = ESTADO_VISUAL[estado];
+  const { texto, icono: Icono, color, fondo } = visualParcela(estado);
   return (
     <View style={[styles.chip, { backgroundColor: fondo }]}>
       <Icono size={14} color={color} />

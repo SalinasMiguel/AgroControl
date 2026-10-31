@@ -6,7 +6,7 @@ import { StatusBar } from "expo-status-bar";
 import type { Parcela, Seccion } from "./src/models/agro";
 import { DATOS_DEMO } from "./src/data/demoData";
 import { cargarDatos, iniciarSesion, URL_POR_DEFECTO, type DatosCampo, type Sesion } from "./src/api/cliente";
-import { armarDetalle } from "./src/logic/detalleParcela";
+import { armarDetalle, campanaAbierta } from "./src/logic/detalleParcela";
 import { PALETTE } from "./src/theme/palette";
 import { MetricCard } from "./src/components/MetricCard";
 import { TabSelector } from "./src/components/TabSelector";
@@ -93,7 +93,7 @@ export default function App() {
 
   // Campaña no finalizada de la parcela, con su cultivo (si existe).
   const siembraDe = (parcelaId: number) => {
-    const campana = CAMPANAS.find((c) => c.parcelaId === parcelaId && c.estado !== "FINALIZADA");
+    const campana = CAMPANAS.find((c) => c.parcelaId === parcelaId && campanaAbierta(c));
     const cultivo = campana && CULTIVOS.find((c) => c.id === campana.cultivoId);
     return { campana, cultivo };
   };

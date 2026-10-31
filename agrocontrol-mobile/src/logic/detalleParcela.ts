@@ -1,5 +1,7 @@
 import type { Campana, Cosecha, Cultivo, Incidencia, Labor, Parcela } from "../models/agro";
 
+export const campanaAbierta = (c: Campana): boolean => c.estado === "PLANIFICADA" || c.estado === "EN_CURSO";
+
 export type CampanaPasada = Readonly<{
   campana: Campana;
   cultivo: Cultivo | undefined;
@@ -27,13 +29,13 @@ type Datos = Readonly<{
 // Todo lo de una parcela se deriva de los datos: no se guarda aparte.
 export function armarDetalle(parcela: Parcela, datos: Datos): DetalleParcela {
   const cultivoDe = (id: number) => datos.cultivos.find((c) => c.id === id);
-  const campana = datos.campanas.find((c) => c.parcelaId === parcela.id && c.estado !== "FINALIZADA");
+  const campana = datos.campanas.find((c) => c.parcelaId === parcela.id && campanaAbierta(c));
   const labores = campana
-    ? datos.labores.filter((l) => l.campanaId === campana.id).sort((a, b) => a.fechaPlan.localeCompare(b.fechaPlan))
+    ? datos.labores.filter((l) => l.campanaId === campana.id && l.estado !== "CANCELADA").sort((a, b) => a.fechaPlan.localeCompare(b.fechaPlan))
     : [];
 
   const historial = datos.campanas
-    .filter((c) => c.parcelaId === parcela.id && c.estado === "FINALIZADA")
+    .filter((c) => c.parcelaId === parcela.id && (c.estado === "FINALIZADA" || c.estado === "PERDIDA"))
     .sort((a, b) => b.fechaInicio.localeCompare(a.fechaInicio))
     .map((c) => {
       const cosechas = datos.cosechas.filter((k) => k.campanaId === c.id);
@@ -45,7 +47,7 @@ export function armarDetalle(parcela: Parcela, datos: Datos): DetalleParcela {
     });
 
   const incidencias = datos.incidencias
-    .filter((i) => i.parcelaId === parcela.id)
+    .filter((i) => i.parcelaId === parcela.id && i.estado !== "ANULADA")
     .sort((a, b) => Number(a.estado === "RESUELTA") - Number(b.estado === "RESUELTA") || b.fecha.localeCompare(a.fecha));
 
   return {

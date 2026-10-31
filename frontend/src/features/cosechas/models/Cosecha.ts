@@ -3,6 +3,7 @@ export interface Cosecha {
   campanaId: number;
   cantidad: number;
   unidadMedida: string;
+  toneladas: number;
   fecha: string;
   usuarioId: number;
   anulado: boolean;

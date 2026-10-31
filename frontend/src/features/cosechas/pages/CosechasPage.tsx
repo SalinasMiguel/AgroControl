@@ -54,7 +54,7 @@ export default function CosechasPage() {
 
   const campana = (id: number) => campanas.find((item) => item.id === id);
   const vigentes = sinAnulados(cosechas);
-  const toneladas = vigentes.filter((c) => c.unidadMedida === 't').reduce((suma, c) => suma + c.cantidad, 0);
+  const toneladas = vigentes.reduce((suma, c) => suma + c.toneladas, 0);
   const campanasCosechadas = new Set(vigentes.map((cosecha) => cosecha.campanaId)).size;
 
   return (

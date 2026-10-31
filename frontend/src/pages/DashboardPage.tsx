@@ -5,6 +5,7 @@ import { useAuth } from '../features/auth/context/useAuth';
 import type { Rol } from '../features/auth/models/Sesion';
 import { NOMBRE_ROL } from '../features/auth/permisos';
 import { campanaAbierta, laborPendiente, sinAnulados } from '../shared/utils/estados';
+import { diasAtraso, insumosPorReponer, siembrasAtrasadas } from '../shared/utils/resumenInicio';
 import type { Campana } from '../features/campanas/models/Campana';
 import { campanaService } from '../features/campanas/services/campanaService';
 import { etiquetaCampana, type Catalogos } from '../features/campanas/utils/etiquetas';
@@ -22,7 +23,7 @@ import type { Usuario } from '../features/usuarios/models/Usuario';
 import { usuarioService } from '../features/usuarios/services/usuarioService';
 import { useCarga } from '../hooks/useCarga';
 import { formatArea } from '../utils/area';
-import { formatCantidad, formatFecha } from '../utils/formato';
+import { formatCantidad, formatFecha, hoyISO } from '../utils/formato';
 
 // Cada rol pide solo lo que su panel muestra (y lo que el backend le permite leer).
 const cargarResumen = (rol: Rol) => async (signal: AbortSignal) => {
@@ -76,8 +77,10 @@ export default function DashboardPage() {
   const proximasLabores = [...pendientes].sort((a, b) => a.fechaPlan.localeCompare(b.fechaPlan)).slice(0, 5);
   const sinAsignar = pendientes.filter((labor) => !asignaciones.some((a) => a.laborId === labor.id)).length;
   const insumosSinStock = insumos.filter((insumo) => insumo.stockActual <= 0).length;
-  const stockBajo = [...insumos].sort((a, b) => a.stockActual - b.stockActual).slice(0, 5);
-  const toneladas = cosechas.filter((c) => c.unidadMedida === 't').reduce((suma, c) => suma + c.cantidad, 0);
+  const porReponer = insumosPorReponer(insumos).slice(0, 5);
+  const hoy = hoyISO();
+  const atrasadas = siembrasAtrasadas(campanas, hoy);
+  const toneladas = cosechas.reduce((suma, c) => suma + c.toneladas, 0);
   const avance = labores.length === 0 ? 0 : Math.round(((labores.length - pendientes.length) / labores.length) * 100);
   const campana = (id: number) => campanas.find((item) => item.id === id);
 
@@ -87,12 +90,14 @@ export default function DashboardPage() {
       { etiqueta: 'Predios activos', valor: predios.filter((predio) => predio.activo).length },
       { etiqueta: `Parcelas (${formatArea(areaTotal)})`, valor: parcelas.length },
       { etiqueta: 'Campañas abiertas', valor: campanasAbiertas.length },
+      { etiqueta: 'Siembras atrasadas', valor: atrasadas },
     ],
     JEFE_DE_CAMPO: [
       { etiqueta: 'Campañas abiertas', valor: campanasAbiertas.length },
       { etiqueta: 'Labores pendientes', valor: pendientes.length },
       { etiqueta: 'Pendientes sin operario', valor: sinAsignar },
       { etiqueta: 'Insumos sin stock', valor: insumosSinStock },
+      { etiqueta: 'Siembras atrasadas', valor: atrasadas },
     ],
     OPERARIO: [
       { etiqueta: 'Asignadas a mí', valor: labores.length },
@@ -110,6 +115,7 @@ export default function DashboardPage() {
       { etiqueta: 'Avance de labores', valor: `${avance} %` },
       { etiqueta: 'Cosechado (t)', valor: formatCantidad(toneladas, 't') },
       { etiqueta: 'Insumos sin stock', valor: insumosSinStock },
+      { etiqueta: 'Siembras atrasadas', valor: atrasadas },
     ],
   };
 
@@ -131,7 +137,12 @@ export default function DashboardPage() {
                     {campanaLabor ? etiquetaCampana(campanaLabor, catalogos) : `Campaña ${labor.campanaId}`}
                   </small>
                 </span>
-                <span>{formatFecha(labor.fechaPlan)}</span>
+                <span>
+                  {formatFecha(labor.fechaPlan)}
+                  {diasAtraso(labor.fechaPlan, hoy) > 0 && (
+                    <small className="celda-nota field-error">Atrasada · {diasAtraso(labor.fechaPlan, hoy)} días</small>
+                  )}
+                </span>
               </li>
             );
           })}
@@ -143,12 +154,12 @@ export default function DashboardPage() {
 
   const tarjetaStock = (
     <article className="list-card">
-      <h3>Insumos con menos stock</h3>
-      {stockBajo.length === 0 ? (
+      <h3>Por reponer</h3>
+      {porReponer.length === 0 ? (
         <p className="muted">No hay insumos registrados.</p>
       ) : (
         <ul>
-          {stockBajo.map((insumo) => (
+          {porReponer.map((insumo) => (
             <li key={insumo.id}>
               <span>{insumo.nombre}</span>
               <strong className={insumo.stockActual <= 0 ? 'field-error' : ''}>

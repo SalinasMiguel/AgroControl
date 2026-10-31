@@ -1,5 +1,6 @@
 package com.agrocontrol.auth.infrastructure.security;
 
+import com.agrocontrol.auth.application.AuthService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import jakarta.servlet.http.HttpServletResponse;
@@ -20,6 +21,7 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 
 import javax.crypto.SecretKey;
@@ -51,8 +53,9 @@ public class SecurityConfig {
     // insumos, usuarios, roles) quedan abiertas a cualquier usuario autenticado porque todas las
     // pantallas las necesitan para mostrar nombres; lo que cambia por rol es quién puede escribir.
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthService authService) throws Exception {
         http
+                .addFilterAfter(new EstadoCuentaFilter(authService, this::escribirProblema), BearerTokenAuthenticationFilter.class)
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

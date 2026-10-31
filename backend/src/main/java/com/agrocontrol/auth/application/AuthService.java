@@ -12,6 +12,8 @@ import com.agrocontrol.usuario.domain.UsuarioRepository;
 import com.agrocontrol.usuario.domain.exception.UsuarioNoEncontradoException;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 public class AuthService {
 
     private final UsuarioRepository usuarioRepository;
@@ -63,6 +65,12 @@ public class AuthService {
         Usuario guardado = usuarioRepository.guardar(usuario);
         String rol = nombreRol(guardado);
         return new Sesion(generadorToken.generar(guardado, rol), guardado, rol);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<EstadoCuenta> estadoCuenta(Long usuarioId) {
+        return usuarioRepository.buscarPorId(usuarioId)
+                .map(u -> new EstadoCuenta(u.isActivo(), u.getTokenVersion(), u.isDebeCambiarPassword()));
     }
 
     private String nombreRol(Usuario usuario) {

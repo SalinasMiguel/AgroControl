@@ -8,16 +8,20 @@ import { usuarioService } from '../services/usuarioService';
 
 interface UsuarioFormProps {
   roles: RolCatalogo[];
-  onCreated: (usuario: Usuario) => void;
+  // Con usuario se edita; sin usuario se crea uno nuevo
+  usuario?: Usuario;
+  onGuardado: (usuario: Usuario) => void;
+  onCerrar?: () => void;
 }
 
 type Errores = Partial<Record<'rolId' | 'nombreCompleto' | 'email' | 'password', string>>;
 
-export default function UsuarioForm({ roles, onCreated }: UsuarioFormProps) {
-  const [nombreCompleto, setNombreCompleto] = useState('');
-  const [email, setEmail] = useState('');
+export default function UsuarioForm({ roles, usuario, onGuardado, onCerrar }: UsuarioFormProps) {
+  const editando = Boolean(usuario);
+  const [nombreCompleto, setNombreCompleto] = useState(usuario?.nombreCompleto ?? '');
+  const [email, setEmail] = useState(usuario?.email ?? '');
   const [password, setPassword] = useState('');
-  const [rolId, setRolId] = useState('');
+  const [rolId, setRolId] = useState(usuario ? String(usuario.rolId) : '');
   const [errors, setErrors] = useState<Errores>({});
   const [mensaje, setMensaje] = useState('');
   const [apiError, setApiError] = useState('');
@@ -30,27 +34,26 @@ export default function UsuarioForm({ roles, onCreated }: UsuarioFormProps) {
     const errores: Errores = {};
     if (!nombreCompleto.trim()) errores.nombreCompleto = 'El nombre es obligatorio.';
     if (!email.includes('@')) errores.email = 'Ingrese un email válido.';
-    if (password.length < 8) errores.password = 'La contraseña debe tener al menos 8 caracteres.';
+    if (!editando && password.length < 8) errores.password = 'La contraseña debe tener al menos 8 caracteres.';
     if (!rolId) errores.rolId = 'Seleccione el rol.';
     setErrors(errores);
     if (Object.keys(errores).length > 0) return;
 
     try {
       setSubmitting(true);
-      const creado = await usuarioService.crear({
-        rolId: Number(rolId),
-        nombreCompleto: nombreCompleto.trim(),
-        email: email.trim(),
-        password,
-      });
-      onCreated(creado);
+      const datos = { rolId: Number(rolId), nombreCompleto: nombreCompleto.trim(), email: email.trim() };
+      if (usuario) {
+        onGuardado(await usuarioService.actualizar(usuario.id, datos));
+        return;
+      }
+      onGuardado(await usuarioService.crear({ ...datos, password }));
       setNombreCompleto('');
       setEmail('');
       setPassword('');
       setMensaje('Usuario creado: ya puede iniciar sesión con su email y contraseña.');
     } catch (err) {
       if (err instanceof ApiError) setErrors(err.campos);
-      setApiError(err instanceof Error ? err.message : 'No se pudo crear');
+      setApiError(err instanceof Error ? err.message : 'No se pudo guardar');
     } finally {
       setSubmitting(false);
     }
@@ -69,11 +72,13 @@ export default function UsuarioForm({ roles, onCreated }: UsuarioFormProps) {
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           {errors.email && <small className="field-error">{errors.email}</small>}
         </label>
-        <label>
-          Contraseña
-          <input type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
-          {errors.password && <small className="field-error">{errors.password}</small>}
-        </label>
+        {!editando && (
+          <label>
+            Contraseña
+            <input type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            {errors.password && <small className="field-error">{errors.password}</small>}
+          </label>
+        )}
         <label>
           Rol
           <select value={rolId} onChange={(e) => setRolId(e.target.value)}>
@@ -88,8 +93,13 @@ export default function UsuarioForm({ roles, onCreated }: UsuarioFormProps) {
       {mensaje && <div className="form-success">{mensaje}</div>}
       {apiError && <div className="form-error">{apiError}</div>}
       <div className="form-actions">
+        {onCerrar && (
+          <button type="button" className="btn-secondary" onClick={onCerrar}>
+            Cancelar
+          </button>
+        )}
         <button type="submit" className="btn-primary" disabled={submitting}>
-          {submitting ? 'Guardando...' : 'Crear usuario'}
+          {submitting ? 'Guardando...' : editando ? 'Guardar cambios' : 'Crear usuario'}
         </button>
       </div>
     </form>

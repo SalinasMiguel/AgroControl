@@ -9,4 +9,6 @@ public interface UsuarioRepository {
     Optional<Usuario> buscarPorEmail(String email);
     List<Usuario> listarTodos();
     boolean existePorEmail(String email);
+    boolean existeEmailEnOtroUsuario(String email, Long idExcluido);
+    long contarAdministradoresActivos();
 }

@@ -11,6 +11,8 @@ RUN cd backend && mvn -B -q -Pfullstack -DskipTests package
 
 # 2) Imagen final: solo Java y el jar
 FROM eclipse-temurin:21-jre
+# La base guarda UTC (hibernate.jdbc.time_zone); la aplicación trabaja en hora de Bolivia
+ENV TZ=America/La_Paz
 WORKDIR /app
 COPY --from=build /app/backend/target/AgroControl-1.0-SNAPSHOT.jar app.jar
 EXPOSE 8080

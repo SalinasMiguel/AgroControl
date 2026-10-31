@@ -60,6 +60,7 @@ class BitacoraServiceTest {
     @Test
     void laBitacoraDeUnaCampanaFinalizadaQuedaCerrada() {
         Campana finalizada = new Campana(5L, 3L, 1L, LocalDate.of(2026, 1, 1));
+        finalizada.iniciar();
         finalizada.finalizar(LocalDate.of(2026, 5, 1));
         laborDeCampana(finalizada);
 
@@ -76,7 +77,7 @@ class BitacoraServiceTest {
 
     @Test
     void laCampanaPerdidaCierraLaBitacora() {
-        Campana perdida = Campana.reconstruir(5L, 3L, 1L, LocalDate.now(), LocalDate.now(), EstadoCampana.PERDIDA);
+        Campana perdida = Campana.reconstruir(5L, 3L, 1L, LocalDate.now(), LocalDate.now(), EstadoCampana.PERDIDA, "Granizo");
         laborDeCampana(perdida);
 
         assertThatThrownBy(() -> service.registrar(9L, 1L, "Sin agua")).isInstanceOf(ConflictoException.class);

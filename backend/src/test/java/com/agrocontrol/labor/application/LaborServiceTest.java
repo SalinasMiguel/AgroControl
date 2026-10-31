@@ -45,6 +45,7 @@ class LaborServiceTest {
 
     private Campana campanaFinalizada() {
         Campana campana = new Campana(5L, 3L, 1L, LocalDate.of(2026, 1, 1));
+        campana.iniciar();
         campana.finalizar(LocalDate.of(2026, 5, 1));
         return campana;
     }

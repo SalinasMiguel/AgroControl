@@ -38,17 +38,21 @@ public class CampanaJpaEntity {
     @Column(name = "estado", nullable = false, length = 20)
     private EstadoCampana estado;
 
+    @Column(name = "motivo_cierre", length = 200)
+    private String motivoCierre;
+
     protected CampanaJpaEntity() {
     }
 
     public CampanaJpaEntity(Long id, Long parcelaId, Long cultivoId, LocalDate fechaInicio, LocalDate fechaFin,
-                            EstadoCampana estado) {
+                            EstadoCampana estado, String motivoCierre) {
         this.id = id;
         this.parcelaId = parcelaId;
         this.cultivoId = cultivoId;
         this.fechaInicio = fechaInicio;
         this.fechaFin = fechaFin;
         this.estado = estado;
+        this.motivoCierre = motivoCierre;
     }
 
     public Long getId() { return id; }
@@ -57,4 +61,5 @@ public class CampanaJpaEntity {
     public LocalDate getFechaInicio() { return fechaInicio; }
     public LocalDate getFechaFin() { return fechaFin; }
     public EstadoCampana getEstado() { return estado; }
+    public String getMotivoCierre() { return motivoCierre; }
 }

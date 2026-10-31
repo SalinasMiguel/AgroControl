@@ -109,6 +109,7 @@ class InventarioServiceTest {
     @Test
     void consumoEnCampanaFinalizadaLanza409() {
         Campana finalizada = new Campana(5L, 3L, 1L, LocalDate.of(2026, 1, 1));
+        finalizada.iniciar();
         finalizada.finalizar(LocalDate.of(2026, 5, 1));
         laborDeCampana(finalizada);
 

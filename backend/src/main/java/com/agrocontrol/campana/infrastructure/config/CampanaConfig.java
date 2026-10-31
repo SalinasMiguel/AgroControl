@@ -18,8 +18,8 @@ public class CampanaConfig {
 
     @Bean
     public CampanaService campanaService(CampanaRepository campanaRepository, ParcelaRepository parcelaRepository,
-                                         CultivoRepository cultivoRepository) {
-        return new CampanaService(campanaRepository, parcelaRepository, cultivoRepository);
+                                         CultivoRepository cultivoRepository, LaborRepository laborRepository) {
+        return new CampanaService(campanaRepository, parcelaRepository, cultivoRepository, laborRepository);
     }
 
     @Bean

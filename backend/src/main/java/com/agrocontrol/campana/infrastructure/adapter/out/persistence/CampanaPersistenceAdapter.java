@@ -47,6 +47,6 @@ public class CampanaPersistenceAdapter implements CampanaRepository {
 
     @Override
     public boolean existeAbiertaEnParcela(Long parcelaId) {
-        return jpaRepository.existsByParcelaIdAndEstadoNot(parcelaId, EstadoCampana.FINALIZADA);
+        return jpaRepository.existsByParcelaIdAndEstadoIn(parcelaId, List.of(EstadoCampana.PLANIFICADA, EstadoCampana.EN_CURSO));
     }
 }

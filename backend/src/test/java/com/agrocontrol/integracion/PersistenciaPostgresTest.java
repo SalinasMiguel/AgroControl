@@ -109,6 +109,23 @@ class PersistenciaPostgresTest {
     }
 
     @Test
+    void laCanceladaLiberaLaParcela() {
+        Long parcelaId = jdbc.queryForObject(
+                "SELECT min(id_parcela) FROM agrocontrol.parcela p WHERE NOT EXISTS "
+                        + "(SELECT 1 FROM agrocontrol.campana c WHERE c.id_parcela = p.id_parcela AND c.estado IN ('PLANIFICADA', 'EN_CURSO'))",
+                Long.class);
+        Long cultivoId = jdbc.queryForObject("SELECT min(id_cultivo) FROM agrocontrol.cultivo", Long.class);
+        Campana primera = campanaService.crear(parcelaId, cultivoId, LocalDate.now());
+
+        campanaService.cancelar(primera.getId(), "Sin semilla");
+
+        Campana segunda = campanaService.crear(parcelaId, cultivoId, LocalDate.now());
+        assertThat(segunda.getEstado()).isEqualTo(EstadoCampana.PLANIFICADA);
+        campanaService.cancelar(segunda.getId(), "Fin de la prueba");
+        assertThat(campanaService.obtener(primera.getId()).getMotivoCierre()).isEqualTo("Sin semilla");
+    }
+
+    @Test
     void elUsuarioDeDemoEntraConAgro123() {
         assertThat(authService.iniciarSesion("sergio@agrocontrol.com", "agro123").rol()).isEqualTo("ADMINISTRADOR");
     }
@@ -136,7 +153,7 @@ class PersistenciaPostgresTest {
     void elCambioDeEstadoSeGuardaEnLaBase() {
         Long parcelaId = jdbc.queryForObject(
                 "SELECT min(id_parcela) FROM agrocontrol.parcela p WHERE NOT EXISTS "
-                        + "(SELECT 1 FROM agrocontrol.campana c WHERE c.id_parcela = p.id_parcela AND c.estado <> 'FINALIZADA')",
+                        + "(SELECT 1 FROM agrocontrol.campana c WHERE c.id_parcela = p.id_parcela AND c.estado IN ('PLANIFICADA', 'EN_CURSO'))",
                 Long.class);
         Long cultivoId = jdbc.queryForObject("SELECT min(id_cultivo) FROM agrocontrol.cultivo", Long.class);
         Campana creada = campanaService.crear(parcelaId, cultivoId, LocalDate.now());
@@ -178,7 +195,7 @@ class PersistenciaPostgresTest {
     void laBitacoraDeUnaParcelaReuneLasObservacionesDeSusLabores() {
         Long laborId = jdbc.queryForObject(
                 "SELECT min(l.id_labor) FROM agrocontrol.labor l JOIN agrocontrol.campana c ON c.id_campana = l.id_campana "
-                        + "WHERE c.estado <> 'FINALIZADA'", Long.class);
+                        + "WHERE c.estado IN ('PLANIFICADA', 'EN_CURSO')", Long.class);
         Long parcelaId = jdbc.queryForObject(
                 "SELECT id_parcela FROM agrocontrol.labor WHERE id_labor = ?", Long.class, laborId);
         Long usuarioId = jdbc.queryForObject("SELECT min(id_usuario) FROM agrocontrol.usuario", Long.class);

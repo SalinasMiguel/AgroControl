@@ -1,8 +1,9 @@
-import { incidenciaAbierta } from '../../../shared/utils/estados';
 import { useState } from 'react';
 import PageHeading from '../../../components/common/PageHeading';
 import StatsGrid from '../../../components/common/StatsGrid';
+import MotivoDialog from '../../../components/ui/MotivoDialog';
 import { useCarga } from '../../../hooks/useCarga';
+import { incidenciaAbierta } from '../../../shared/utils/estados';
 import { formatFecha } from '../../../utils/formato';
 import type { Campana } from '../../campanas/models/Campana';
 import { campanaService } from '../../campanas/services/campanaService';
@@ -49,12 +50,19 @@ export default function IncidenciasPage() {
   const puedeGestionar = puede('incidencias.gestionar');
   const [resolviendo, setResolviendo] = useState<Incidencia | null>(null);
   const [accionError, setAccionError] = useState('');
+  const [anulando, setAnulando] = useState<Incidencia | null>(null);
 
   const reemplazar = (actualizada: Incidencia) =>
     setDatos((prev) => ({
       ...prev,
       incidencias: prev.incidencias.map((item) => (item.id === actualizada.id ? actualizada : item)),
     }));
+
+  const anular = async (motivo: string) => {
+    if (!anulando) return;
+    reemplazar(await incidenciaService.anular(anulando.id, motivo));
+    setAnulando(null);
+  };
 
   const atender = async (incidencia: Incidencia) => {
     setAccionError('');
@@ -137,7 +145,7 @@ export default function IncidenciasPage() {
                   </thead>
                   <tbody>
                     {incidencias.map((incidencia) => (
-                      <tr key={incidencia.id}>
+                      <tr key={incidencia.id} title={incidencia.motivoAnulacion ?? undefined}>
                         <td>{formatFecha(incidencia.fecha)}</td>
                         <td>{incidencia.parcelaId ? etiquetaParcela(incidencia.parcelaId, catalogos) : '—'}</td>
                         <td>{cultivoDeCampana(incidencia.campanaId)}</td>
@@ -155,7 +163,10 @@ export default function IncidenciasPage() {
                                 <button type="button" className="btn-link" onClick={() => atender(incidencia)}>Atender</button>
                               )}
                               {incidenciaAbierta(incidencia) ? (
-                                <button type="button" className="btn-link" onClick={() => setResolviendo(incidencia)}>Resolver</button>
+                                <>
+                                  <button type="button" className="btn-link" onClick={() => setResolviendo(incidencia)}>Resolver</button>
+                                  <button type="button" className="btn-link" onClick={() => setAnulando(incidencia)}>Anular</button>
+                                </>
                               ) : (
                                 <span className="muted">—</span>
                               )}
@@ -171,6 +182,15 @@ export default function IncidenciasPage() {
           )}
         </>
       )}
+
+      <MotivoDialog
+        open={anulando !== null}
+        title="Anular incidencia"
+        confirmLabel="Anular"
+        aviso="La incidencia queda en el historial, fuera de las abiertas."
+        onConfirm={anular}
+        onCancel={() => setAnulando(null)}
+      />
     </section>
   );
 }

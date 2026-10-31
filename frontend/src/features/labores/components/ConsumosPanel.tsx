@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import MotivoDialog from '../../../components/ui/MotivoDialog';
 import { useCarga } from '../../../hooks/useCarga';
 import { formatCantidad, formatFecha, validarCantidadPositiva } from '../../../utils/formato';
 import { CATEGORIAS, type Insumo } from '../../insumos/models/Insumo';
@@ -11,11 +12,12 @@ interface ConsumosPanelProps {
   insumos: Insumo[];
   // Supervisor y almacenero ven los consumos pero no registran
   puedeRegistrar: boolean;
+  puedeAnular: boolean;
   onConsumoRegistrado: () => void;
   onCerrar: () => void;
 }
 
-export default function ConsumosPanel({ labor, insumos, puedeRegistrar, onConsumoRegistrado, onCerrar }: ConsumosPanelProps) {
+export default function ConsumosPanel({ labor, insumos, puedeRegistrar, puedeAnular, onConsumoRegistrado, onCerrar }: ConsumosPanelProps) {
   const sesion = useSesion();
   const { datos: consumos, setDatos: setConsumos, loading, error } = useCarga<ConsumoLabor[]>(
     (signal) => laborService.listarConsumos(labor.id, signal),
@@ -26,6 +28,15 @@ export default function ConsumosPanel({ labor, insumos, puedeRegistrar, onConsum
   const [cantidad, setCantidad] = useState('');
   const [errorForm, setErrorForm] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [anulando, setAnulando] = useState<ConsumoLabor | null>(null);
+
+  const anular = async (motivo: string) => {
+    if (!anulando) return;
+    const anulado = await laborService.anularConsumo(labor.id, anulando.id, motivo);
+    setConsumos((prev) => prev.map((item) => (item.id === anulado.id ? anulado : item)));
+    setAnulando(null);
+    onConsumoRegistrado();
+  };
 
   const insumo = (id: number) => insumos.find((item) => item.id === id);
 
@@ -64,14 +75,21 @@ export default function ConsumosPanel({ labor, insumos, puedeRegistrar, onConsum
         <div className="table-responsive">
           <table className="data-table">
             <thead>
-              <tr><th>Insumo</th><th>Cantidad</th><th>Fecha</th></tr>
+              <tr><th>Insumo</th><th>Cantidad</th><th>Fecha</th>{puedeAnular && <th>Acciones</th>}</tr>
             </thead>
             <tbody>
               {consumos.map((consumo) => (
-                <tr key={consumo.id}>
+                <tr key={consumo.id} className={consumo.anulado ? 'fila-anulada' : undefined} title={consumo.motivoAnulacion ?? undefined}>
                   <td>{insumo(consumo.insumoId)?.nombre ?? `Insumo ${consumo.insumoId}`}</td>
                   <td>{formatCantidad(consumo.cantidad, insumo(consumo.insumoId)?.unidadMedida ?? '')}</td>
                   <td>{formatFecha(consumo.fecha)}</td>
+                  {puedeAnular && (
+                    <td>
+                      {!consumo.anulado && (
+                        <button type="button" className="btn-link" onClick={() => setAnulando(consumo)}>Anular</button>
+                      )}
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -122,6 +140,14 @@ export default function ConsumosPanel({ labor, insumos, puedeRegistrar, onConsum
       </form>
       )}
 
+      <MotivoDialog
+        open={anulando !== null}
+        title="Anular consumo"
+        confirmLabel="Anular"
+        aviso="La cantidad vuelve al stock con una entrada compensatoria."
+        onConfirm={anular}
+        onCancel={() => setAnulando(null)}
+      />
     </div>
   );
 }

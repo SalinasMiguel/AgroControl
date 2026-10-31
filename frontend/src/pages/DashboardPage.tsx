@@ -4,7 +4,7 @@ import StatsGrid from '../components/common/StatsGrid';
 import { useAuth } from '../features/auth/context/useAuth';
 import type { Rol } from '../features/auth/models/Sesion';
 import { NOMBRE_ROL } from '../features/auth/permisos';
-import { campanaAbierta, laborPendiente } from '../shared/utils/estados';
+import { campanaAbierta, laborPendiente, sinAnulados } from '../shared/utils/estados';
 import type { Campana } from '../features/campanas/models/Campana';
 import { campanaService } from '../features/campanas/services/campanaService';
 import { etiquetaCampana, type Catalogos } from '../features/campanas/utils/etiquetas';
@@ -66,7 +66,8 @@ export default function DashboardPage() {
   const { sesion } = useAuth();
   const rol = sesion?.rol ?? 'SUPERVISOR';
   const { datos, loading, error } = useCarga(cargarResumen(rol), vacio, rol);
-  const { predios, parcelas, cultivos, campanas, labores, insumos, cosechas, usuarios, asignaciones } = datos;
+  const { predios, parcelas, cultivos, campanas, labores, insumos, usuarios, asignaciones } = datos;
+  const cosechas = sinAnulados(datos.cosechas);
   const catalogos: Catalogos = { predios, parcelas, cultivos };
 
   const areaTotal = parcelas.reduce((suma, parcela) => suma + (parcela.areaHa ?? 0), 0);

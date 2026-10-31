@@ -15,7 +15,7 @@ services:
       POSTGRES_PASSWORD: postgres
     # 5433 para no chocar con un Postgres instalado en la PC (5432)
     ports:
-      - "5433:5432"
+      - "${AGROCONTROL_DB_PORT:-5433}:5432"
     volumes:
       - agrocontrol-db:/var/lib/postgresql/data
     healthcheck:
@@ -34,9 +34,12 @@ services:
       AGROCONTROL_DB_USER: postgres
       AGROCONTROL_DB_PASSWORD: postgres
       # Cambiar en un despliegue real (mínimo 32 caracteres)
-      AGROCONTROL_JWT_SECRET: agrocontrol-docker-clave-de-desarrollo-cambiar
+      AGROCONTROL_JWT_SECRET: ${AGROCONTROL_JWT_SECRET:-agrocontrol-docker-clave-de-desarrollo-cambiar}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-}
+      AGROCONTROL_ADMIN_EMAIL: ${AGROCONTROL_ADMIN_EMAIL:-}
+      AGROCONTROL_ADMIN_PASSWORD: ${AGROCONTROL_ADMIN_PASSWORD:-}
     ports:
-      - "8080:8080"
+      - "${AGROCONTROL_APP_PORT:-8080}:8080"
     restart: unless-stopped
 
 volumes:

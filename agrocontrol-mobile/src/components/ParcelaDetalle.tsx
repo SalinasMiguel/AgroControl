@@ -12,7 +12,7 @@ import {
 import { StyleSheet, Text, View } from "react-native";
 import type { EstadoIncidencia, EstadoLabor, Parcela } from "../models/agro";
 import type { DetalleParcela } from "../logic/detalleParcela";
-import { formatearFechaIso } from "../logic/siembra";
+import { esAtrasada, formatearFechaIso } from "../logic/siembra";
 import { PALETTE } from "../theme/palette";
 import { visualParcela } from "../theme/estados";
 import { CampanaProgreso } from "./CampanaProgreso";
@@ -44,7 +44,7 @@ const INCIDENCIA_VISUAL: Record<EstadoIncidencia, VisualFila> = {
 const FILA_DESCONOCIDA: VisualFila = { icono: CircleHelp, color: PALETTE.textoSuave, texto: "Sin clasificar" };
 
 const SIN_SIEMBRA: Record<Parcela["estado"], string> = {
-  SEMBRADA: "Sembrada, sin campaña cargada.",
+  EN_PRODUCCION: "Sembrada, sin campaña cargada.",
   DISPONIBLE: "Libre: lista para planificar una siembra.",
   EN_DESCANSO: "En descanso: el suelo se recupera esta temporada.",
 };
@@ -113,6 +113,7 @@ export function ParcelaDetalle({ parcela, areaPredio, detalle }: Props) {
                 <Text style={styles.filaTexto}>{nombreLabor(labor.tipo)}</Text>
                 <Text style={styles.filaFecha}>
                   {formatearFechaIso(labor.fechaEjecucion ?? labor.fechaPlan)} · {v.texto}
+                  {labor.estado !== "EJECUTADA" && esAtrasada(labor.fechaPlan) ? " · Atrasada" : ""}
                 </Text>
               </View>
             );

@@ -48,7 +48,7 @@ export function PredioDetalle({ predio, parcelas, detalleDe, alVolver }: Props) 
 
       <View style={styles.fila}>
         <MetricCard etiqueta="Parcelas" valor={parcelas.length} />
-        <MetricCard etiqueta="Sembradas" valor={parcelas.filter((p) => p.estado === "SEMBRADA").length} />
+        <MetricCard etiqueta="Sembradas" valor={parcelas.filter((p) => p.estado === "EN_PRODUCCION").length} />
         <MetricCard etiqueta="Problemas" valor={problemas} />
       </View>
 

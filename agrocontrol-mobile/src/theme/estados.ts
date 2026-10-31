@@ -8,7 +8,7 @@ export const ESTADO_VISUAL: Record<
   EstadoParcela,
   Readonly<{ texto: string; icono: LucideIcon; color: string; fondo: string }>
 > = {
-  SEMBRADA: { texto: "Sembrada", icono: Sprout, color: PALETTE.sembrada, fondo: PALETTE.sembradaSuave },
+  EN_PRODUCCION: { texto: "Sembrada", icono: Sprout, color: PALETTE.sembrada, fondo: PALETTE.sembradaSuave },
   DISPONIBLE: { texto: "Lista para sembrar", icono: Shovel, color: PALETTE.disponible, fondo: PALETTE.disponibleSuave },
   EN_DESCANSO: { texto: "En descanso", icono: Moon, color: PALETTE.descanso, fondo: PALETTE.descansoSuave },
 };

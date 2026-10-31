@@ -7,7 +7,7 @@ type Props = {
   parcelas: readonly Parcela[];
 };
 
-const ORDEN: EstadoParcela[] = ["SEMBRADA", "DISPONIBLE", "EN_DESCANSO"];
+const ORDEN: EstadoParcela[] = ["EN_PRODUCCION", "DISPONIBLE", "EN_DESCANSO"];
 
 // Barra apilada: cuántas hectáreas hay en cada estado.
 export function ResumenCampo({ parcelas }: Props) {

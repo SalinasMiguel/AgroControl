@@ -10,9 +10,9 @@ export const PREDIOS: readonly Predio[] = [
 
 // San José: 2 parcelas · Las Palmeras: 1 · El Retiro (inactivo): 2 · Nuevo Horizonte: 0
 export const PARCELAS: readonly Parcela[] = [
-  { id: 101, predioId: 1, codigo: "P-01", areaHa: 45, estado: "SEMBRADA" },
+  { id: 101, predioId: 1, codigo: "P-01", areaHa: 45, estado: "EN_PRODUCCION" },
   { id: 102, predioId: 1, codigo: "P-02", areaHa: 30, estado: "DISPONIBLE" },
-  { id: 103, predioId: 2, codigo: "P-01", areaHa: 50, estado: "SEMBRADA" },
+  { id: 103, predioId: 2, codigo: "P-01", areaHa: 50, estado: "EN_PRODUCCION" },
   { id: 104, predioId: 3, codigo: "P-01", areaHa: 25, estado: "EN_DESCANSO" },
   { id: 105, predioId: 3, codigo: "P-02", areaHa: 15, estado: "EN_DESCANSO" },
 ];
@@ -48,9 +48,9 @@ export const LABORES: readonly Labor[] = [
 
 // Lo cosechado en las campañas ya cerradas (para el rendimiento del historial).
 export const COSECHAS: readonly Cosecha[] = [
-  { id: 1, campanaId: 4, cantidad: 315, unidadMedida: "t" },
-  { id: 2, campanaId: 5, cantidad: 72, unidadMedida: "t" },
-  { id: 3, campanaId: 6, cantidad: 87000, unidadMedida: "kg" },
+  { id: 1, campanaId: 4, cantidad: 315, unidadMedida: "t", toneladas: 315 },
+  { id: 2, campanaId: 5, cantidad: 72, unidadMedida: "t", toneladas: 72 },
+  { id: 3, campanaId: 6, cantidad: 87000, unidadMedida: "kg", toneladas: 87 },
 ];
 
 export const INCIDENCIAS: readonly Incidencia[] = [

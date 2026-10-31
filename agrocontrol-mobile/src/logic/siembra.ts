@@ -44,6 +44,11 @@ export function calcularAvance(campana: Campana, cultivo: Cultivo, hoy: Date = n
   return { dia, cicloDias: ciclo, avance, etapa: etapaPorAvance(avance), fechaSiembra, fechaCosecha };
 }
 
+// Vencida: su fecha ya pasó, comparando días locales (hoy mismo todavía no está atrasada).
+export function esAtrasada(fechaIso: string, hoy: Date = new Date()): boolean {
+  return aFecha(fechaIso) < new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+}
+
 // "AAAA-MM-DD" → "DD/MM/AAAA"
 export function formatearFechaIso(iso: string): string {
   return formatearFecha(aFecha(iso));

@@ -40,7 +40,7 @@ export function armarDetalle(parcela: Parcela, datos: Datos): DetalleParcela {
     .map((c) => {
       const cosechas = datos.cosechas.filter((k) => k.campanaId === c.id);
       const toneladas = cosechas.length
-        ? cosechas.reduce((suma, k) => suma + (k.unidadMedida === "kg" ? k.cantidad / 1000 : k.cantidad), 0)
+        ? cosechas.reduce((suma, k) => suma + k.toneladas, 0)
         : null;
       const rendimiento = toneladas !== null && parcela.areaHa > 0 ? toneladas / parcela.areaHa : null;
       return { campana: c, cultivo: cultivoDe(c.cultivoId), toneladas, rendimiento };

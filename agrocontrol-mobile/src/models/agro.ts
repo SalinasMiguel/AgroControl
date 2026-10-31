@@ -7,7 +7,7 @@ export type Predio = Readonly<{
   activo: boolean;
 }>;
 
-export type EstadoParcela = "DISPONIBLE" | "SEMBRADA" | "EN_DESCANSO";
+export type EstadoParcela = "DISPONIBLE" | "EN_PRODUCCION" | "EN_DESCANSO";
 
 export type Parcela = Readonly<{
   id: number;
@@ -51,7 +51,8 @@ export type Cosecha = Readonly<{
   id: number;
   campanaId: number;
   cantidad: number;
-  unidadMedida: "t" | "kg";
+  unidadMedida: string;
+  toneladas: number; // el backend convierte: un quintal son 46 kg
 }>;
 
 export type EstadoIncidencia = "ABIERTA" | "EN_ATENCION" | "RESUELTA" | "ANULADA";

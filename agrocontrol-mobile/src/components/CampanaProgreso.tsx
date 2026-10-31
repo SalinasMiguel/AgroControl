@@ -1,7 +1,7 @@
 import { Calendar } from "lucide-react-native";
 import { StyleSheet, Text, View } from "react-native";
 import type { Campana, Cultivo } from "../models/agro";
-import { calcularAvance, formatearFecha } from "../logic/siembra";
+import { calcularAvance, esAtrasada, formatearFecha } from "../logic/siembra";
 import { ETAPA_ICONO } from "../theme/estados";
 import { PALETTE } from "../theme/palette";
 import { BarraProgreso } from "./BarraProgreso";
@@ -23,7 +23,9 @@ export function CampanaProgreso({ campana, cultivo }: Props) {
           <Calendar size={16} color={PALETTE.disponible} />
           <Text style={styles.cultivo}>{cultivo.nombre}</Text>
         </View>
-        <Text style={styles.detalle}>Siembra programada para el {formatearFecha(a.fechaSiembra)}</Text>
+        <Text style={styles.detalle}>
+          {esAtrasada(campana.fechaInicio) ? "Siembra atrasada: era" : "Siembra programada para"} el {formatearFecha(a.fechaSiembra)}
+        </Text>
       </View>
     );
   }

@@ -89,7 +89,7 @@ export default function App() {
   const contarParcelas = (id: number) => PARCELAS.filter((p) => p.predioId === id).length;
   const nombreDePredio = (id: number) =>
     PREDIOS.find((p) => p.id === id)?.nombre ?? "Predio desconocido";
-  const sembradas = PARCELAS.filter((p) => p.estado === "SEMBRADA").length;
+  const sembradas = PARCELAS.filter((p) => p.estado === "EN_PRODUCCION").length;
 
   // Campaña no finalizada de la parcela, con su cultivo (si existe).
   const siembraDe = (parcelaId: number) => {

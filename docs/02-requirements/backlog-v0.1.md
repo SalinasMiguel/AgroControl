@@ -65,9 +65,9 @@ Como Jefe de campo debo consultar los avances de campaña a los operarios y vali
 
 ## RF-16 Auditar cambios críticos.
 **Prioridad:* P0
-Como Administrador se pueden consultar ocupación, disponibilidad, reservas e incidencias para el cambio de terrenos normalmente por problemas graves.
+Como administrador quiero consultar quién hizo cada cambio crítico y cuándo, para revisar lo ocurrido ante problemas graves.
 
 ## RF-17 — Consultar dashboard
 **Prioridad:* P1
-Como supervisor uiero consultar ocupación, disponibilidad, reservas e incidencias para entender
+Como supervisor quiero consultar campañas, avance de labores, stock y cosechas para entender
 el estado operativo.

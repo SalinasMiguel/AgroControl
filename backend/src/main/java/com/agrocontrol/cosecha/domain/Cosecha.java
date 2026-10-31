@@ -46,6 +46,7 @@ public class Cosecha {
         if (unidadMedida == null || unidadMedida.isBlank()) {
             throw new IllegalArgumentException("La unidad de medida no puede estar vacía");
         }
+        UnidadCosecha.desde(unidadMedida);
         if (usuarioId == null) {
             throw new IllegalArgumentException("La cosecha debe registrarse con un usuario");
         }
@@ -65,6 +66,10 @@ public class Cosecha {
     }
 
     public boolean isAnulado() { return anulacion != null; }
+
+    public BigDecimal getToneladas() {
+        return UnidadCosecha.desde(unidadMedida).aToneladas(cantidad);
+    }
 
     public Long getId() { return id; }
     public Long getCampanaId() { return campanaId; }

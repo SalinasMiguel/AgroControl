@@ -1,6 +1,7 @@
 package com.agrocontrol.integracion;
 
 import org.flywaydb.core.Flyway;
+import org.flywaydb.core.api.FlywayException;
 import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
@@ -13,6 +14,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 // Cada prueba crea su propia base y corre Flyway sin Spring: así se comparan demo y producción
 // y se migra desde una versión intermedia con datos antiguos.
@@ -134,5 +136,51 @@ class MigracionesTest {
                 WHERE i.stock_actual <> (SELECT coalesce(sum(CASE m.tipo WHEN 'ENTRADA' THEN m.cantidad ELSE -m.cantidad END), 0)
                                          FROM agrocontrol.movimiento_insumo m WHERE m.id_insumo = i.id_insumo)""",
                 Integer.class)).isZero();
+    }
+
+    private static Long campanaDe(JdbcTemplate jdbc) {
+        return jdbc.queryForObject("SELECT min(id_campana) FROM agrocontrol.campana", Long.class);
+    }
+
+    private static void cosecha(JdbcTemplate jdbc, String unidad) {
+        Long usuario = jdbc.queryForObject("SELECT min(id_usuario) FROM agrocontrol.usuario", Long.class);
+        jdbc.update("INSERT INTO agrocontrol.cosecha (id_campana, cantidad, unidad_medida, id_usuario) VALUES (?, 1, ?, ?)",
+                campanaDe(jdbc), unidad, usuario);
+    }
+
+    @Test
+    void v10NormalizaUnidadesYAlineaParcelas() {
+        String url = baseNueva();
+        flyway(url, DEMO, "9").migrate();
+        JdbcTemplate jdbc = jdbc(url);
+        for (String unidad : List.of(" T ", "tn", "Kilos", "Quintales")) {
+            cosecha(jdbc, unidad);
+        }
+        Long campana = campanaDe(jdbc);
+        Long conCampana = jdbc.queryForObject("SELECT id_parcela FROM agrocontrol.campana WHERE id_campana = ?", Long.class, campana);
+        jdbc.update("UPDATE agrocontrol.campana SET estado = 'EN_CURSO', fecha_fin = NULL WHERE id_campana = ?", campana);
+        jdbc.update("UPDATE agrocontrol.parcela SET estado = 'DISPONIBLE' WHERE id_parcela = ?", conCampana);
+        Long sinCampana = jdbc.queryForObject("""
+                SELECT min(p.id_parcela) FROM agrocontrol.parcela p WHERE NOT EXISTS
+                (SELECT 1 FROM agrocontrol.campana c WHERE c.id_parcela = p.id_parcela AND c.estado = 'EN_CURSO')""", Long.class);
+        jdbc.update("UPDATE agrocontrol.parcela SET estado = 'EN_PRODUCCION' WHERE id_parcela = ?", sinCampana);
+
+        flyway(url, DEMO, null).migrate();
+
+        assertThat(jdbc.queryForList("SELECT DISTINCT unidad_medida FROM agrocontrol.cosecha", String.class))
+                .containsExactlyInAnyOrder("t", "kg", "qq");
+        assertThat(jdbc.queryForObject("SELECT estado FROM agrocontrol.parcela WHERE id_parcela = ?", String.class, conCampana))
+                .isEqualTo("EN_PRODUCCION");
+        assertThat(jdbc.queryForObject("SELECT estado FROM agrocontrol.parcela WHERE id_parcela = ?", String.class, sinCampana))
+                .isEqualTo("DISPONIBLE");
+    }
+
+    @Test
+    void v10FallaConUnaUnidadDesconocida() {
+        String url = baseNueva();
+        flyway(url, DEMO, "9").migrate();
+        cosecha(jdbc(url), "arroba");
+
+        assertThatThrownBy(() -> flyway(url, DEMO, null).migrate()).isInstanceOf(FlywayException.class);
     }
 }

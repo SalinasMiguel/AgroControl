@@ -160,4 +160,25 @@ class AvanceCampanaServiceTest {
         assertThat(avance.incidenciasTotal()).isZero();
         assertThat(avance.incidenciasAbiertas()).isZero();
     }
+
+    @Test
+    void elRendimientoCuentaQuintales() {
+        LocalDate inicio = LocalDate.of(2026, 9, 1);
+        Campana campana = new Campana(5L, 3L, 1L, inicio);
+        campana.iniciar();
+        when(campanaRepository.buscarPorId(5L)).thenReturn(Optional.of(campana));
+        when(cultivoRepository.buscarPorId(1L)).thenReturn(Optional.of(new Cultivo(1L, "Soya", 120)));
+        when(parcelaRepository.buscarPorId(3L)).thenReturn(Optional.of(new Parcela(3L, 1L, "P-01", new BigDecimal("2"))));
+        when(laborRepository.listarPorCampana(5L)).thenReturn(List.of());
+        when(insumoRepository.listarTodos()).thenReturn(List.of());
+        when(incidenciaRepository.listarPorParcela(3L)).thenReturn(List.of());
+        when(cosechaRepository.listarPorCampana(5L)).thenReturn(List.of(
+                new Cosecha(1L, 5L, new BigDecimal("100"), "qq", 7L),
+                new Cosecha(2L, 5L, new BigDecimal("400"), "kg", 7L)));
+
+        AvanceCampana avance = service.calcular(5L, inicio.plusDays(1));
+
+        assertThat(avance.cosechaToneladas()).isEqualByComparingTo("5.0");
+        assertThat(avance.rendimientoToneladasPorHa()).isEqualByComparingTo("2.50");
+    }
 }

@@ -28,7 +28,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -83,6 +82,8 @@ public class AvanceCampanaService {
                 .filter(incidencia -> incidencia.getEstado() != EstadoIncidencia.ANULADA)
                 .toList();
 
+        BigDecimal toneladas = cosechas.stream().map(Cosecha::getToneladas).reduce(BigDecimal.ZERO, BigDecimal::add);
+
         return new AvanceCampana(
                 campanaId,
                 cultivo == null ? null : cultivo.getNombre(),
@@ -94,7 +95,8 @@ public class AvanceCampanaService {
                 ciclo == null ? null : Math.min(100, porcentaje(dias, ciclo)),
                 insumosConsumidos(labores),
                 totalesDeCosecha(cosechas),
-                rendimiento(campana, cosechas),
+                toneladas,
+                rendimiento(campana, toneladas),
                 (int) incidencias.stream().filter(Incidencia::estaAbierta).count(),
                 incidencias.size()
         );
@@ -130,18 +132,10 @@ public class AvanceCampanaService {
                 .toList();
     }
 
-    // Toneladas por hectárea: solo con cosechas en t o kg y si la parcela tiene área cargada
-    private BigDecimal rendimiento(Campana campana, List<Cosecha> cosechas) {
+    // Toneladas por hectárea, si la parcela tiene área cargada
+    private BigDecimal rendimiento(Campana campana, BigDecimal toneladas) {
         BigDecimal area = parcelaRepository.buscarPorId(campana.getParcelaId())
                 .map(parcela -> parcela.getAreaHa()).orElse(null);
-        BigDecimal toneladas = cosechas.stream()
-                .map(c -> switch (c.getUnidadMedida()) {
-                    case "t" -> c.getCantidad();
-                    case "kg" -> c.getCantidad().divide(BigDecimal.valueOf(1000), 3, RoundingMode.HALF_UP);
-                    default -> null;
-                })
-                .filter(Objects::nonNull)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
         if (area == null || area.signum() == 0 || toneladas.signum() == 0) {
             return null;
         }

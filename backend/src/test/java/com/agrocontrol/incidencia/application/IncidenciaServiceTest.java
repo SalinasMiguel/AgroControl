@@ -146,4 +146,48 @@ class IncidenciaServiceTest {
         assertThatThrownBy(() -> service.resolver(4L, "Otra vez")).isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> service.atender(4L)).isInstanceOf(IllegalStateException.class);
     }
+
+    private Incidencia existente() {
+        Incidencia incidencia = new Incidencia(4L, 3L, null, null, "Plaga", 7L);
+        when(incidenciaRepository.buscarPorId(4L)).thenReturn(Optional.of(incidencia));
+        return incidencia;
+    }
+
+    @Test
+    void anularDesdeAbiertaOEnAtencion() {
+        when(incidenciaRepository.guardar(any())).thenAnswer(inv -> inv.getArgument(0));
+        existente();
+        Incidencia abierta = service.anular(4L, "Cargada por error", 7L);
+        assertThat(abierta.getEstado()).isEqualTo(EstadoIncidencia.ANULADA);
+        assertThat(abierta.getAnulacion().motivo()).isEqualTo("Cargada por error");
+        assertThat(abierta.getAnulacion().usuarioId()).isEqualTo(7L);
+        assertThat(abierta.getAnulacion().fecha()).isNotNull();
+
+        existente().atender();
+        assertThat(service.anular(4L, "Repetida", 7L).getEstado()).isEqualTo(EstadoIncidencia.ANULADA);
+    }
+
+    @Test
+    void noSeAnulaUnaResuelta() {
+        existente().resolver("Fumigada");
+
+        assertThatThrownBy(() -> service.anular(4L, "Error", 7L)).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void noSeResuelveUnaAnulada() {
+        existente().anular("Error", 7L);
+
+        assertThatThrownBy(() -> service.resolver(4L, "Fumigada")).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void estaAbiertaSoloAbiertaYEnAtencion() {
+        Incidencia incidencia = new Incidencia(4L, 3L, null, null, "Plaga", 7L);
+        assertThat(incidencia.estaAbierta()).isTrue();
+        incidencia.atender();
+        assertThat(incidencia.estaAbierta()).isTrue();
+        incidencia.resolver("Fumigada");
+        assertThat(incidencia.estaAbierta()).isFalse();
+    }
 }

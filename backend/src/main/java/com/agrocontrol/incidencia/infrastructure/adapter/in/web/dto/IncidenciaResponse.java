@@ -2,6 +2,7 @@ package com.agrocontrol.incidencia.infrastructure.adapter.in.web.dto;
 
 import com.agrocontrol.incidencia.domain.EstadoIncidencia;
 import com.agrocontrol.incidencia.domain.Incidencia;
+import com.agrocontrol.shared.domain.Anulacion;
 
 import java.time.LocalDateTime;
 
@@ -15,9 +16,13 @@ public record IncidenciaResponse(
         LocalDateTime fecha,
         EstadoIncidencia estado,
         String resolucion,
-        LocalDateTime resueltaEn
+        LocalDateTime resueltaEn,
+        String motivoAnulacion,
+        Long anuladoPor,
+        LocalDateTime anuladoEn
 ) {
     public static IncidenciaResponse desde(Incidencia incidencia) {
+        Anulacion anulacion = incidencia.getAnulacion();
         return new IncidenciaResponse(
                 incidencia.getId(),
                 incidencia.getParcelaId(),
@@ -28,7 +33,10 @@ public record IncidenciaResponse(
                 incidencia.getFecha(),
                 incidencia.getEstado(),
                 incidencia.getResolucion(),
-                incidencia.getResueltaEn()
+                incidencia.getResueltaEn(),
+                anulacion == null ? null : anulacion.motivo(),
+                anulacion == null ? null : anulacion.usuarioId(),
+                anulacion == null ? null : anulacion.fecha()
         );
     }
 }

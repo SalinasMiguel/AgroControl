@@ -49,12 +49,22 @@ public class IncidenciaJpaEntity {
     @Column(name = "resuelta_en")
     private LocalDateTime resueltaEn;
 
+    @Column(name = "motivo_anulacion", length = 200)
+    private String motivoAnulacion;
+
+    @Column(name = "anulado_por")
+    private Long anuladoPor;
+
+    @Column(name = "anulado_en")
+    private LocalDateTime anuladoEn;
+
     protected IncidenciaJpaEntity() {
     }
 
     public IncidenciaJpaEntity(Long id, Long parcelaId, Long campanaId, Long laborId, String descripcion,
                                Long usuarioId, LocalDateTime fecha, EstadoIncidencia estado, String resolucion,
-                               LocalDateTime resueltaEn) {
+                               LocalDateTime resueltaEn, String motivoAnulacion, Long anuladoPor,
+                               LocalDateTime anuladoEn) {
         this.id = id;
         this.parcelaId = parcelaId;
         this.campanaId = campanaId;
@@ -65,6 +75,9 @@ public class IncidenciaJpaEntity {
         this.estado = estado;
         this.resolucion = resolucion;
         this.resueltaEn = resueltaEn;
+        this.motivoAnulacion = motivoAnulacion;
+        this.anuladoPor = anuladoPor;
+        this.anuladoEn = anuladoEn;
     }
 
     public Long getId() { return id; }
@@ -77,4 +90,7 @@ public class IncidenciaJpaEntity {
     public EstadoIncidencia getEstado() { return estado; }
     public String getResolucion() { return resolucion; }
     public LocalDateTime getResueltaEn() { return resueltaEn; }
+    public String getMotivoAnulacion() { return motivoAnulacion; }
+    public Long getAnuladoPor() { return anuladoPor; }
+    public LocalDateTime getAnuladoEn() { return anuladoEn; }
 }

@@ -104,7 +104,7 @@ public class SecurityConfig {
 
                         // Incidencias (RF-12): las reportan quienes están o supervisan el campo;
                         // atenderlas y cerrarlas es tarea de quien gestiona (el operario no las cierra)
-                        .requestMatchers(HttpMethod.POST, "/api/incidencias/*/atender", "/api/incidencias/*/resolver")
+                        .requestMatchers(HttpMethod.POST, "/api/incidencias/*/atender", "/api/incidencias/*/resolver", "/api/incidencias/*/anular")
                                 .hasAnyRole(ADMINISTRADOR, JEFE_DE_CAMPO, SUPERVISOR)
                         .requestMatchers("/api/incidencias/**")
                                 .hasAnyRole(ADMINISTRADOR, JEFE_DE_CAMPO, OPERARIO, SUPERVISOR)

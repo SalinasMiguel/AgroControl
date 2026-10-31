@@ -64,8 +64,10 @@ public class AvanceCampanaService {
                 .orElseThrow(() -> new RecursoNoEncontradoException("No existe la campaña con id: " + campanaId));
         Cultivo cultivo = cultivoRepository.buscarPorId(campana.getCultivoId()).orElse(null);
 
-        List<Labor> labores = laborRepository.listarPorCampana(campanaId);
-        int planificadas = contar(labores, EstadoLabor.PLANIFICADA);
+        List<Labor> labores = laborRepository.listarPorCampana(campanaId).stream()
+                .filter(labor -> labor.getEstado() != EstadoLabor.CANCELADA)
+                .toList();
+        int planificadas = contar(labores, EstadoLabor.PLANIFICADA) + contar(labores, EstadoLabor.ASIGNADA);
         int enCurso = contar(labores, EstadoLabor.EN_CURSO);
         int ejecutadas = contar(labores, EstadoLabor.EJECUTADA);
 
@@ -73,9 +75,12 @@ public class AvanceCampanaService {
         int dias = (int) Math.max(0, ChronoUnit.DAYS.between(campana.getFechaInicio(), hasta));
         Integer ciclo = cultivo == null ? null : cultivo.getCicloDias();
 
-        List<Cosecha> cosechas = cosechaRepository.listarPorCampana(campanaId);
+        List<Cosecha> cosechas = cosechaRepository.listarPorCampana(campanaId).stream()
+                .filter(cosecha -> !cosecha.isAnulado())
+                .toList();
         List<Incidencia> incidencias = incidenciaRepository.listarPorParcela(campana.getParcelaId()).stream()
                 .filter(incidencia -> campanaId.equals(incidencia.getCampanaId()))
+                .filter(incidencia -> incidencia.getEstado() != EstadoIncidencia.ANULADA)
                 .toList();
 
         return new AvanceCampana(
@@ -90,7 +95,7 @@ public class AvanceCampanaService {
                 insumosConsumidos(labores),
                 totalesDeCosecha(cosechas),
                 rendimiento(campana, cosechas),
-                (int) incidencias.stream().filter(i -> i.getEstado() != EstadoIncidencia.RESUELTA).count(),
+                (int) incidencias.stream().filter(Incidencia::estaAbierta).count(),
                 incidencias.size()
         );
     }
@@ -99,7 +104,9 @@ public class AvanceCampanaService {
         Map<Long, BigDecimal> porInsumo = new LinkedHashMap<>();
         for (Labor labor : labores) {
             for (ConsumoLabor consumo : consumoRepository.listarPorLabor(labor.getId())) {
-                porInsumo.merge(consumo.getInsumoId(), consumo.getCantidad(), BigDecimal::add);
+                if (!consumo.isAnulado()) {
+                    porInsumo.merge(consumo.getInsumoId(), consumo.getCantidad(), BigDecimal::add);
+                }
             }
         }
         Map<Long, Insumo> insumos = insumoRepository.listarTodos().stream()

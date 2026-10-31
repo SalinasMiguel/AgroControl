@@ -34,6 +34,10 @@ export default function App() {
     setError(null);
     try {
       const nueva = await iniciarSesion(url, email, password);
+      if (nueva.debeCambiarPassword) {
+        setError("Cambie su contraseña en la web antes de usar la app");
+        return;
+      }
       setDatos(await cargarDatos(url, nueva.token));
       setServidor(url);
       setSesion(nueva);

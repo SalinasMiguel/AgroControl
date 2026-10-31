@@ -13,6 +13,7 @@ export type Sesion = Readonly<{
   nombreCompleto: string;
   email: string;
   rol: string;
+  debeCambiarPassword: boolean;
 }>;
 
 export type DatosCampo = Readonly<{

@@ -139,8 +139,8 @@ Con el backend en marcha (`http://localhost:8080`). Swagger UI: `http://localhos
 | Recurso | Endpoints | Reglas principales |
 |---------|-----------|--------------------|
 | Roles | `GET/POST /api/roles`, `GET/PUT/DELETE /api/roles/{id}` | Nombre único (409); no se borra un rol con usuarios (409) |
-| Login | `POST /api/auth/login`, `GET /api/auth/me` | Email o contraseña incorrectos dan el mismo 401; usuario inactivo no entra |
-| Usuarios | `GET/POST /api/usuarios`, `GET /api/usuarios/{id}` | Rol existente (404); email único (409); contraseña con BCrypt |
+| Login | `POST /api/auth/login`, `GET /api/auth/me`, `POST /api/auth/cambiar-password` | Email o contraseña incorrectos dan el mismo 401; usuario inactivo no entra. Cambiar la clave exige la actual (400), 8 a 72 caracteres y devuelve un token nuevo |
+| Usuarios | `GET/POST /api/usuarios`, `GET/PUT /api/usuarios/{id}`, `POST /api/usuarios/{id}/desactivar`, `/activar`, `/restablecer-password` | Rol existente (404); email único (409); contraseña con BCrypt. Solo el administrador escribe. Nadie se desactiva a sí mismo y siempre queda un administrador activo (409). Restablecer genera una clave temporal de 12 caracteres que se muestra una sola vez |
 | Predios | `GET/POST /api/predios`, `GET/PUT/DELETE /api/predios/{id}` | No se borra un predio con parcelas (409) |
 | Parcelas | `GET/POST /api/parcelas?predioId=`, `GET/PUT/DELETE /api/parcelas/{id}` | Código único por predio (409); no se borra con campañas (409) |
 | Cultivos | `GET/POST /api/cultivos` | Nombre único (409) |
@@ -168,6 +168,23 @@ Toda la API (salvo `POST /api/auth/login`, `/api/health` y Swagger) exige `Autho
 | Supervisor | supervisor@agrocontrol.com | Todo en lectura e indicadores; además registra incidencias y observaciones de campo (RF-09, RF-12) |
 
 Contraseña de demo de todos: `agro123` (migración `V3__usuarios_login.sql`). La clave de firma se cambia con `AGROCONTROL_JWT_SECRET` (mínimo 32 caracteres) y la duración con `AGROCONTROL_JWT_HORAS`.
+
+Cada petición con token se compara con la cuenta real (`EstadoCuentaFilter`): un usuario desactivado o con la clave, o el rol, recién cambiados pierde su sesión al instante (401), y con la clave pendiente solo puede cambiarla (403 en lo demás).
+
+### Instalación en producción
+
+El perfil `produccion` arranca sin datos de ejemplo: Flyway usa `db/migration` + `db/produccion` (solo los 5 roles) en vez de `db/migration` + `db/demo`. **Requiere una base vacía**: una base creada con un perfil no abre con el otro. Hasta completar la Parte 3 (HTTPS, copias, puertos) no debe exponerse a internet.
+
+| Variable | Uso |
+|---|---|
+| `SPRING_PROFILES_ACTIVE=produccion` | Activa el perfil; sin ella arranca la demo |
+| `AGROCONTROL_JWT_SECRET` | Obligatoria, mínimo 32 caracteres; sin ella no arranca |
+| `AGROCONTROL_ADMIN_EMAIL`, `AGROCONTROL_ADMIN_PASSWORD` | Primer administrador, mínimo 8 caracteres; deberá cambiar la clave al entrar. Se ignoran si ya hay usuarios |
+| `AGROCONTROL_DB_PORT`, `AGROCONTROL_APP_PORT` | Puertos publicados por Compose (5433 y 8080 por defecto) |
+
+Con esas variables en un archivo: `docker compose --env-file .env.produccion.local up -d --build`.
+
+Si cambian de carpeta las migraciones y `mvn` falla con "more than one migration with version", hay que borrar `backend/target` (`./mvnw clean`).
 
 ### Arquitectura por módulo
 ```

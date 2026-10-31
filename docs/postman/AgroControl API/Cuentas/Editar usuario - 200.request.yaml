@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/api/usuarios/3"
+method: PUT
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "rolId": 3,
+      "nombreCompleto": "Luis Choque",
+      "email": "operario1@agrocontrol.com"
+    }
+order: 2000

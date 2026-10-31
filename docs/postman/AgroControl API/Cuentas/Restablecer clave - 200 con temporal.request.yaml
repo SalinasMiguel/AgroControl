@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{baseUrl}}/api/usuarios/3/restablecer-password"
+method: POST
+headers:
+  Accept: application/json
+order: 5000

@@ -1,4 +1,5 @@
 import StatusBadge from '../../../components/ui/StatusBadge';
+import { laborPendiente } from '../../../shared/utils/estados';
 import { formatFecha } from '../../../utils/formato';
 import type { Campana } from '../../campanas/models/Campana';
 import { etiquetaCampana, type Catalogos } from '../../campanas/utils/etiquetas';
@@ -64,13 +65,13 @@ export default function LaborTable({
                   <td><StatusBadge estado={labor.estado} /></td>
                   <td>
                     <div className="table-actions">
-                      {onAsignar && labor.estado !== 'EJECUTADA' && (
+                      {onAsignar && laborPendiente(labor) && (
                         <button type="button" className="btn-link" onClick={() => onAsignar(labor)}>Asignar</button>
                       )}
-                      {onIniciar && labor.estado === 'PLANIFICADA' && (
+                      {onIniciar && (labor.estado === 'PLANIFICADA' || labor.estado === 'ASIGNADA') && (
                         <button type="button" className="btn-link" onClick={() => onIniciar(labor)}>Iniciar</button>
                       )}
-                      {onEjecutar && labor.estado !== 'EJECUTADA' && (
+                      {onEjecutar && laborPendiente(labor) && (
                         <button type="button" className="btn-link" onClick={() => onEjecutar(labor)}>Ejecutar</button>
                       )}
                       <button type="button" className="btn-link" onClick={() => onInsumos(labor)}>Insumos</button>

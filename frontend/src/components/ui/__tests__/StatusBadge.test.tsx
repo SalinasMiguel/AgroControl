@@ -13,4 +13,14 @@ describe('StatusBadge', () => {
     render(<StatusBadge estado="OTRO" />);
     expect(screen.getByText('OTRO')).toHaveClass('status-neutral');
   });
+
+  it.each([
+    ['CANCELADA', 'status-inactive'],
+    ['PERDIDA', 'status-inactive'],
+    ['ANULADA', 'status-neutral'],
+    ['ASIGNADA', 'status-planned'],
+  ])('colorea %s', (estado, clase) => {
+    render(<StatusBadge estado={estado} />);
+    expect(screen.getByText(estado)).toHaveClass(clase);
+  });
 });

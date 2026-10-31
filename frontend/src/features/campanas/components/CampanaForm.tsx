@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { ApiError } from '../../../api/apiClient';
+import { campanaAbierta } from '../../../shared/utils/estados';
 import { hoyISO } from '../../../utils/formato';
 import type { Campana } from '../models/Campana';
 import { campanaService } from '../services/campanaService';
@@ -24,7 +25,7 @@ export default function CampanaForm({ catalogos, campanas, onCreated }: CampanaF
 
   // Una parcela trabaja una campaña a la vez: se ofrecen solo las que no tienen una abierta.
   const parcelasOcupadas = new Set(
-    campanas.filter((campana) => campana.estado !== 'FINALIZADA').map((campana) => campana.parcelaId),
+    campanas.filter(campanaAbierta).map((campana) => campana.parcelaId),
   );
   const parcelasLibres = catalogos.parcelas.filter((parcela) => !parcelasOcupadas.has(parcela.id));
 

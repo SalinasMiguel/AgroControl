@@ -49,7 +49,7 @@ export default function CampanaTable({ campanas, catalogos, onIniciar, onFinaliz
                     {onIniciar && campana.estado === 'PLANIFICADA' && (
                       <button type="button" className="btn-link" onClick={() => onIniciar(campana)}>Iniciar</button>
                     )}
-                    {onFinalizar && campana.estado !== 'FINALIZADA' && (
+                    {onFinalizar && campana.estado === 'EN_CURSO' && (
                       <button type="button" className="btn-link" onClick={() => onFinalizar(campana)}>Finalizar</button>
                     )}
                     {onAvance && (

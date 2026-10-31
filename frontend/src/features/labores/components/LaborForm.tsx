@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { ApiError } from '../../../api/apiClient';
+import { campanaAbierta } from '../../../shared/utils/estados';
 import { hoyISO } from '../../../utils/formato';
 import type { Campana } from '../../campanas/models/Campana';
 import { etiquetaCampana, type Catalogos } from '../../campanas/utils/etiquetas';
@@ -23,7 +24,7 @@ export default function LaborForm({ campanas, catalogos, onCreated }: LaborFormP
   const [apiError, setApiError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const campanasAbiertas = campanas.filter((campana) => campana.estado !== 'FINALIZADA');
+  const campanasAbiertas = campanas.filter(campanaAbierta);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();

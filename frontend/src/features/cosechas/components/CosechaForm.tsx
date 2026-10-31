@@ -27,8 +27,8 @@ export default function CosechaForm({ campanas, catalogos, onCreated }: CosechaF
   const [apiError, setApiError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Solo se cosecha una campaña que ya empezó.
-  const cosechables = campanas.filter((campana) => campana.estado !== 'PLANIFICADA');
+  // RN-06: solo se cosecha una campaña en curso; una cosecha tardía exige reabrirla.
+  const cosechables = campanas.filter((campana) => campana.estado === 'EN_CURSO');
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -65,7 +65,7 @@ export default function CosechaForm({ campanas, catalogos, onCreated }: CosechaF
         <label className="form-span-2">
           Campaña
           <select value={campanaId} onChange={(e) => setCampanaId(e.target.value)}>
-            <option value="">Seleccione una campaña en curso o finalizada</option>
+            <option value="">Seleccione una campaña en curso</option>
             {cosechables.map((campana) => (
               <option key={campana.id} value={campana.id}>{etiquetaCampana(campana, catalogos)}</option>
             ))}

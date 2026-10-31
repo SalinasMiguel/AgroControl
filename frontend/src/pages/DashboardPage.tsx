@@ -4,6 +4,7 @@ import StatsGrid from '../components/common/StatsGrid';
 import { useAuth } from '../features/auth/context/useAuth';
 import type { Rol } from '../features/auth/models/Sesion';
 import { NOMBRE_ROL } from '../features/auth/permisos';
+import { campanaAbierta, laborPendiente } from '../shared/utils/estados';
 import type { Campana } from '../features/campanas/models/Campana';
 import { campanaService } from '../features/campanas/services/campanaService';
 import { etiquetaCampana, type Catalogos } from '../features/campanas/utils/etiquetas';
@@ -69,8 +70,8 @@ export default function DashboardPage() {
   const catalogos: Catalogos = { predios, parcelas, cultivos };
 
   const areaTotal = parcelas.reduce((suma, parcela) => suma + (parcela.areaHa ?? 0), 0);
-  const campanasAbiertas = campanas.filter((campana) => campana.estado !== 'FINALIZADA');
-  const pendientes = labores.filter((labor) => labor.estado !== 'EJECUTADA');
+  const campanasAbiertas = campanas.filter(campanaAbierta);
+  const pendientes = labores.filter(laborPendiente);
   const proximasLabores = [...pendientes].sort((a, b) => a.fechaPlan.localeCompare(b.fechaPlan)).slice(0, 5);
   const sinAsignar = pendientes.filter((labor) => !asignaciones.some((a) => a.laborId === labor.id)).length;
   const insumosSinStock = insumos.filter((insumo) => insumo.stockActual <= 0).length;

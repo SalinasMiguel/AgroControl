@@ -1,4 +1,4 @@
-export type EstadoCampana = 'PLANIFICADA' | 'EN_CURSO' | 'FINALIZADA';
+export type EstadoCampana = 'PLANIFICADA' | 'EN_CURSO' | 'FINALIZADA' | 'CANCELADA' | 'PERDIDA';
 
 export interface Campana {
   id: number;
@@ -7,4 +7,5 @@ export interface Campana {
   fechaInicio: string;
   fechaFin: string | null;
   estado: EstadoCampana;
+  motivoCierre: string | null;
 }

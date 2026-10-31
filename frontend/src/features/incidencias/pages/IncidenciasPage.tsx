@@ -1,3 +1,4 @@
+import { incidenciaAbierta } from '../../../shared/utils/estados';
 import { useState } from 'react';
 import PageHeading from '../../../components/common/PageHeading';
 import StatsGrid from '../../../components/common/StatsGrid';
@@ -72,7 +73,7 @@ export default function IncidenciasPage() {
   };
   const tipoLabor = (id: number | null) => labores.find((item) => item.id === id)?.tipo ?? '—';
   const parcelasAfectadas = new Set(incidencias.map((incidencia) => incidencia.parcelaId)).size;
-  const abiertas = incidencias.filter((incidencia) => incidencia.estado !== 'RESUELTA').length;
+  const abiertas = incidencias.filter(incidenciaAbierta).length;
   const ultimaSemana = incidencias.filter((incidencia) => new Date(incidencia.fecha).getTime() >= haceUnaSemana).length;
 
   return (
@@ -153,7 +154,7 @@ export default function IncidenciasPage() {
                               {incidencia.estado === 'ABIERTA' && (
                                 <button type="button" className="btn-link" onClick={() => atender(incidencia)}>Atender</button>
                               )}
-                              {incidencia.estado !== 'RESUELTA' ? (
+                              {incidenciaAbierta(incidencia) ? (
                                 <button type="button" className="btn-link" onClick={() => setResolviendo(incidencia)}>Resolver</button>
                               ) : (
                                 <span className="muted">—</span>

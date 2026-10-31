@@ -1,3 +1,4 @@
+import { laborPendiente } from '../../../shared/utils/estados';
 import { useMemo, useState } from 'react';
 import FechaAccionPanel from '../../../components/common/FechaAccionPanel';
 import PageHeading from '../../../components/common/PageHeading';
@@ -86,7 +87,7 @@ export default function LaboresPage() {
     );
 
   const visibles = filtroCampana ? labores.filter((labor) => labor.campanaId === Number(filtroCampana)) : labores;
-  const pendientes = visibles.filter((labor) => labor.estado !== 'EJECUTADA').length;
+  const pendientes = visibles.filter(laborPendiente).length;
   const [accionError, setAccionError] = useState('');
 
   const iniciar = async (labor: Labor) => {
@@ -198,7 +199,7 @@ export default function LaboresPage() {
               { etiqueta: esOperario ? 'Asignadas a mí' : 'Labores', valor: visibles.length },
               { etiqueta: 'Pendientes', valor: pendientes },
               { etiqueta: 'En curso', valor: visibles.filter((labor) => labor.estado === 'EN_CURSO').length },
-              { etiqueta: 'Ejecutadas', valor: visibles.length - pendientes },
+              { etiqueta: 'Ejecutadas', valor: visibles.filter((labor) => labor.estado === 'EJECUTADA').length },
             ]}
           />
           <div className="toolbar">

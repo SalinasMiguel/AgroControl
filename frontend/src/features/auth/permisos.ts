@@ -32,6 +32,7 @@ export type Accion =
   | 'insumos.gestionar'
   | 'insumos.verMovimientos'
   | 'cosechas.registrar'
+  | 'consumos.anular'
   | 'incidencias.reportar'
   | 'bitacora.registrar'
   | 'incidencias.gestionar'
@@ -48,6 +49,7 @@ const ACCIONES: Record<Accion, Rol[]> = {
   'insumos.gestionar': ['ADMINISTRADOR', 'ALMACENERO'],
   'insumos.verMovimientos': ['ADMINISTRADOR', 'ALMACENERO', 'JEFE_DE_CAMPO', 'SUPERVISOR'],
   'cosechas.registrar': ['ADMINISTRADOR', 'JEFE_DE_CAMPO', 'ALMACENERO'],
+  'consumos.anular': ['ADMINISTRADOR', 'JEFE_DE_CAMPO'],
   // RF-12 y RF-09: las registran quienes están o supervisan el campo
   'incidencias.reportar': ['ADMINISTRADOR', 'JEFE_DE_CAMPO', 'OPERARIO', 'SUPERVISOR'],
   'bitacora.registrar': ['ADMINISTRADOR', 'JEFE_DE_CAMPO', 'OPERARIO', 'SUPERVISOR'],

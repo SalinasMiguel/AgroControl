@@ -1,3 +1,12 @@
+import {
+  Calendar,
+  CircleCheck,
+  Hourglass,
+  TriangleAlert,
+  Wheat,
+  Wrench,
+  type LucideIcon,
+} from "lucide-react-native";
 import { StyleSheet, Text, View } from "react-native";
 import type { EstadoIncidencia, EstadoLabor, Parcela } from "../models/agro";
 import type { DetalleParcela } from "../logic/detalleParcela";
@@ -5,6 +14,7 @@ import { formatearFechaIso } from "../logic/siembra";
 import { PALETTE } from "../theme/palette";
 import { ESTADO_VISUAL } from "../theme/estados";
 import { CampanaProgreso } from "./CampanaProgreso";
+import { EstadoChip } from "./EstadoChip";
 
 type Props = {
   parcela: Parcela;
@@ -12,16 +22,18 @@ type Props = {
   detalle: DetalleParcela;
 };
 
-const LABOR_VISUAL: Record<EstadoLabor, { icono: string; texto: string }> = {
-  EJECUTADA: { icono: "✅", texto: "Hecha" },
-  EN_CURSO: { icono: "⏳", texto: "En curso" },
-  PLANIFICADA: { icono: "📅", texto: "Pendiente" },
+type VisualFila = { icono: LucideIcon; color: string; texto: string };
+
+const LABOR_VISUAL: Record<EstadoLabor, VisualFila> = {
+  EJECUTADA: { icono: CircleCheck, color: PALETTE.acento, texto: "Hecha" },
+  EN_CURSO: { icono: Hourglass, color: PALETTE.disponible, texto: "En curso" },
+  PLANIFICADA: { icono: Calendar, color: PALETTE.textoSuave, texto: "Pendiente" },
 };
 
-const INCIDENCIA_VISUAL: Record<EstadoIncidencia, { icono: string; texto: string }> = {
-  ABIERTA: { icono: "⚠️", texto: "Sin atender" },
-  EN_ATENCION: { icono: "🛠️", texto: "En atención" },
-  RESUELTA: { icono: "✔️", texto: "Resuelta" },
+const INCIDENCIA_VISUAL: Record<EstadoIncidencia, VisualFila> = {
+  ABIERTA: { icono: TriangleAlert, color: PALETTE.inactivo, texto: "Sin atender" },
+  EN_ATENCION: { icono: Wrench, color: PALETTE.disponible, texto: "En atención" },
+  RESUELTA: { icono: CircleCheck, color: PALETTE.textoSuave, texto: "Resuelta" },
 };
 
 const SIN_SIEMBRA: Record<Parcela["estado"], string> = {
@@ -57,14 +69,17 @@ export function ParcelaDetalle({ parcela, areaPredio, detalle }: Props) {
         <Text style={styles.codigo}>
           {parcela.codigo} <Text style={styles.id}>#{parcela.id}</Text>
         </Text>
-        <Text style={[styles.chip, { color: visual.color, backgroundColor: visual.fondo }]}>
-          {visual.icono} {visual.texto}
-        </Text>
+        <EstadoChip estado={parcela.estado} />
       </View>
       <Text style={styles.detalle}>
         {parcela.areaHa} ha{areaPredio > 0 ? ` · ${Math.round((parcela.areaHa / areaPredio) * 100)}% del predio` : ""}
-        {sinResolver > 0 ? ` · ⚠️ ${sinResolver} problema(s) sin resolver` : ""}
       </Text>
+      {sinResolver > 0 && (
+        <View style={styles.fila}>
+          <TriangleAlert size={16} color={PALETTE.inactivo} />
+          <Text style={styles.alerta}>{sinResolver} problema(s) sin resolver</Text>
+        </View>
+      )}
 
       <Text style={styles.seccion}>Siembra actual</Text>
       {campana && cultivo ? (
@@ -87,7 +102,7 @@ export function ParcelaDetalle({ parcela, areaPredio, detalle }: Props) {
             const v = LABOR_VISUAL[labor.estado];
             return (
               <View key={labor.id} style={styles.fila} accessible accessibilityLabel={`${labor.tipo}: ${v.texto}`}>
-                <Text style={styles.icono}>{v.icono}</Text>
+                <v.icono size={16} color={v.color} />
                 <Text style={styles.filaTexto}>{nombreLabor(labor.tipo)}</Text>
                 <Text style={styles.filaFecha}>
                   {formatearFechaIso(labor.fechaEjecucion ?? labor.fechaPlan)} · {v.texto}
@@ -106,7 +121,7 @@ export function ParcelaDetalle({ parcela, areaPredio, detalle }: Props) {
           const v = INCIDENCIA_VISUAL[incidencia.estado];
           return (
             <View key={incidencia.id} style={styles.fila}>
-              <Text style={styles.icono}>{v.icono}</Text>
+              <v.icono size={16} color={v.color} />
               <Text style={[styles.filaTexto, incidencia.estado === "RESUELTA" && styles.resuelta]}>
                 {incidencia.descripcion}
               </Text>
@@ -122,7 +137,7 @@ export function ParcelaDetalle({ parcela, areaPredio, detalle }: Props) {
       ) : (
         historial.map(({ campana: pasada, cultivo: cultivoPasado, toneladas, rendimiento }) => (
           <View key={pasada.id} style={styles.fila}>
-            <Text style={styles.icono}>🌾</Text>
+            <Wheat size={16} color={PALETTE.textoSuave} />
             <Text style={styles.filaTexto}>
               {cultivoPasado?.nombre ?? "Cultivo"} · {formatearFechaIso(pasada.fechaInicio)}
               {pasada.fechaFin ? ` → ${formatearFechaIso(pasada.fechaFin)}` : ""}
@@ -150,15 +165,8 @@ const styles = StyleSheet.create({
   cabecera: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 },
   codigo: { fontSize: 18, fontWeight: "700", color: PALETTE.texto },
   id: { fontSize: 13, fontWeight: "400", color: PALETTE.textoSuave },
-  chip: {
-    fontSize: 12,
-    fontWeight: "700",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    overflow: "hidden",
-  },
   detalle: { fontSize: 14, color: PALETTE.textoSuave },
+  alerta: { flex: 1, fontSize: 14, fontWeight: "600", color: PALETTE.inactivo },
   seccion: {
     fontSize: 13,
     fontWeight: "700",
@@ -170,7 +178,6 @@ const styles = StyleSheet.create({
   vacio: { fontSize: 14, color: PALETTE.textoSuave, fontStyle: "italic" },
   proxima: { fontSize: 14, fontWeight: "600", color: PALETTE.texto },
   fila: { flexDirection: "row", alignItems: "center", gap: 8 },
-  icono: { width: 22, fontSize: 15 },
   filaTexto: { flex: 1, fontSize: 14, color: PALETTE.texto },
   filaFecha: { fontSize: 12, color: PALETTE.textoSuave, textAlign: "right" },
   resuelta: { color: PALETTE.textoSuave, textDecorationLine: "line-through" },

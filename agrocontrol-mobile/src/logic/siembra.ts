@@ -14,14 +14,15 @@ export function formatearFecha(fecha: Date): string {
   return `${dd}/${mm}/${fecha.getFullYear()}`;
 }
 
-export type Etapa = Readonly<{ nombre: string; icono: string }>;
+export type NombreEtapa = "Germinación" | "Crecimiento" | "Maduración" | "Lista para cosecha";
+export type Etapa = Readonly<{ nombre: NombreEtapa }>;
 
 // Etapa según el avance del ciclo; los cortes son aproximados.
 function etapaPorAvance(avance: number): Etapa {
-  if (avance < 0.15) return { nombre: "Germinación", icono: "🌱" };
-  if (avance < 0.6) return { nombre: "Crecimiento", icono: "🌿" };
-  if (avance < 1) return { nombre: "Maduración", icono: "🌾" };
-  return { nombre: "Lista para cosecha", icono: "🚜" };
+  if (avance < 0.15) return { nombre: "Germinación" };
+  if (avance < 0.6) return { nombre: "Crecimiento" };
+  if (avance < 1) return { nombre: "Maduración" };
+  return { nombre: "Lista para cosecha" };
 }
 
 export type AvanceSiembra = Readonly<{

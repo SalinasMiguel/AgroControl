@@ -3,6 +3,7 @@ import type { Campana, Cultivo, Parcela } from "../models/agro";
 import { PALETTE } from "../theme/palette";
 import { ESTADO_VISUAL } from "../theme/estados";
 import { CampanaProgreso } from "./CampanaProgreso";
+import { EstadoChip } from "./EstadoChip";
 
 type Props = {
   parcela: Parcela;
@@ -19,9 +20,7 @@ export function ParcelaCard({ parcela, nombrePredio, campana, cultivo }: Props) 
         <Text style={styles.codigo}>
           {parcela.codigo} <Text style={styles.id}>#{parcela.id}</Text>
         </Text>
-        <Text style={[styles.chip, { color: visual.color, backgroundColor: visual.fondo }]}>
-          {visual.icono} {visual.texto}
-        </Text>
+        <EstadoChip estado={parcela.estado} />
       </View>
       <Text style={styles.detalle}>
         {parcela.areaHa} ha · Predio: <Text style={styles.predio}>{nombrePredio}</Text>
@@ -44,14 +43,6 @@ const styles = StyleSheet.create({
   cabecera: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 },
   codigo: { fontSize: 16, fontWeight: "700", color: PALETTE.texto },
   id: { fontSize: 13, fontWeight: "400", color: PALETTE.textoSuave },
-  chip: {
-    fontSize: 12,
-    fontWeight: "700",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    overflow: "hidden",
-  },
   detalle: { fontSize: 14, color: PALETTE.textoSuave },
   predio: { color: PALETTE.acento, fontWeight: "600" },
 });

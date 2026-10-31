@@ -1,12 +1,21 @@
+import { Leaf, Moon, Shovel, Sprout, Tractor, Wheat, type LucideIcon } from "lucide-react-native";
+import type { NombreEtapa } from "../logic/siembra";
 import type { EstadoParcela } from "../models/agro";
 import { PALETTE } from "./palette";
 
 // Cómo se ve cada estado de parcela: un solo lugar para chip, barra y leyenda.
 export const ESTADO_VISUAL: Record<
   EstadoParcela,
-  Readonly<{ texto: string; icono: string; color: string; fondo: string }>
+  Readonly<{ texto: string; icono: LucideIcon; color: string; fondo: string }>
 > = {
-  SEMBRADA: { texto: "Sembrada", icono: "🌱", color: PALETTE.sembrada, fondo: PALETTE.sembradaSuave },
-  DISPONIBLE: { texto: "Lista para sembrar", icono: "🟫", color: PALETTE.disponible, fondo: PALETTE.disponibleSuave },
-  EN_DESCANSO: { texto: "En descanso", icono: "💤", color: PALETTE.descanso, fondo: PALETTE.descansoSuave },
+  SEMBRADA: { texto: "Sembrada", icono: Sprout, color: PALETTE.sembrada, fondo: PALETTE.sembradaSuave },
+  DISPONIBLE: { texto: "Lista para sembrar", icono: Shovel, color: PALETTE.disponible, fondo: PALETTE.disponibleSuave },
+  EN_DESCANSO: { texto: "En descanso", icono: Moon, color: PALETTE.descanso, fondo: PALETTE.descansoSuave },
+};
+
+export const ETAPA_ICONO: Record<NombreEtapa, LucideIcon> = {
+  Germinación: Sprout,
+  Crecimiento: Leaf,
+  Maduración: Wheat,
+  "Lista para cosecha": Tractor,
 };

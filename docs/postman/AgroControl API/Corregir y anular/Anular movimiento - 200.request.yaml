@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{baseUrl}}/api/insumos/1/movimientos/1/anular"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "motivo": "Cargado por error"
+    }
+order: 11000

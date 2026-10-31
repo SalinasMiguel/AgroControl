@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/api/campanas/1"
+method: PUT
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "cultivoId": 1,
+      "fechaInicio": "2026-11-05"
+    }
+order: 4000

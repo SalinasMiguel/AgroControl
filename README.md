@@ -171,6 +171,22 @@ Contraseña de demo de todos: `agro123` (migración `V3__usuarios_login.sql`). L
 
 Cada petición con token se compara con la cuenta real (`EstadoCuentaFilter`): un usuario desactivado o con la clave, o el rol, recién cambiados pierde su sesión al instante (401), y con la clave pendiente solo puede cambiarla (403 en lo demás).
 
+### Corregir y anular
+
+Nada se borra (RN-09): lo planificado se edita y lo que ya pasó se anula con motivo, y queda tachado en el historial y fuera de los totales. Todo pasa por `@Auditable`.
+
+| Recurso | Rutas | Reglas |
+|---|---|---|
+| Labores | `PUT /api/labores/{id}`, `POST /{id}/cancelar`, `POST /{id}/reabrir` | Editar antes de empezar; cancelar pendientes; reabrir ejecutadas. Exigen campaña abierta. Asignar un operario la pasa a `ASIGNADA` (RN-03) |
+| Campañas | `PUT /api/campanas/{id}`, `POST /{id}/cancelar`, `/marcar-perdida`, `/reabrir` | Editar y cancelar una planificada; finalizar o perder una en curso, y sus labores pendientes se cancelan; reabrir una finalizada o perdida si la parcela no tiene otra abierta |
+| Cultivos | `PUT /api/cultivos/{id}` | Nombre único |
+| Cosechas | `POST /api/cosechas/{id}/anular`; `fecha` opcional al registrar | Solo en campañas en curso (RN-06); la fecha no puede ser futura ni anterior al inicio |
+| Consumos | `POST /api/labores/{laborId}/consumos/{id}/anular` | Devuelve el stock con una entrada compensatoria |
+| Movimientos | `POST /api/insumos/{id}/movimientos/{movId}/anular`, `POST /api/insumos/{id}/ajustes` | Solo los `MANUAL` y `AJUSTE`; crea el inverso. 409 si dejaría stock negativo. El ajuste registra la diferencia con el conteo físico |
+| Incidencias | `POST /api/incidencias/{id}/anular` | Desde `ABIERTA` o `EN_ATENCION` |
+
+Cada anulación exige `motivo` (200 caracteres; el del ajuste, 150) y anular dos veces responde 409. `stock_actual` siempre es igual a entradas menos salidas, contando anulados e inversos.
+
 ### Instalación en producción
 
 El perfil `produccion` arranca sin datos de ejemplo: Flyway usa `db/migration` + `db/produccion` (solo los 5 roles) en vez de `db/migration` + `db/demo`. **Requiere una base vacía**: una base creada con un perfil no abre con el otro. Hasta completar la Parte 3 (HTTPS, copias, puertos) no debe exponerse a internet.

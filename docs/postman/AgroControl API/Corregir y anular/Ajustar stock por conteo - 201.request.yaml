@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/api/insumos/1/ajustes"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "stockContado": 80,
+      "motivo": "Conteo de fin de mes"
+    }
+order: 12000

@@ -484,3 +484,33 @@ Authorization: Bearer {{token}}
 ### Restablecer -> 200 con passwordTemporal (Cache-Control: no-store)
 POST http://localhost:8080/api/usuarios/3/restablecer-password
 Authorization: Bearer {{token}}
+
+### ---------- Corregir y anular ----------
+
+### Cancelar una labor -> 200; ejecutada -> 409
+POST http://localhost:8080/api/labores/1/cancelar
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "motivo": "Llovió" }
+
+### Marcar perdida una campaña en curso -> 200
+POST http://localhost:8080/api/campanas/1/marcar-perdida
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "motivo": "Granizo", "fechaFin": "2026-10-30" }
+
+### Anular un consumo -> 200 y el stock vuelve; dos veces -> 409
+POST http://localhost:8080/api/labores/1/consumos/1/anular
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "motivo": "Cantidad mal cargada" }
+
+### Ajustar por conteo físico -> 201; igual al stock -> 409
+POST http://localhost:8080/api/insumos/1/ajustes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "stockContado": 80, "motivo": "Conteo de fin de mes" }

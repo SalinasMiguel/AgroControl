@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/api/campanas/1/marcar-perdida"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "motivo": "Granizo",
+      "fechaFin": "2026-10-30"
+    }
+order: 6000

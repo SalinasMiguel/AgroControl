@@ -2,6 +2,7 @@ package com.agrocontrol.integracion;
 
 import com.agrocontrol.auditoria.application.AuditoriaService;
 import com.agrocontrol.auditoria.domain.Auditoria;
+import com.agrocontrol.auth.application.AuthService;
 import com.agrocontrol.bitacora.application.BitacoraService;
 import com.agrocontrol.campana.application.AvanceCampanaService;
 import com.agrocontrol.campana.application.CampanaService;
@@ -58,6 +59,8 @@ class PersistenciaPostgresTest {
     @Autowired
     private AvanceCampanaService avanceCampanaService;
     @Autowired
+    private AuthService authService;
+    @Autowired
     private JdbcTemplate jdbc;
 
     @Test
@@ -66,6 +69,11 @@ class PersistenciaPostgresTest {
         Integer version = jdbc.queryForObject(
                 "SELECT max(version::int) FROM flyway_schema_history WHERE success", Integer.class);
         assertThat(version).isEqualTo(7);
+    }
+
+    @Test
+    void elUsuarioDeDemoEntraConAgro123() {
+        assertThat(authService.iniciarSesion("sergio@agrocontrol.com", "agro123").rol()).isEqualTo("ADMINISTRADOR");
     }
 
     @Test

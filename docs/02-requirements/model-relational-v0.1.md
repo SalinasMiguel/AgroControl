@@ -219,3 +219,19 @@ Revisión aplicada bajo 1FN, 2FN y 3FN sobre el modelo v0.1:
 ---
 
 *Documento generado en el marco de la Clase 03. Fuente de verdad: documento contractual del proyecto (secciones D, E, F, J) y modelo conceptual v0.1 (Clase 02).*
+
+---
+
+## Cambios del modelo hasta V10
+
+El esquema vigente está en `database/esquema_actual.sql`.
+
+| Tabla | Cambio | Migración |
+|---|---|---|
+| `usuario` | `token_version`, `debe_cambiar_password` | V8 |
+| `labor` | `motivo_cancelacion`; estados `ASIGNADA` y `CANCELADA` | V9 |
+| `campana` | `motivo_cierre`; estados `CANCELADA` y `PERDIDA` | V9 |
+| `cosecha`, `consumo_labor` | `anulado`, `motivo_anulacion`, `anulado_por`, `anulado_en` | V9 |
+| `movimiento_insumo` | Los de anulación, más `origen`, `id_consumo` e `id_movimiento_anulado`, con índices únicos | V9 |
+| `incidencia` | `motivo_anulacion`, `anulado_por`, `anulado_en`; estado `ANULADA` | V9 |
+| `cosecha` | `cosecha_unidad_check`: `t`, `kg` o `qq` | V10 |

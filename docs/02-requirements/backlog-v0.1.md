@@ -71,3 +71,16 @@ Como administrador quiero consultar quién hizo cada cambio crítico y cuándo, 
 **Prioridad:* P1
 Como supervisor quiero consultar campañas, avance de labores, stock y cosechas para entender
 el estado operativo.
+
+---
+
+## Actualización: base confiable (2026-10-31)
+
+Requisitos agregados por el equipo, sin contradecir el alcance del Banco. Las decisiones están en `docs/03-decisions/`.
+
+- **Cuentas:** cambiar contraseña, editar, desactivar y activar usuarios, y restablecer con clave temporal. Siempre queda un administrador activo.
+- **Instalación limpia:** perfil `produccion` sin datos de ejemplo (ADR-001).
+- **Corrección sin borrar:** editar lo planificado y anular con motivo lo registrado (ADR-002, RN-09).
+- **Estados de labor:** planificada, asignada, en ejecución, completada y cancelada (RN-03, ADR-004).
+- **Cosecha:** solo en campañas en curso (RN-06), con unidades `t`, `kg` y `qq` (RN-07, ADR-003).
+- **Parcela:** su estado lo mueve la campaña.

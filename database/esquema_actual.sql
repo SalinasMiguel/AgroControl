@@ -1,4 +1,4 @@
--- Esquema COMPLETO que usa la aplicación (resultado de aplicar las migraciones Flyway V1 a V7).
+-- Esquema COMPLETO que usa la aplicación (resultado de aplicar las migraciones Flyway V1 a V10).
 -- Generado con: pg_dump --schema-only --no-owner --no-privileges -n agrocontrol
 -- Solo referencia: el backend no lo ejecuta. Si cambia una migración, regenerarlo.
 
@@ -144,8 +144,9 @@ CREATE TABLE agrocontrol.campana (
     fecha_inicio date NOT NULL,
     fecha_fin date,
     estado character varying(20) DEFAULT 'PLANIFICADA'::character varying NOT NULL,
+    motivo_cierre character varying(200),
     CONSTRAINT campana_check CHECK (((fecha_fin IS NULL) OR (fecha_fin >= fecha_inicio))),
-    CONSTRAINT campana_estado_check CHECK (((estado)::text = ANY ((ARRAY['PLANIFICADA'::character varying, 'EN_CURSO'::character varying, 'FINALIZADA'::character varying])::text[])))
+    CONSTRAINT campana_estado_check CHECK (((estado)::text = ANY ((ARRAY['PLANIFICADA'::character varying, 'EN_CURSO'::character varying, 'FINALIZADA'::character varying, 'CANCELADA'::character varying, 'PERDIDA'::character varying])::text[])))
 );
 
 
@@ -179,6 +180,11 @@ CREATE TABLE agrocontrol.consumo_labor (
     id_insumo integer NOT NULL,
     cantidad numeric(12,2) NOT NULL,
     fecha timestamp without time zone DEFAULT now() NOT NULL,
+    anulado boolean DEFAULT false NOT NULL,
+    motivo_anulacion character varying(200),
+    anulado_por integer,
+    anulado_en timestamp without time zone,
+    CONSTRAINT consumo_labor_anulado_check CHECK (((NOT anulado) OR ((motivo_anulacion IS NOT NULL) AND (anulado_por IS NOT NULL) AND (anulado_en IS NOT NULL)))),
     CONSTRAINT consumo_labor_cantidad_check CHECK ((cantidad > (0)::numeric))
 );
 
@@ -214,7 +220,13 @@ CREATE TABLE agrocontrol.cosecha (
     unidad_medida character varying(20) NOT NULL,
     fecha date DEFAULT CURRENT_DATE NOT NULL,
     id_usuario integer NOT NULL,
-    CONSTRAINT cosecha_cantidad_check CHECK ((cantidad > (0)::numeric))
+    anulado boolean DEFAULT false NOT NULL,
+    motivo_anulacion character varying(200),
+    anulado_por integer,
+    anulado_en timestamp without time zone,
+    CONSTRAINT cosecha_anulado_check CHECK (((NOT anulado) OR ((motivo_anulacion IS NOT NULL) AND (anulado_por IS NOT NULL) AND (anulado_en IS NOT NULL)))),
+    CONSTRAINT cosecha_cantidad_check CHECK ((cantidad > (0)::numeric)),
+    CONSTRAINT cosecha_unidad_check CHECK (((unidad_medida)::text = ANY ((ARRAY['t'::character varying, 'kg'::character varying, 'qq'::character varying])::text[])))
 );
 
 
@@ -285,7 +297,11 @@ CREATE TABLE agrocontrol.incidencia (
     estado character varying(20) DEFAULT 'ABIERTA'::character varying NOT NULL,
     resolucion text,
     resuelta_en timestamp without time zone,
-    CONSTRAINT incidencia_estado_check CHECK (((estado)::text = ANY ((ARRAY['ABIERTA'::character varying, 'EN_ATENCION'::character varying, 'RESUELTA'::character varying])::text[]))),
+    motivo_anulacion character varying(200),
+    anulado_por integer,
+    anulado_en timestamp without time zone,
+    CONSTRAINT incidencia_anulada_check CHECK ((((estado)::text <> 'ANULADA'::text) OR ((motivo_anulacion IS NOT NULL) AND (anulado_por IS NOT NULL) AND (anulado_en IS NOT NULL)))),
+    CONSTRAINT incidencia_estado_check CHECK (((estado)::text = ANY ((ARRAY['ABIERTA'::character varying, 'EN_ATENCION'::character varying, 'RESUELTA'::character varying, 'ANULADA'::character varying])::text[]))),
     CONSTRAINT incidencia_resuelta_check CHECK ((((estado)::text <> 'RESUELTA'::text) OR ((resolucion IS NOT NULL) AND (resuelta_en IS NOT NULL))))
 );
 
@@ -360,7 +376,8 @@ CREATE TABLE agrocontrol.labor (
     fecha_ejecucion date,
     estado character varying(20) DEFAULT 'PLANIFICADA'::character varying NOT NULL,
     creado_en timestamp without time zone DEFAULT now() NOT NULL,
-    CONSTRAINT labor_estado_check CHECK (((estado)::text = ANY ((ARRAY['PLANIFICADA'::character varying, 'EN_CURSO'::character varying, 'EJECUTADA'::character varying])::text[])))
+    motivo_cancelacion character varying(200),
+    CONSTRAINT labor_estado_check CHECK (((estado)::text = ANY ((ARRAY['PLANIFICADA'::character varying, 'ASIGNADA'::character varying, 'EN_CURSO'::character varying, 'EJECUTADA'::character varying, 'CANCELADA'::character varying])::text[])))
 );
 
 
@@ -396,7 +413,16 @@ CREATE TABLE agrocontrol.movimiento_insumo (
     motivo character varying(150),
     id_usuario integer NOT NULL,
     fecha timestamp without time zone DEFAULT now() NOT NULL,
+    anulado boolean DEFAULT false NOT NULL,
+    motivo_anulacion character varying(200),
+    anulado_por integer,
+    anulado_en timestamp without time zone,
+    origen character varying(10) DEFAULT 'MANUAL'::character varying NOT NULL,
+    id_consumo integer,
+    id_movimiento_anulado integer,
+    CONSTRAINT movimiento_insumo_anulado_check CHECK (((NOT anulado) OR ((motivo_anulacion IS NOT NULL) AND (anulado_por IS NOT NULL) AND (anulado_en IS NOT NULL)))),
     CONSTRAINT movimiento_insumo_cantidad_check CHECK ((cantidad > (0)::numeric)),
+    CONSTRAINT movimiento_insumo_origen_check CHECK (((origen)::text = ANY ((ARRAY['MANUAL'::character varying, 'CONSUMO'::character varying, 'ANULACION'::character varying, 'AJUSTE'::character varying])::text[]))),
     CONSTRAINT movimiento_insumo_tipo_check CHECK (((tipo)::text = ANY (ARRAY[('ENTRADA'::character varying)::text, ('SALIDA'::character varying)::text])))
 );
 
@@ -532,7 +558,9 @@ CREATE TABLE agrocontrol.usuario (
     password_hash character varying(255) NOT NULL,
     id_rol integer NOT NULL,
     activo boolean DEFAULT true NOT NULL,
-    creado_en timestamp without time zone DEFAULT now() NOT NULL
+    creado_en timestamp without time zone DEFAULT now() NOT NULL,
+    token_version integer DEFAULT 0 NOT NULL,
+    debe_cambiar_password boolean DEFAULT false NOT NULL
 );
 
 
@@ -899,6 +927,20 @@ CREATE INDEX idx_movimiento_tipo_fecha ON agrocontrol.movimiento_insumo USING bt
 
 
 --
+-- Name: uq_movimiento_anulado; Type: INDEX; Schema: agrocontrol; Owner: -
+--
+
+CREATE UNIQUE INDEX uq_movimiento_anulado ON agrocontrol.movimiento_insumo USING btree (id_movimiento_anulado) WHERE (id_movimiento_anulado IS NOT NULL);
+
+
+--
+-- Name: uq_movimiento_consumo; Type: INDEX; Schema: agrocontrol; Owner: -
+--
+
+CREATE UNIQUE INDEX uq_movimiento_consumo ON agrocontrol.movimiento_insumo USING btree (id_consumo) WHERE ((origen)::text = 'CONSUMO'::text);
+
+
+--
 -- Name: asignacion_labor asignacion_labor_id_labor_fkey; Type: FK CONSTRAINT; Schema: agrocontrol; Owner: -
 --
 
@@ -955,6 +997,14 @@ ALTER TABLE ONLY agrocontrol.campana
 
 
 --
+-- Name: consumo_labor consumo_labor_anulado_por_fkey; Type: FK CONSTRAINT; Schema: agrocontrol; Owner: -
+--
+
+ALTER TABLE ONLY agrocontrol.consumo_labor
+    ADD CONSTRAINT consumo_labor_anulado_por_fkey FOREIGN KEY (anulado_por) REFERENCES agrocontrol.usuario(id_usuario);
+
+
+--
 -- Name: consumo_labor consumo_labor_id_insumo_fkey; Type: FK CONSTRAINT; Schema: agrocontrol; Owner: -
 --
 
@@ -971,6 +1021,14 @@ ALTER TABLE ONLY agrocontrol.consumo_labor
 
 
 --
+-- Name: cosecha cosecha_anulado_por_fkey; Type: FK CONSTRAINT; Schema: agrocontrol; Owner: -
+--
+
+ALTER TABLE ONLY agrocontrol.cosecha
+    ADD CONSTRAINT cosecha_anulado_por_fkey FOREIGN KEY (anulado_por) REFERENCES agrocontrol.usuario(id_usuario);
+
+
+--
 -- Name: cosecha cosecha_id_campana_fkey; Type: FK CONSTRAINT; Schema: agrocontrol; Owner: -
 --
 
@@ -984,6 +1042,14 @@ ALTER TABLE ONLY agrocontrol.cosecha
 
 ALTER TABLE ONLY agrocontrol.cosecha
     ADD CONSTRAINT cosecha_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES agrocontrol.usuario(id_usuario);
+
+
+--
+-- Name: incidencia incidencia_anulado_por_fkey; Type: FK CONSTRAINT; Schema: agrocontrol; Owner: -
+--
+
+ALTER TABLE ONLY agrocontrol.incidencia
+    ADD CONSTRAINT incidencia_anulado_por_fkey FOREIGN KEY (anulado_por) REFERENCES agrocontrol.usuario(id_usuario);
 
 
 --
@@ -1035,11 +1101,35 @@ ALTER TABLE ONLY agrocontrol.labor
 
 
 --
+-- Name: movimiento_insumo movimiento_insumo_anulado_por_fkey; Type: FK CONSTRAINT; Schema: agrocontrol; Owner: -
+--
+
+ALTER TABLE ONLY agrocontrol.movimiento_insumo
+    ADD CONSTRAINT movimiento_insumo_anulado_por_fkey FOREIGN KEY (anulado_por) REFERENCES agrocontrol.usuario(id_usuario);
+
+
+--
+-- Name: movimiento_insumo movimiento_insumo_id_consumo_fkey; Type: FK CONSTRAINT; Schema: agrocontrol; Owner: -
+--
+
+ALTER TABLE ONLY agrocontrol.movimiento_insumo
+    ADD CONSTRAINT movimiento_insumo_id_consumo_fkey FOREIGN KEY (id_consumo) REFERENCES agrocontrol.consumo_labor(id_consumo);
+
+
+--
 -- Name: movimiento_insumo movimiento_insumo_id_insumo_fkey; Type: FK CONSTRAINT; Schema: agrocontrol; Owner: -
 --
 
 ALTER TABLE ONLY agrocontrol.movimiento_insumo
     ADD CONSTRAINT movimiento_insumo_id_insumo_fkey FOREIGN KEY (id_insumo) REFERENCES agrocontrol.insumo(id_insumo);
+
+
+--
+-- Name: movimiento_insumo movimiento_insumo_id_movimiento_anulado_fkey; Type: FK CONSTRAINT; Schema: agrocontrol; Owner: -
+--
+
+ALTER TABLE ONLY agrocontrol.movimiento_insumo
+    ADD CONSTRAINT movimiento_insumo_id_movimiento_anulado_fkey FOREIGN KEY (id_movimiento_anulado) REFERENCES agrocontrol.movimiento_insumo(id_movimiento);
 
 
 --

@@ -187,6 +187,12 @@ Nada se borra (RN-09): lo planificado se edita y lo que ya pasó se anula con mo
 
 Cada anulación exige `motivo` (200 caracteres; el del ajuste, 150) y anular dos veces responde 409. `stock_actual` siempre es igual a entradas menos salidas, contando anulados e inversos.
 
+### Datos veraces
+
+- **Unidades:** las cosechas se registran en `t`, `kg` o `qq` (46 kg). `GET /api/cosechas` y `/api/campanas/{id}/avance` ya traen las toneladas calculadas (RN-07, ADR-003).
+- **Hora:** la imagen corre en `America/La_Paz` y la base guarda UTC.
+- **Parcela:** iniciar o reabrir una campaña la pasa a `EN_PRODUCCION`; finalizar o perderla, a `DISPONIBLE`. Una parcela `EN_DESCANSO` no admite campañas (409), `EN_PRODUCCION` no se pide a mano (409) y con campaña en curso no se cambia el estado (409).
+
 ### Instalación en producción
 
 El perfil `produccion` arranca sin datos de ejemplo: Flyway usa `db/migration` + `db/produccion` (solo los 5 roles) en vez de `db/migration` + `db/demo`. **Requiere una base vacía**: una base creada con un perfil no abre con el otro. Hasta completar la Parte 3 (HTTPS, copias, puertos) no debe exponerse a internet.

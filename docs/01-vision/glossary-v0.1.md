@@ -43,3 +43,13 @@
 | **Auditoría** | Mecanismo de registro que almacena los cambios críticos realizados en el sistema (quién modificó qué y cuándo). |
 | **No Asesoría Agronómica (IA)** | Regla de negocio estricta (RN-10) que prohíbe que el sistema o módulos de IA prescriban dosis químicas o tratamientos agrícolas. |
 | **Validación de Stock** | Regla de negocio (RN-04) que impide registrar consumo de insumos si este supera la disponibilidad en almacén. |
+
+## Términos agregados en la Parte 1 (base confiable)
+
+| Término | Definición |
+|---|---|
+| **Anulación** | Dejar sin efecto un hecho registrado sin borrarlo: exige motivo, queda tachado en el historial y sale de los totales. |
+| **Ajuste de stock** | Movimiento que registra la diferencia entre el stock del sistema y un conteo físico. |
+| **Campaña perdida** | Campaña que empezó y no llegó a cosecha, por ejemplo por granizo. Libera la parcela. |
+| **Quintal (qq)** | Unidad de cosecha equivalente a 46 kg. |
+| **Clave temporal** | Contraseña de 12 caracteres que genera el administrador; se muestra una vez y obliga a cambiarla al entrar. |

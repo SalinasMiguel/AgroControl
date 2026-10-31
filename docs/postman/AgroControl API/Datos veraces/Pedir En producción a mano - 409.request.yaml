@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{baseUrl}}/api/parcelas/1"
+method: PUT
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "predioId": 1,
+      "codigo": "P-01",
+      "areaHa": 10,
+      "estado": "EN_PRODUCCION"
+    }
+order: 2000

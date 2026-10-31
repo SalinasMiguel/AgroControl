@@ -3,6 +3,7 @@ import MainLayout from '../layouts/MainLayout';
 import DashboardPage from '../pages/DashboardPage';
 import NotFoundPage from '../pages/NotFoundPage';
 import { RequireAuth, RequireSeccion } from '../features/auth/components/RequireAuth';
+import CambiarPasswordPage from '../features/auth/pages/CambiarPasswordPage';
 import LoginPage from '../features/auth/pages/LoginPage';
 import PrediosPage from '../features/predios/pages/PrediosPage';
 import ParcelasPage from '../features/parcelas/pages/ParcelasPage';
@@ -20,6 +21,7 @@ export default function AppRouter() {
     <Routes>
       <Route path="login" element={<LoginPage />} />
       <Route element={<RequireAuth />}>
+        <Route path="cambiar-password" element={<CambiarPasswordPage />} />
         <Route element={<MainLayout />}>
           <Route index element={<DashboardPage />} />
           <Route element={<RequireSeccion seccion="predios" />}>

@@ -1,8 +1,10 @@
 import { useState, type FormEvent } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router';
+import { useCarga } from '../../../hooks/useCarga';
 import { useAuth } from '../context/useAuth';
 import { NOMBRE_ROL } from '../permisos';
 import type { Rol } from '../models/Sesion';
+import { authService } from '../services/authService';
 
 // Usuarios de V2/V3 (contraseña agro123) para la demo de la defensa.
 const USUARIOS_DEMO: { email: string; rol: Rol }[] = [
@@ -21,6 +23,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const { datos: demo } = useCarga(authService.demo, false);
 
   if (sesion) return <Navigate to="/" replace />;
 
@@ -72,25 +75,27 @@ export default function LoginPage() {
           {submitting ? 'Ingresando...' : 'Ingresar'}
         </button>
 
-        <div className="login-demo">
-          <p className="muted">Usuarios de prueba (contraseña <code>agro123</code>):</p>
-          <div className="login-demo__list">
-            {USUARIOS_DEMO.map((usuario) => (
-              <button
-                key={usuario.email}
-                type="button"
-                className="btn-link"
-                onClick={() => {
-                  setEmail(usuario.email);
-                  setPassword('agro123');
-                  setError('');
-                }}
-              >
-                {NOMBRE_ROL[usuario.rol]}
-              </button>
-            ))}
+        {demo && (
+          <div className="login-demo">
+            <p className="muted">Usuarios de prueba (contraseña <code>agro123</code>):</p>
+            <div className="login-demo__list">
+              {USUARIOS_DEMO.map((usuario) => (
+                <button
+                  key={usuario.email}
+                  type="button"
+                  className="btn-link"
+                  onClick={() => {
+                    setEmail(usuario.email);
+                    setPassword('agro123');
+                    setError('');
+                  }}
+                >
+                  {NOMBRE_ROL[usuario.rol]}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </form>
     </div>
   );

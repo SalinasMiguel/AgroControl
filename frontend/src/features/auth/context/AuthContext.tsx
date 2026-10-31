@@ -40,15 +40,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return nueva;
   }, []);
 
+  // Cambiar la clave invalida el token anterior: se guarda la sesión nueva sin pasar por el login.
+  const actualizarSesion = useCallback((nueva: Sesion) => {
+    guardarSesion(nueva);
+    setSesion(nueva);
+  }, []);
+
   const valor = useMemo<AuthContextValue>(
     () => ({
       sesion,
       iniciarSesion,
       cerrarSesion,
+      actualizarSesion,
       puede: (accion) => (sesion ? puede(sesion.rol, accion) : false),
       puedeVer: (seccion) => (sesion ? puedeVer(sesion.rol, seccion) : false),
     }),
-    [sesion, iniciarSesion, cerrarSesion],
+    [sesion, iniciarSesion, cerrarSesion, actualizarSesion],
   );
 
   return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>;

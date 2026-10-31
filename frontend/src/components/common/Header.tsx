@@ -1,10 +1,14 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
+import CambiarPasswordForm from '../../features/auth/components/CambiarPasswordForm';
 import { useAuth } from '../../features/auth/context/useAuth';
 import { NOMBRE_ROL } from '../../features/auth/permisos';
+import Modal from '../ui/Modal';
 
 export default function Header() {
   const { sesion, cerrarSesion } = useAuth();
   const navigate = useNavigate();
+  const [cambiandoClave, setCambiandoClave] = useState(false);
 
   return (
     <header className="topbar">
@@ -19,6 +23,9 @@ export default function Header() {
             <small>{sesion.email}</small>
           </div>
           <span className="topbar__status">{NOMBRE_ROL[sesion.rol]}</span>
+          <button type="button" className="btn-secondary" onClick={() => setCambiandoClave(true)}>
+            Cambiar contraseña
+          </button>
           <button
             type="button"
             className="btn-secondary"
@@ -31,6 +38,9 @@ export default function Header() {
           </button>
         </div>
       )}
+      <Modal open={cambiandoClave} title="Cambiar contraseña" onClose={() => setCambiandoClave(false)}>
+        <CambiarPasswordForm onListo={() => setCambiandoClave(false)} onCancelar={() => setCambiandoClave(false)} />
+      </Modal>
     </header>
   );
 }

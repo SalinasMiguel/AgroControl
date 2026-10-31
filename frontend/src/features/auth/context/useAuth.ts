@@ -6,6 +6,7 @@ export interface AuthContextValue {
   sesion: Sesion | null;
   iniciarSesion: (email: string, password: string) => Promise<Sesion>;
   cerrarSesion: () => void;
+  actualizarSesion: (sesion: Sesion) => void;
   puede: (accion: Accion) => boolean;
   puedeVer: (seccion: Seccion) => boolean;
 }

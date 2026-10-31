@@ -16,7 +16,9 @@ public final class UsuarioPersistenceMapper {
                 entity.getPasswordHash(),
                 entity.getRol().getId(),
                 entity.isActivo(),
-                entity.getCreadoEn()
+                entity.getCreadoEn(),
+                entity.getTokenVersion(),
+                entity.isDebeCambiarPassword()
         );
     }
 
@@ -28,7 +30,9 @@ public final class UsuarioPersistenceMapper {
                 usuario.getPasswordHash(),
                 rol,
                 usuario.isActivo(),
-                usuario.getCreadoEn()
+                usuario.getCreadoEn(),
+                usuario.getTokenVersion(),
+                usuario.isDebeCambiarPassword()
         );
     }
 }

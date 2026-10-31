@@ -35,6 +35,7 @@ public class JwtGeneradorToken implements GeneradorToken {
                 .expiresAt(ahora.plus(duracion))
                 .claim("nombre", usuario.getNombreCompleto())
                 .claim("rol", rol)
+                .claim("ver", usuario.getTokenVersion())
                 .build();
         JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
         return encoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();

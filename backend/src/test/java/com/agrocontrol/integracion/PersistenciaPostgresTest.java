@@ -13,6 +13,8 @@ import com.agrocontrol.insumo.application.InventarioService;
 import com.agrocontrol.insumo.domain.Insumo;
 import com.agrocontrol.insumo.domain.TipoMovimiento;
 import com.agrocontrol.parcela.domain.ParcelaRepository;
+import com.agrocontrol.usuario.domain.Usuario;
+import com.agrocontrol.usuario.domain.UsuarioRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -61,6 +63,8 @@ class PersistenciaPostgresTest {
     @Autowired
     private AuthService authService;
     @Autowired
+    private UsuarioRepository usuarioRepository;
+    @Autowired
     private JdbcTemplate jdbc;
 
     @Test
@@ -68,7 +72,24 @@ class PersistenciaPostgresTest {
         assertThat(parcelaRepository.listarTodas()).isNotEmpty();
         Integer version = jdbc.queryForObject(
                 "SELECT max(version::int) FROM flyway_schema_history WHERE success", Integer.class);
-        assertThat(version).isEqualTo(7);
+        assertThat(version).isEqualTo(8);
+    }
+
+    @Test
+    void elUsuarioGuardaVersionYClavePendiente() {
+        Usuario usuario = usuarioRepository.buscarPorEmail("supervisor@agrocontrol.com").orElseThrow();
+        int version = usuario.getTokenVersion();
+
+        usuario.restablecerPassword(usuario.getPasswordHash());
+        usuarioRepository.guardar(usuario);
+
+        Usuario leido = usuarioRepository.buscarPorId(usuario.getId()).orElseThrow();
+        assertThat(leido.getTokenVersion()).isEqualTo(version + 1);
+        assertThat(leido.isDebeCambiarPassword()).isTrue();
+
+        // deshacer para no bloquear a otras pruebas de esta misma base
+        leido.cambiarPassword(leido.getPasswordHash());
+        usuarioRepository.guardar(leido);
     }
 
     @Test

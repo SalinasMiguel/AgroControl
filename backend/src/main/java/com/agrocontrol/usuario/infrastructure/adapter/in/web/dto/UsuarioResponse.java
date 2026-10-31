@@ -11,7 +11,8 @@ public record UsuarioResponse(
         String email,
         Long rolId,
         EstadoUsuario estado,
-        LocalDateTime creadoEn
+        LocalDateTime creadoEn,
+        boolean debeCambiarPassword
 ) {
     public static UsuarioResponse desde(Usuario usuario) {
         return new UsuarioResponse(
@@ -20,7 +21,8 @@ public record UsuarioResponse(
                 usuario.getEmail(),
                 usuario.getRolId(),
                 usuario.getEstado(),
-                usuario.getCreadoEn()
+                usuario.getCreadoEn(),
+                usuario.isDebeCambiarPassword()
         );
     }
 }

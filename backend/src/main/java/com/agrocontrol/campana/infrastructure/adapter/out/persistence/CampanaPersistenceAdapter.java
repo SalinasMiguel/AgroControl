@@ -49,4 +49,9 @@ public class CampanaPersistenceAdapter implements CampanaRepository {
     public boolean existeAbiertaEnParcela(Long parcelaId) {
         return jpaRepository.existsByParcelaIdAndEstadoIn(parcelaId, List.of(EstadoCampana.PLANIFICADA, EstadoCampana.EN_CURSO));
     }
+
+    @Override
+    public boolean existeEnCursoEnParcela(Long parcelaId) {
+        return jpaRepository.existsByParcelaIdAndEstadoIn(parcelaId, List.of(EstadoCampana.EN_CURSO));
+    }
 }

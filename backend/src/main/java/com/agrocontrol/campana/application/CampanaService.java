@@ -6,6 +6,8 @@ import com.agrocontrol.campana.domain.CampanaRepository;
 import com.agrocontrol.cultivo.domain.CultivoRepository;
 import com.agrocontrol.labor.domain.Labor;
 import com.agrocontrol.labor.domain.LaborRepository;
+import com.agrocontrol.parcela.domain.EstadoParcela;
+import com.agrocontrol.parcela.domain.Parcela;
 import com.agrocontrol.parcela.domain.ParcelaRepository;
 import com.agrocontrol.shared.domain.ConflictoException;
 import com.agrocontrol.shared.domain.RecursoNoEncontradoException;
@@ -65,7 +67,9 @@ public class CampanaService {
     @Transactional
     public Campana iniciar(Long id) {
         Campana campana = obtener(id);
+        Parcela parcela = parcelaSinDescanso(campana);
         campana.iniciar();
+        ocupar(parcela);
         return campanaRepository.guardar(campana);
     }
 
@@ -75,6 +79,7 @@ public class CampanaService {
         Campana campana = obtener(id);
         campana.finalizar(fechaFin);
         cancelarLaboresPendientes(id, "Campaña finalizada");
+        liberarParcela(campana);
         return campanaRepository.guardar(campana);
     }
 
@@ -104,6 +109,7 @@ public class CampanaService {
         Campana campana = obtener(id);
         campana.marcarPerdida(motivo, fechaFin);
         cancelarLaboresPendientes(id, "Campaña perdida: " + motivo);
+        liberarParcela(campana);
         return campanaRepository.guardar(campana);
     }
 
@@ -115,8 +121,35 @@ public class CampanaService {
         if (campanaRepository.existeAbiertaEnParcela(campana.getParcelaId())) {
             throw new ConflictoException("La parcela " + campana.getParcelaId() + " ya tiene otra campaña abierta");
         }
+        Parcela parcela = parcelaSinDescanso(campana);
         campana.reabrir();
+        ocupar(parcela);
         return campanaRepository.guardar(campana);
+    }
+
+    // El estado de la parcela lo mueve la campaña: en descanso, el suelo no admite una siembra.
+    private Parcela parcelaSinDescanso(Campana campana) {
+        Parcela parcela = parcelaDe(campana);
+        if (parcela.getEstado() == EstadoParcela.EN_DESCANSO) {
+            throw new ConflictoException("La parcela " + parcela.getCodigo() + " está en descanso");
+        }
+        return parcela;
+    }
+
+    private void ocupar(Parcela parcela) {
+        parcela.cambiarEstado(EstadoParcela.EN_PRODUCCION);
+        parcelaRepository.guardar(parcela);
+    }
+
+    private void liberarParcela(Campana campana) {
+        Parcela parcela = parcelaDe(campana);
+        parcela.cambiarEstado(EstadoParcela.DISPONIBLE);
+        parcelaRepository.guardar(parcela);
+    }
+
+    private Parcela parcelaDe(Campana campana) {
+        return parcelaRepository.buscarPorId(campana.getParcelaId())
+                .orElseThrow(() -> new RecursoNoEncontradoException("No existe la parcela con id: " + campana.getParcelaId()));
     }
 
     // Abiertas en una campaña cerrada quedarían sin ninguna acción posible.

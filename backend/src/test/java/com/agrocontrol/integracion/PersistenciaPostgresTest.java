@@ -126,6 +126,22 @@ class PersistenciaPostgresTest {
     }
 
     @Test
+    void iniciarCambiaLaParcelaEnLaBase() {
+        Long parcelaId = jdbc.queryForObject(
+                "SELECT min(id_parcela) FROM agrocontrol.parcela p WHERE estado = 'DISPONIBLE' AND NOT EXISTS "
+                        + "(SELECT 1 FROM agrocontrol.campana c WHERE c.id_parcela = p.id_parcela AND c.estado IN ('PLANIFICADA', 'EN_CURSO'))",
+                Long.class);
+        Long cultivoId = jdbc.queryForObject("SELECT min(id_cultivo) FROM agrocontrol.cultivo", Long.class);
+        Campana campana = campanaService.crear(parcelaId, cultivoId, LocalDate.now());
+
+        campanaService.iniciar(campana.getId());
+
+        assertThat(jdbc.queryForObject("SELECT estado FROM agrocontrol.parcela WHERE id_parcela = ?", String.class, parcelaId))
+                .isEqualTo("EN_PRODUCCION");
+        campanaService.finalizar(campana.getId(), LocalDate.now());
+    }
+
+    @Test
     void elUsuarioDeDemoEntraConAgro123() {
         assertThat(authService.iniciarSesion("sergio@agrocontrol.com", "agro123").rol()).isEqualTo("ADMINISTRADOR");
     }

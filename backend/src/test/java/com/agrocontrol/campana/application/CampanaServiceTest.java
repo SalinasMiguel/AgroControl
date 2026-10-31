@@ -7,6 +7,8 @@ import com.agrocontrol.cultivo.domain.CultivoRepository;
 import com.agrocontrol.labor.domain.EstadoLabor;
 import com.agrocontrol.labor.domain.Labor;
 import com.agrocontrol.labor.domain.LaborRepository;
+import com.agrocontrol.parcela.domain.EstadoParcela;
+import com.agrocontrol.parcela.domain.Parcela;
 import com.agrocontrol.parcela.domain.ParcelaRepository;
 import com.agrocontrol.shared.domain.ConflictoException;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,11 +46,13 @@ class CampanaServiceTest {
     private LaborRepository laborRepository;
 
     private CampanaService service;
+    private final Parcela parcela = new Parcela(3L, 1L, "P-01", null);
 
     @BeforeEach
     void crear() {
         service = new CampanaService(campanaRepository, parcelaRepository, cultivoRepository, laborRepository);
         when(campanaRepository.guardar(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(parcelaRepository.buscarPorId(3L)).thenReturn(Optional.of(parcela));
     }
 
     private Campana existente(EstadoCampana estado) {
@@ -129,5 +133,64 @@ class CampanaServiceTest {
 
         assertThatThrownBy(() -> service.editar(5L, 9L, INICIO))
                 .isInstanceOf(com.agrocontrol.shared.domain.RecursoNoEncontradoException.class);
+    }
+
+    @Test
+    void iniciarPasaLaParcelaAEnProduccion() {
+        existente(EstadoCampana.PLANIFICADA);
+
+        service.iniciar(5L);
+
+        assertThat(parcela.getEstado()).isEqualTo(EstadoParcela.EN_PRODUCCION);
+        verify(parcelaRepository).guardar(parcela);
+    }
+
+    @Test
+    void noSeIniciaEnUnaParcelaEnDescanso() {
+        Campana campana = existente(EstadoCampana.PLANIFICADA);
+        parcela.cambiarEstado(EstadoParcela.EN_DESCANSO);
+
+        assertThatThrownBy(() -> service.iniciar(5L)).isInstanceOf(ConflictoException.class);
+        assertThat(campana.getEstado()).isEqualTo(EstadoCampana.PLANIFICADA);
+    }
+
+    @Test
+    void finalizarYPerderDejanLaParcelaDisponible() {
+        parcela.cambiarEstado(EstadoParcela.EN_PRODUCCION);
+        existente(EstadoCampana.EN_CURSO);
+        service.finalizar(5L, INICIO.plusDays(90));
+        assertThat(parcela.getEstado()).isEqualTo(EstadoParcela.DISPONIBLE);
+
+        parcela.cambiarEstado(EstadoParcela.EN_PRODUCCION);
+        existente(EstadoCampana.EN_CURSO);
+        service.marcarPerdida(5L, "Granizo", INICIO.plusDays(30));
+        assertThat(parcela.getEstado()).isEqualTo(EstadoParcela.DISPONIBLE);
+    }
+
+    @Test
+    void reabrirVuelveAEnProduccion() {
+        existente(EstadoCampana.PERDIDA);
+
+        service.reabrir(5L, "Faltó cosechar");
+
+        assertThat(parcela.getEstado()).isEqualTo(EstadoParcela.EN_PRODUCCION);
+    }
+
+    @Test
+    void noSeReabreEnUnaParcelaEnDescanso() {
+        Campana campana = existente(EstadoCampana.FINALIZADA);
+        parcela.cambiarEstado(EstadoParcela.EN_DESCANSO);
+
+        assertThatThrownBy(() -> service.reabrir(5L, "Faltó cosechar")).isInstanceOf(ConflictoException.class);
+        assertThat(campana.getEstado()).isEqualTo(EstadoCampana.FINALIZADA);
+    }
+
+    @Test
+    void cancelarNoTocaLaParcela() {
+        existente(EstadoCampana.PLANIFICADA);
+
+        service.cancelar(5L, "Sin semilla");
+
+        verify(parcelaRepository, never()).guardar(any());
     }
 }

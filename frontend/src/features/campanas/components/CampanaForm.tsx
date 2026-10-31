@@ -9,15 +9,19 @@ import { etiquetaParcela, type Catalogos } from '../utils/etiquetas';
 interface CampanaFormProps {
   catalogos: Catalogos;
   campanas: Campana[];
-  onCreated: (campana: Campana) => void;
+  // Con campana se corrige el plan; sin campana se crea una nueva
+  campana?: Campana;
+  onGuardado: (campana: Campana) => void;
+  onCerrar?: () => void;
 }
 
 type Errores = Partial<Record<'parcelaId' | 'cultivoId' | 'fechaInicio', string>>;
 
-export default function CampanaForm({ catalogos, campanas, onCreated }: CampanaFormProps) {
-  const [parcelaId, setParcelaId] = useState('');
-  const [cultivoId, setCultivoId] = useState('');
-  const [fechaInicio, setFechaInicio] = useState(hoyISO());
+export default function CampanaForm({ catalogos, campanas, campana, onGuardado, onCerrar }: CampanaFormProps) {
+  const editando = Boolean(campana);
+  const [parcelaId, setParcelaId] = useState(campana ? String(campana.parcelaId) : '');
+  const [cultivoId, setCultivoId] = useState(campana ? String(campana.cultivoId) : '');
+  const [fechaInicio, setFechaInicio] = useState(campana?.fechaInicio ?? hoyISO());
   const [errors, setErrors] = useState<Errores>({});
   const [mensaje, setMensaje] = useState('');
   const [apiError, setApiError] = useState('');
@@ -42,18 +46,22 @@ export default function CampanaForm({ catalogos, campanas, onCreated }: CampanaF
 
     try {
       setSubmitting(true);
+      if (campana) {
+        onGuardado(await campanaService.editar(campana.id, { cultivoId: Number(cultivoId), fechaInicio }));
+        return;
+      }
       const creada = await campanaService.crear({
         parcelaId: Number(parcelaId),
         cultivoId: Number(cultivoId),
         fechaInicio,
       });
-      onCreated(creada);
+      onGuardado(creada);
       setParcelaId('');
       setCultivoId('');
       setMensaje('Campaña planificada correctamente.');
     } catch (err) {
       if (err instanceof ApiError) setErrors(err.campos);
-      setApiError(err instanceof Error ? err.message : 'No se pudo crear');
+      setApiError(err instanceof Error ? err.message : 'No se pudo guardar');
     } finally {
       setSubmitting(false);
     }
@@ -64,12 +72,16 @@ export default function CampanaForm({ catalogos, campanas, onCreated }: CampanaF
       <div className="form-grid">
         <label>
           Parcela
-          <select value={parcelaId} onChange={(e) => setParcelaId(e.target.value)}>
-            <option value="">Seleccione una parcela</option>
-            {parcelasLibres.map((parcela) => (
-              <option key={parcela.id} value={parcela.id}>{etiquetaParcela(parcela.id, catalogos)}</option>
-            ))}
-          </select>
+          {campana ? (
+            <input value={etiquetaParcela(campana.parcelaId, catalogos)} readOnly />
+          ) : (
+            <select value={parcelaId} onChange={(e) => setParcelaId(e.target.value)}>
+              <option value="">Seleccione una parcela</option>
+              {parcelasLibres.map((parcela) => (
+                <option key={parcela.id} value={parcela.id}>{etiquetaParcela(parcela.id, catalogos)}</option>
+              ))}
+            </select>
+          )}
           {errors.parcelaId && <small className="field-error">{errors.parcelaId}</small>}
         </label>
         <label>
@@ -91,8 +103,11 @@ export default function CampanaForm({ catalogos, campanas, onCreated }: CampanaF
       {mensaje && <div className="form-success">{mensaje}</div>}
       {apiError && <div className="form-error">{apiError}</div>}
       <div className="form-actions">
+        {onCerrar && (
+          <button type="button" className="btn-secondary" onClick={onCerrar}>Cancelar</button>
+        )}
         <button type="submit" className="btn-primary" disabled={submitting}>
-          {submitting ? 'Guardando...' : 'Planificar campaña'}
+          {submitting ? 'Guardando...' : editando ? 'Guardar cambios' : 'Planificar campaña'}
         </button>
       </div>
     </form>

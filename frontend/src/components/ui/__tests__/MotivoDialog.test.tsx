@@ -8,8 +8,12 @@ const comun = { open: true, title: 'Anular', confirmLabel: 'Anular', onCancel: (
 describe('MotivoDialog', () => {
   beforeAll(() => {
     // jsdom no implementa showModal
-    HTMLDialogElement.prototype.showModal = vi.fn();
-    HTMLDialogElement.prototype.close = vi.fn();
+    HTMLDialogElement.prototype.showModal = function showModal() {
+      this.setAttribute('open', '');
+    };
+    HTMLDialogElement.prototype.close = function close() {
+      this.removeAttribute('open');
+    };
   });
 
   it('exige motivo y limita a 200 caracteres', async () => {

@@ -10,8 +10,11 @@ interface LaborTableProps {
   campanas: Campana[];
   catalogos: Catalogos;
   // Cada acción es opcional: la página solo pasa las que el rol puede usar
+  onEditar?: (labor: Labor) => void;
   onIniciar?: (labor: Labor) => void;
   onEjecutar?: (labor: Labor) => void;
+  onCancelar?: (labor: Labor) => void;
+  onReabrir?: (labor: Labor) => void;
   onInsumos: (labor: Labor) => void;
   onBitacora: (labor: Labor) => void;
   onAsignar?: (labor: Labor) => void;
@@ -23,8 +26,11 @@ export default function LaborTable({
   labores,
   campanas,
   catalogos,
+  onEditar,
   onIniciar,
   onEjecutar,
+  onCancelar,
+  onReabrir,
   onInsumos,
   onBitacora,
   onAsignar,
@@ -56,7 +62,7 @@ export default function LaborTable({
               const campanaLabor = campana(labor.campanaId);
               const operarios = asignados?.get(labor.id) ?? [];
               return (
-                <tr key={labor.id}>
+                <tr key={labor.id} title={labor.motivoCancelacion ?? undefined}>
                   <td className="code-cell">{labor.tipo.replace(/_/g, ' ')}</td>
                   <td>{campanaLabor ? etiquetaCampana(campanaLabor, catalogos) : `Campaña ${labor.campanaId}`}</td>
                   <td>{formatFecha(labor.fechaPlan)}</td>
@@ -65,6 +71,9 @@ export default function LaborTable({
                   <td><StatusBadge estado={labor.estado} /></td>
                   <td>
                     <div className="table-actions">
+                      {onEditar && (labor.estado === 'PLANIFICADA' || labor.estado === 'ASIGNADA') && (
+                        <button type="button" className="btn-link" onClick={() => onEditar(labor)}>Editar</button>
+                      )}
                       {onAsignar && laborPendiente(labor) && (
                         <button type="button" className="btn-link" onClick={() => onAsignar(labor)}>Asignar</button>
                       )}
@@ -73,6 +82,12 @@ export default function LaborTable({
                       )}
                       {onEjecutar && laborPendiente(labor) && (
                         <button type="button" className="btn-link" onClick={() => onEjecutar(labor)}>Ejecutar</button>
+                      )}
+                      {onCancelar && laborPendiente(labor) && (
+                        <button type="button" className="btn-link" onClick={() => onCancelar(labor)}>Cancelar</button>
+                      )}
+                      {onReabrir && labor.estado === 'EJECUTADA' && (
+                        <button type="button" className="btn-link" onClick={() => onReabrir(labor)}>Reabrir</button>
                       )}
                       <button type="button" className="btn-link" onClick={() => onInsumos(labor)}>Insumos</button>
                       <button type="button" className="btn-link" onClick={() => onBitacora(labor)}>Bitácora</button>

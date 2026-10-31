@@ -2,6 +2,7 @@ import { useState } from 'react';
 import FechaAccionPanel from '../../../components/common/FechaAccionPanel';
 import PageHeading from '../../../components/common/PageHeading';
 import StatsGrid from '../../../components/common/StatsGrid';
+import MotivoDialog from '../../../components/ui/MotivoDialog';
 import { useCarga } from '../../../hooks/useCarga';
 import { cultivoService } from '../../cultivos/services/cultivoService';
 import { parcelaService } from '../../parcelas/services/parcelaService';
@@ -24,8 +25,18 @@ const cargarDatos = async (signal: AbortSignal) => {
   return { campanas, catalogos: { predios, parcelas, cultivos } };
 };
 
+type Accion = 'cancelar' | 'perder' | 'reabrir';
+
+const AVISO_INSUMOS = 'Los insumos ya registrados no vuelven al almacén; anúlelos por separado';
+
+const DIALOGO: Record<Accion, { titulo: string; boton: string; aviso?: string; conFecha?: string }> = {
+  cancelar: { titulo: 'Cancelar campaña', boton: 'Cancelar campaña', aviso: 'Sus labores pendientes también se cancelan.' },
+  perder: { titulo: 'Marcar campaña perdida', boton: 'Marcar perdida', aviso: AVISO_INSUMOS, conFecha: 'Fecha de fin' },
+  reabrir: { titulo: 'Reabrir campaña', boton: 'Reabrir', aviso: 'Las labores canceladas no vuelven: se planifican de nuevo.' },
+};
+
 export default function CampanasPage() {
-  const { datos, setDatos, loading, error } = useCarga(cargarDatos, {
+  const { datos, setDatos, loading, error, recargar } = useCarga(cargarDatos, {
     campanas: [] as Campana[],
     catalogos: { predios: [], parcelas: [], cultivos: [] },
   });
@@ -33,6 +44,8 @@ export default function CampanasPage() {
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const puedeGestionar = useAuth().puede('campanas.gestionar');
   const [finalizando, setFinalizando] = useState<Campana | null>(null);
+  const [editando, setEditando] = useState<Campana | null>(null);
+  const [dialogo, setDialogo] = useState<{ accion: Accion; campana: Campana } | null>(null);
   const [conAvance, setConAvance] = useState<Campana | null>(null);
   const [accionError, setAccionError] = useState('');
 
@@ -49,6 +62,17 @@ export default function CampanasPage() {
     } catch (err) {
       setAccionError(err instanceof Error ? err.message : 'No se pudo iniciar');
     }
+  };
+
+  // Cancelar, perder o reabrir también cambian las labores: se recarga todo.
+  const confirmarDialogo = async (motivo: string, fecha: string) => {
+    if (!dialogo) return;
+    const { accion, campana } = dialogo;
+    if (accion === 'cancelar') await campanaService.cancelar(campana.id, motivo);
+    if (accion === 'perder') await campanaService.marcarPerdida(campana.id, motivo, fecha);
+    if (accion === 'reabrir') await campanaService.reabrir(campana.id, motivo);
+    setDialogo(null);
+    recargar();
   };
 
   const contar = (estado: Campana['estado']) => campanas.filter((campana) => campana.estado === estado).length;
@@ -72,7 +96,21 @@ export default function CampanasPage() {
         <CampanaForm
           catalogos={catalogos}
           campanas={campanas}
-          onCreated={(nueva) => setDatos((prev) => ({ ...prev, campanas: [nueva, ...prev.campanas] }))}
+          onGuardado={(nueva) => setDatos((prev) => ({ ...prev, campanas: [nueva, ...prev.campanas] }))}
+        />
+      )}
+
+      {editando && (
+        <CampanaForm
+          key={editando.id}
+          catalogos={catalogos}
+          campanas={campanas}
+          campana={editando}
+          onGuardado={(actualizada) => {
+            reemplazar(actualizada);
+            setEditando(null);
+          }}
+          onCerrar={() => setEditando(null)}
         />
       )}
 
@@ -114,7 +152,11 @@ export default function CampanasPage() {
             campanas={campanas}
             catalogos={catalogos}
             onAvance={setConAvance}
+            onEditar={puedeGestionar ? setEditando : undefined}
             onIniciar={puedeGestionar ? iniciar : undefined}
+            onCancelar={puedeGestionar ? (campana) => setDialogo({ accion: 'cancelar', campana }) : undefined}
+            onMarcarPerdida={puedeGestionar ? (campana) => setDialogo({ accion: 'perder', campana }) : undefined}
+            onReabrir={puedeGestionar ? (campana) => setDialogo({ accion: 'reabrir', campana }) : undefined}
             onFinalizar={
               puedeGestionar
                 ? (campana) => {
@@ -126,6 +168,17 @@ export default function CampanasPage() {
           />
         </>
       )}
+
+      <MotivoDialog
+        key={dialogo?.accion ?? 'cerrado'}
+        open={dialogo !== null}
+        title={dialogo ? DIALOGO[dialogo.accion].titulo : ''}
+        confirmLabel={dialogo ? DIALOGO[dialogo.accion].boton : ''}
+        aviso={dialogo ? DIALOGO[dialogo.accion].aviso : undefined}
+        conFecha={dialogo ? DIALOGO[dialogo.accion].conFecha : undefined}
+        onConfirm={confirmarDialogo}
+        onCancel={() => setDialogo(null)}
+      />
     </section>
   );
 }

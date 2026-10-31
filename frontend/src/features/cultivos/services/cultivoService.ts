@@ -14,4 +14,11 @@ export const cultivoService = {
       body: JSON.stringify(data),
     });
   },
+
+  actualizar(id: number, data: CultivoRequest): Promise<Cultivo> {
+    return apiFetch<Cultivo>(`/cultivos/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
 };

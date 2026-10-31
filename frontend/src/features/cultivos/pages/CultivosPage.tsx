@@ -12,6 +12,7 @@ export default function CultivosPage() {
   const { datos: cultivos, setDatos: setCultivos, loading, error } = useCarga<Cultivo[]>(cargarCultivos, []);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const puedeCrear = useAuth().puede('cultivos.crear');
+  const [editando, setEditando] = useState<Cultivo | null>(null);
 
   return (
     <section className="feature-page">
@@ -30,9 +31,22 @@ export default function CultivosPage() {
 
       {puedeCrear && mostrarFormulario && (
         <CultivoForm
-          onCreated={(nuevo) =>
+          onGuardado={(nuevo) =>
             setCultivos((prev) => [...prev, nuevo].sort((a, b) => a.nombre.localeCompare(b.nombre)))
           }
+        />
+      )}
+
+      {editando && (
+        <CultivoForm
+          key={editando.id}
+          cultivo={editando}
+          onGuardado={(actualizado) => {
+            setCultivos((prev) =>
+              prev.map((item) => (item.id === actualizado.id ? actualizado : item)).sort((a, b) => a.nombre.localeCompare(b.nombre)));
+            setEditando(null);
+          }}
+          onCerrar={() => setEditando(null)}
         />
       )}
 
@@ -48,6 +62,7 @@ export default function CultivosPage() {
                   <th>ID</th>
                   <th>Cultivo</th>
                   <th>Ciclo</th>
+                  {puedeCrear && <th>Acciones</th>}
                 </tr>
               </thead>
               <tbody>
@@ -56,6 +71,11 @@ export default function CultivosPage() {
                     <td>{cultivo.id}</td>
                     <td>{cultivo.nombre}</td>
                     <td>{cultivo.cicloDias ? `${cultivo.cicloDias} días` : '—'}</td>
+                    {puedeCrear && (
+                      <td>
+                        <button type="button" className="btn-link" onClick={() => setEditando(cultivo)}>Editar</button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

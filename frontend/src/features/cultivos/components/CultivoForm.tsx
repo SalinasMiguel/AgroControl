@@ -4,14 +4,17 @@ import type { Cultivo } from '../models/Cultivo';
 import { cultivoService } from '../services/cultivoService';
 
 interface CultivoFormProps {
-  onCreated: (cultivo: Cultivo) => void;
+  // Con cultivo se edita; sin cultivo se crea uno nuevo
+  cultivo?: Cultivo;
+  onGuardado: (cultivo: Cultivo) => void;
+  onCerrar?: () => void;
 }
 
 type Errores = Partial<Record<'nombre' | 'cicloDias', string>>;
 
-export default function CultivoForm({ onCreated }: CultivoFormProps) {
-  const [nombre, setNombre] = useState('');
-  const [cicloDias, setCicloDias] = useState('');
+export default function CultivoForm({ cultivo, onGuardado, onCerrar }: CultivoFormProps) {
+  const [nombre, setNombre] = useState(cultivo?.nombre ?? '');
+  const [cicloDias, setCicloDias] = useState(cultivo?.cicloDias ? String(cultivo.cicloDias) : '');
   const [errors, setErrors] = useState<Errores>({});
   const [mensaje, setMensaje] = useState('');
   const [apiError, setApiError] = useState('');
@@ -37,17 +40,18 @@ export default function CultivoForm({ onCreated }: CultivoFormProps) {
 
     try {
       setSubmitting(true);
-      const creado = await cultivoService.crear({
-        nombre: nombre.trim(),
-        cicloDias: cicloDias ? Number(cicloDias) : null,
-      });
-      onCreated(creado);
+      const datos = { nombre: nombre.trim(), cicloDias: cicloDias ? Number(cicloDias) : null };
+      if (cultivo) {
+        onGuardado(await cultivoService.actualizar(cultivo.id, datos));
+        return;
+      }
+      onGuardado(await cultivoService.crear(datos));
       setNombre('');
       setCicloDias('');
       setMensaje('Cultivo creado correctamente.');
     } catch (err) {
       if (err instanceof ApiError) setErrors(err.campos);
-      setApiError(err instanceof Error ? err.message : 'No se pudo crear');
+      setApiError(err instanceof Error ? err.message : 'No se pudo guardar');
     } finally {
       setSubmitting(false);
     }
@@ -70,6 +74,9 @@ export default function CultivoForm({ onCreated }: CultivoFormProps) {
       {mensaje && <div className="form-success">{mensaje}</div>}
       {apiError && <div className="form-error">{apiError}</div>}
       <div className="form-actions">
+        {onCerrar && (
+          <button type="button" className="btn-secondary" onClick={onCerrar}>Cancelar</button>
+        )}
         <button type="submit" className="btn-primary" disabled={submitting}>
           {submitting ? 'Guardando...' : 'Guardar cultivo'}
         </button>

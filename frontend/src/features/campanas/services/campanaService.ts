@@ -30,4 +30,32 @@ export const campanaService = {
       body: JSON.stringify({ fechaFin }),
     });
   },
+
+  editar(id: number, data: Pick<Campana, 'cultivoId' | 'fechaInicio'>): Promise<Campana> {
+    return apiFetch<Campana>(`/campanas/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  cancelar(id: number, motivo: string): Promise<Campana> {
+    return apiFetch<Campana>(`/campanas/${id}/cancelar`, {
+      method: 'POST',
+      body: JSON.stringify({ motivo }),
+    });
+  },
+
+  marcarPerdida(id: number, motivo: string, fechaFin: string): Promise<Campana> {
+    return apiFetch<Campana>(`/campanas/${id}/marcar-perdida`, {
+      method: 'POST',
+      body: JSON.stringify({ motivo, fechaFin }),
+    });
+  },
+
+  reabrir(id: number, motivo: string): Promise<Campana> {
+    return apiFetch<Campana>(`/campanas/${id}/reabrir`, {
+      method: 'POST',
+      body: JSON.stringify({ motivo }),
+    });
+  },
 };

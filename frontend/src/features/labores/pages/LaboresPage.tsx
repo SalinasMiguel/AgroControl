@@ -1,9 +1,10 @@
-import { laborPendiente } from '../../../shared/utils/estados';
 import { useMemo, useState } from 'react';
 import FechaAccionPanel from '../../../components/common/FechaAccionPanel';
 import PageHeading from '../../../components/common/PageHeading';
 import StatsGrid from '../../../components/common/StatsGrid';
+import MotivoDialog from '../../../components/ui/MotivoDialog';
 import { useCarga } from '../../../hooks/useCarga';
+import { laborPendiente } from '../../../shared/utils/estados';
 import { useAuth } from '../../auth/context/useAuth';
 import type { Campana } from '../../campanas/models/Campana';
 import { campanaService } from '../../campanas/services/campanaService';
@@ -42,6 +43,8 @@ const cargarDatos = (planifica: boolean) => async (signal: AbortSignal) => {
   return { labores, campanas, insumos, usuarios, roles, asignaciones, catalogos: { predios, parcelas, cultivos } };
 };
 
+const AVISO_INSUMOS = 'Los insumos ya registrados no vuelven al almacén; anúlelos por separado';
+
 export default function LaboresPage() {
   const { sesion, puede } = useAuth();
   const esOperario = sesion?.rol === 'OPERARIO';
@@ -65,6 +68,8 @@ export default function LaboresPage() {
   const [conInsumos, setConInsumos] = useState<Labor | null>(null);
   const [asignando, setAsignando] = useState<Labor | null>(null);
   const [conBitacora, setConBitacora] = useState<Labor | null>(null);
+  const [editando, setEditando] = useState<Labor | null>(null);
+  const [dialogo, setDialogo] = useState<{ accion: 'cancelar' | 'reabrir'; labor: Labor } | null>(null);
 
   const rolOperarioId = roles.find((rol) => rol.nombre === 'OPERARIO')?.id;
   const asignadosPorLabor = useMemo(() => {
@@ -90,14 +95,23 @@ export default function LaboresPage() {
   const pendientes = visibles.filter(laborPendiente).length;
   const [accionError, setAccionError] = useState('');
 
+  const reemplazar = (actualizada: Labor) =>
+    setDatos((prev) => ({
+      ...prev,
+      labores: prev.labores.map((item) => (item.id === actualizada.id ? actualizada : item)),
+    }));
+
+  const confirmarDialogo = async (motivo: string) => {
+    if (!dialogo) return;
+    const { accion, labor } = dialogo;
+    reemplazar(await (accion === 'cancelar' ? laborService.cancelar(labor.id, motivo) : laborService.reabrir(labor.id, motivo)));
+    setDialogo(null);
+  };
+
   const iniciar = async (labor: Labor) => {
     setAccionError('');
     try {
-      const actualizada = await laborService.iniciar(labor.id);
-      setDatos((prev) => ({
-        ...prev,
-        labores: prev.labores.map((item) => (item.id === actualizada.id ? actualizada : item)),
-      }));
+      reemplazar(await laborService.iniciar(labor.id));
     } catch (err) {
       setAccionError(err instanceof Error ? err.message : 'No se pudo iniciar la labor');
     }
@@ -137,7 +151,21 @@ export default function LaboresPage() {
         <LaborForm
           campanas={campanas}
           catalogos={catalogos}
-          onCreated={(nueva) => setDatos((prev) => ({ ...prev, labores: [nueva, ...prev.labores] }))}
+          onGuardado={(nueva) => setDatos((prev) => ({ ...prev, labores: [nueva, ...prev.labores] }))}
+        />
+      )}
+
+      {editando && (
+        <LaborForm
+          key={editando.id}
+          campanas={campanas}
+          catalogos={catalogos}
+          labor={editando}
+          onGuardado={(actualizada) => {
+            reemplazar(actualizada);
+            setEditando(null);
+          }}
+          onCerrar={() => setEditando(null)}
         />
       )}
 
@@ -146,7 +174,10 @@ export default function LaboresPage() {
           key={asignando.id}
           labor={asignando}
           disponibles={operariosDisponibles(asignando)}
-          onAsignado={(nueva) => setDatos((prev) => ({ ...prev, asignaciones: [...prev.asignaciones, nueva] }))}
+          onAsignado={(nueva) => {
+            setDatos((prev) => ({ ...prev, asignaciones: [...prev.asignaciones, nueva] }));
+            recargar();
+          }}
           onCerrar={() => setAsignando(null)}
         />
       )}
@@ -159,11 +190,7 @@ export default function LaboresPage() {
           textoBoton="Marcar como ejecutada"
           onCancelar={() => setEjecutando(null)}
           onConfirmar={async (fecha) => {
-            const actualizada = await laborService.ejecutar(ejecutando.id, fecha);
-            setDatos((prev) => ({
-              ...prev,
-              labores: prev.labores.map((item) => (item.id === actualizada.id ? actualizada : item)),
-            }));
+            reemplazar(await laborService.ejecutar(ejecutando.id, fecha));
             setEjecutando(null);
           }}
         />
@@ -174,6 +201,7 @@ export default function LaboresPage() {
           labor={conInsumos}
           insumos={insumos}
           puedeRegistrar={puedeEjecutar}
+          puedeAnular={puede('consumos.anular')}
           onConsumoRegistrado={recargar}
           onCerrar={() => setConInsumos(null)}
         />
@@ -219,6 +247,9 @@ export default function LaboresPage() {
               campanas={campanas}
               catalogos={catalogos}
               asignados={puedePlanificar ? asignadosPorLabor : undefined}
+              onEditar={puedePlanificar ? setEditando : undefined}
+              onCancelar={puedePlanificar ? (labor) => setDialogo({ accion: 'cancelar', labor }) : undefined}
+              onReabrir={puedePlanificar ? (labor) => setDialogo({ accion: 'reabrir', labor }) : undefined}
               onAsignar={puedePlanificar ? (labor) => abrirPanel('asignar', labor) : undefined}
               onIniciar={puedeEjecutar ? iniciar : undefined}
               onEjecutar={puedeEjecutar ? (labor) => abrirPanel('ejecutar', labor) : undefined}
@@ -228,6 +259,16 @@ export default function LaboresPage() {
           )}
         </>
       )}
+
+      <MotivoDialog
+        key={dialogo?.accion ?? 'cerrado'}
+        open={dialogo !== null}
+        title={dialogo?.accion === 'reabrir' ? 'Reabrir labor' : 'Cancelar labor'}
+        confirmLabel={dialogo?.accion === 'reabrir' ? 'Reabrir' : 'Cancelar labor'}
+        aviso={dialogo?.accion === 'cancelar' ? AVISO_INSUMOS : undefined}
+        onConfirm={confirmarDialogo}
+        onCancel={() => setDialogo(null)}
+      />
     </section>
   );
 }

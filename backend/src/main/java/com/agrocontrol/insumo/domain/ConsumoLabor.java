@@ -1,5 +1,7 @@
 package com.agrocontrol.insumo.domain;
 
+import com.agrocontrol.shared.domain.Anulacion;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -10,19 +12,21 @@ public class ConsumoLabor {
     private Long insumoId;
     private BigDecimal cantidad;
     private LocalDateTime fecha = LocalDateTime.now();
+    private Anulacion anulacion;
 
     private ConsumoLabor() {
     }
 
     // Rehidrata un registro ya guardado (lo usa el mapper de persistencia): no repite las validaciones de alta.
     public static ConsumoLabor reconstruir(Long id, Long laborId, Long insumoId, BigDecimal cantidad,
-                                           LocalDateTime fecha) {
+                                           LocalDateTime fecha, Anulacion anulacion) {
         ConsumoLabor c = new ConsumoLabor();
         c.id = id;
         c.laborId = laborId;
         c.insumoId = insumoId;
         c.cantidad = cantidad;
         c.fecha = fecha;
+        c.anulacion = anulacion;
         return c;
     }
 
@@ -42,9 +46,19 @@ public class ConsumoLabor {
         this.cantidad = cantidad;
     }
 
+    public void anular(String motivo, Long usuarioId) {
+        if (isAnulado()) {
+            throw new IllegalStateException("El consumo ya está anulado");
+        }
+        this.anulacion = Anulacion.registrar(motivo, usuarioId);
+    }
+
+    public boolean isAnulado() { return anulacion != null; }
+
     public Long getId() { return id; }
     public Long getLaborId() { return laborId; }
     public Long getInsumoId() { return insumoId; }
     public BigDecimal getCantidad() { return cantidad; }
     public LocalDateTime getFecha() { return fecha; }
+    public Anulacion getAnulacion() { return anulacion; }
 }

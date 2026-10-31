@@ -117,6 +117,12 @@ public class LaborController {
                 inventarioService.registrarConsumo(id, request.insumoId(), request.cantidad(), UsuarioAutenticado.id(jwt))));
     }
 
+    @PostMapping("/{laborId}/consumos/{id}/anular")
+    public ConsumoResponse anularConsumo(@PathVariable Long laborId, @PathVariable Long id,
+                                         @Valid @RequestBody MotivoRequest request, @AuthenticationPrincipal Jwt jwt) {
+        return ConsumoResponse.desde(inventarioService.anularConsumo(laborId, id, request.motivo(), UsuarioAutenticado.id(jwt)));
+    }
+
     private void verificarOperario(Long laborId, Jwt jwt) {
         if (UsuarioAutenticado.esOperario(jwt)) {
             laborService.verificarAsignacion(laborId, UsuarioAutenticado.id(jwt));

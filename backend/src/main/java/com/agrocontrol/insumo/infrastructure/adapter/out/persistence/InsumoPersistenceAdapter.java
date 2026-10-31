@@ -6,6 +6,7 @@ import com.agrocontrol.insumo.domain.Insumo;
 import com.agrocontrol.insumo.domain.InsumoRepository;
 import com.agrocontrol.insumo.domain.MovimientoInsumo;
 import com.agrocontrol.insumo.domain.MovimientoInsumoRepository;
+import com.agrocontrol.insumo.domain.OrigenMovimiento;
 import com.agrocontrol.insumo.domain.TipoMovimiento;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
@@ -57,6 +58,17 @@ public class InsumoPersistenceAdapter implements InsumoRepository, MovimientoIns
     }
 
     @Override
+    public Optional<MovimientoInsumo> buscarMovimientoParaActualizar(Long id) {
+        return movimientoJpaRepository.findByIdParaActualizar(id).map(MovimientoInsumoPersistenceMapper::toDomain);
+    }
+
+    @Override
+    public Optional<MovimientoInsumo> buscarPorConsumo(Long consumoId) {
+        return movimientoJpaRepository.findByConsumoIdAndOrigen(consumoId, OrigenMovimiento.CONSUMO)
+                .map(MovimientoInsumoPersistenceMapper::toDomain);
+    }
+
+    @Override
     public List<MovimientoInsumo> listarPorInsumo(Long insumoId) {
         return movimientoJpaRepository.findByInsumoIdOrderByFechaDesc(insumoId)
                 .stream().map(MovimientoInsumoPersistenceMapper::toDomain).toList();
@@ -64,7 +76,8 @@ public class InsumoPersistenceAdapter implements InsumoRepository, MovimientoIns
 
     @Override
     public List<MovimientoInsumo> listarSalidasEntre(LocalDateTime desde, LocalDateTime hasta) {
-        return movimientoJpaRepository.findByTipoAndFechaGreaterThanEqualAndFechaLessThan(TipoMovimiento.SALIDA, desde, hasta)
+        return movimientoJpaRepository.buscarSalidasReales(TipoMovimiento.SALIDA, desde, hasta,
+                        List.of(OrigenMovimiento.MANUAL, OrigenMovimiento.CONSUMO))
                 .stream().map(MovimientoInsumoPersistenceMapper::toDomain).toList();
     }
 
@@ -72,6 +85,11 @@ public class InsumoPersistenceAdapter implements InsumoRepository, MovimientoIns
     public ConsumoLabor guardar(ConsumoLabor consumo) {
         return ConsumoLaborPersistenceMapper.toDomain(
                        consumoJpaRepository.save(ConsumoLaborPersistenceMapper.toEntity(consumo)));
+    }
+
+    @Override
+    public Optional<ConsumoLabor> buscarConsumoParaActualizar(Long id) {
+        return consumoJpaRepository.findByIdParaActualizar(id).map(ConsumoLaborPersistenceMapper::toDomain);
     }
 
     @Override

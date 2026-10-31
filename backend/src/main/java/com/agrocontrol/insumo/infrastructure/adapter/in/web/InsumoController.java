@@ -3,10 +3,12 @@ package com.agrocontrol.insumo.infrastructure.adapter.in.web;
 import com.agrocontrol.auth.infrastructure.security.UsuarioAutenticado;
 import com.agrocontrol.insumo.application.InventarioService;
 import com.agrocontrol.insumo.application.SalidaDeAlmacen;
+import com.agrocontrol.insumo.infrastructure.adapter.in.web.dto.AjusteStockRequest;
 import com.agrocontrol.insumo.infrastructure.adapter.in.web.dto.CrearInsumoRequest;
 import com.agrocontrol.insumo.infrastructure.adapter.in.web.dto.InsumoResponse;
 import com.agrocontrol.insumo.infrastructure.adapter.in.web.dto.MovimientoResponse;
 import com.agrocontrol.insumo.infrastructure.adapter.in.web.dto.RegistrarMovimientoRequest;
+import com.agrocontrol.shared.web.MotivoRequest;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -65,6 +67,20 @@ public class InsumoController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta) {
         LocalDate hoy = LocalDate.now();
         return service.salidasEntre(desde == null ? hoy.withDayOfMonth(1) : desde, hasta == null ? hoy : hasta);
+    }
+
+    @PostMapping("/{id}/movimientos/{movimientoId}/anular")
+    public MovimientoResponse anularMovimiento(@PathVariable Long id, @PathVariable Long movimientoId,
+                                               @Valid @RequestBody MotivoRequest request,
+                                               @AuthenticationPrincipal Jwt jwt) {
+        return MovimientoResponse.desde(service.anularMovimiento(id, movimientoId, request.motivo(), UsuarioAutenticado.id(jwt)));
+    }
+
+    @PostMapping("/{id}/ajustes")
+    public ResponseEntity<MovimientoResponse> ajustar(@PathVariable Long id, @Valid @RequestBody AjusteStockRequest request,
+                                                      @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(MovimientoResponse.desde(
+                service.ajustarStock(id, request.stockContado(), request.motivo(), UsuarioAutenticado.id(jwt))));
     }
 
     @GetMapping("/{id}/movimientos")

@@ -3,6 +3,7 @@ package com.agrocontrol.integracion;
 import com.agrocontrol.auditoria.application.AuditoriaService;
 import com.agrocontrol.auditoria.domain.Auditoria;
 import com.agrocontrol.auth.application.AuthService;
+import com.agrocontrol.auth.application.command.CambiarPasswordCommand;
 import com.agrocontrol.bitacora.application.BitacoraService;
 import com.agrocontrol.campana.application.AvanceCampanaService;
 import com.agrocontrol.campana.application.CampanaService;
@@ -13,6 +14,7 @@ import com.agrocontrol.insumo.application.InventarioService;
 import com.agrocontrol.insumo.domain.Insumo;
 import com.agrocontrol.insumo.domain.TipoMovimiento;
 import com.agrocontrol.parcela.domain.ParcelaRepository;
+import com.agrocontrol.usuario.domain.CodificadorPassword;
 import com.agrocontrol.usuario.domain.Usuario;
 import com.agrocontrol.usuario.domain.UsuarioRepository;
 import org.junit.jupiter.api.Test;
@@ -65,6 +67,8 @@ class PersistenciaPostgresTest {
     @Autowired
     private UsuarioRepository usuarioRepository;
     @Autowired
+    private CodificadorPassword codificadorPassword;
+    @Autowired
     private JdbcTemplate jdbc;
 
     @Test
@@ -90,6 +94,18 @@ class PersistenciaPostgresTest {
         // deshacer para no bloquear a otras pruebas de esta misma base
         leido.cambiarPassword(leido.getPasswordHash());
         usuarioRepository.guardar(leido);
+    }
+
+    @Test
+    void laClaveNoApareceEnLaAuditoria() {
+        Usuario usuario = usuarioRepository.guardar(new Usuario(null, "Temporal", "temporal@agrocontrol.com",
+                codificadorPassword.codificar("ClaveActual1"), usuarioRepository.buscarPorEmail("supervisor@agrocontrol.com")
+                .orElseThrow().getRolId()));
+
+        authService.cambiarPassword(usuario.getId(), new CambiarPasswordCommand("ClaveActual1", "ClaveNueva2"));
+
+        assertThat(jdbc.queryForList("SELECT coalesce(detalle, '') FROM agrocontrol.auditoria WHERE accion = 'CAMBIAR_PASSWORD'", String.class))
+                .isNotEmpty().allSatisfy(detalle -> assertThat(detalle).doesNotContain("ClaveActual1", "ClaveNueva2"));
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.agrocontrol.auth.application;
 
+import com.agrocontrol.auth.application.command.CambiarPasswordCommand;
 import com.agrocontrol.auth.domain.GeneradorToken;
 import com.agrocontrol.auth.domain.exception.CredencialesInvalidasException;
 import com.agrocontrol.rol.domain.Rol;
@@ -18,6 +19,9 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -75,5 +79,49 @@ class AuthServiceTest {
 
         assertThatThrownBy(() -> service.iniciarSesion("operario1@agrocontrol.com", "agro123"))
                 .isInstanceOf(CredencialesInvalidasException.class);
+    }
+
+    private Usuario usuarioConClave() {
+        Usuario usuario = new Usuario(3L, "Luis Choque", "operario1@agrocontrol.com", "hash", 2L, true, LocalDateTime.now());
+        when(usuarioRepository.buscarPorId(3L)).thenReturn(Optional.of(usuario));
+        return usuario;
+    }
+
+    @Test
+    void cambiarPasswordExigeLaClaveActual() {
+        usuarioConClave();
+        when(codificadorPassword.coincide("mal", "hash")).thenReturn(false);
+
+        assertThatThrownBy(() -> service.cambiarPassword(3L, new CambiarPasswordCommand("mal", "ClaveNueva2")))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        verify(usuarioRepository, never()).guardar(any());
+    }
+
+    @Test
+    void cambiarPasswordRechazaLaMismaClave() {
+        usuarioConClave();
+        when(codificadorPassword.coincide("ClaveActual1", "hash")).thenReturn(true);
+
+        assertThatThrownBy(() -> service.cambiarPassword(3L, new CambiarPasswordCommand("ClaveActual1", "ClaveActual1")))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        verify(usuarioRepository, never()).guardar(any());
+    }
+
+    @Test
+    void cambiarPasswordDevuelveSesionNueva() {
+        Usuario usuario = usuarioConClave();
+        when(codificadorPassword.coincide("ClaveActual1", "hash")).thenReturn(true);
+        when(codificadorPassword.codificar("ClaveNueva2")).thenReturn("hash2");
+        when(usuarioRepository.guardar(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(rolRepository.buscarPorId(2L)).thenReturn(Optional.of(new Rol(2L, "OPERARIO", null)));
+        when(generadorToken.generar(usuario, "OPERARIO")).thenReturn("jwt-nuevo");
+
+        Sesion sesion = service.cambiarPassword(3L, new CambiarPasswordCommand("ClaveActual1", "ClaveNueva2"));
+
+        assertThat(sesion.token()).isEqualTo("jwt-nuevo");
+        assertThat(sesion.usuario().getPasswordHash()).isEqualTo("hash2");
+        assertThat(sesion.usuario().getTokenVersion()).isEqualTo(1);
     }
 }

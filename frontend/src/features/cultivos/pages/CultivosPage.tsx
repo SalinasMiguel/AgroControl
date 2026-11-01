@@ -5,6 +5,8 @@ import { useAuth } from '../../auth/context/useAuth';
 import CultivoForm from '../components/CultivoForm';
 import type { Cultivo } from '../models/Cultivo';
 import { cultivoService } from '../services/cultivoService';
+import Button from '../../../components/ui/Button';
+import EmptyState from '../../../components/ui/EmptyState';
 
 const cargarCultivos = (signal: AbortSignal) => cultivoService.listar(signal);
 
@@ -21,9 +23,9 @@ export default function CultivosPage() {
         descripcion="Especies que se pueden sembrar en una campaña."
         accion={
           puedeCrear ? (
-            <button type="button" className="btn-primary" onClick={() => setMostrarFormulario((prev) => !prev)}>
+            <Button type="button" onClick={() => setMostrarFormulario((prev) => !prev)}>
               {mostrarFormulario ? 'Cerrar formulario' : '+ Nuevo cultivo'}
-            </button>
+            </Button>
           ) : undefined
         }
       />
@@ -38,7 +40,7 @@ export default function CultivosPage() {
 
       {loading && <div className="state-card">Cargando cultivos...</div>}
       {!loading && error && <div className="state-card error">{error}</div>}
-      {!loading && !error && cultivos.length === 0 && <div className="empty-state">No hay cultivos registrados.</div>}
+      {!loading && !error && cultivos.length === 0 && <EmptyState title="No hay cultivos registrados." />}
       {!loading && !error && cultivos.length > 0 && (
         <div className="table-card">
           <div className="table-responsive">

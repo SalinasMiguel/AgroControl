@@ -1,3 +1,4 @@
+import { MapPin } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { Parcela, Predio } from "../models/agro";
 import type { DetalleParcela } from "../logic/detalleParcela";
@@ -35,9 +36,12 @@ export function PredioDetalle({ predio, parcelas, detalleDe, alVolver }: Props) 
           {predio.activo ? "ACTIVO" : "INACTIVO"}
         </Text>
       </View>
-      <Text style={styles.detalle}>
-        📍 {predio.ubicacion} · {predio.areaHa} ha en total · {areaParcelas} ha en parcelas
-      </Text>
+      <View style={styles.ubicacion}>
+        <MapPin size={16} color={PALETTE.textoSuave} />
+        <Text style={styles.detalle}>
+          {predio.ubicacion} · {predio.areaHa} ha en total · {areaParcelas} ha en parcelas
+        </Text>
+      </View>
       {!predio.activo && (
         <Text style={styles.aviso}>Predio inactivo: no se planifican campañas nuevas aquí.</Text>
       )}
@@ -79,7 +83,8 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   estadoInactivo: { color: PALETTE.inactivo, backgroundColor: PALETTE.inactivoSuave },
-  detalle: { fontSize: 15, color: PALETTE.textoSuave },
+  ubicacion: { flexDirection: "row", alignItems: "center", gap: 6 },
+  detalle: { flex: 1, fontSize: 15, color: PALETTE.textoSuave },
   aviso: {
     fontSize: 14,
     color: PALETTE.inactivo,

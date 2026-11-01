@@ -1,16 +1,18 @@
-import { Fragment, type ReactNode } from 'react';
+import { ArrowRight, CalendarDays, ChartPie, Sprout, Tractor, Warehouse, Wheat, type LucideIcon } from 'lucide-react';
+import { Fragment, useState, type CSSProperties, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import StatsGrid from '../components/common/StatsGrid';
+import EmptyState from '../components/ui/EmptyState';
 import { useAuth } from '../features/auth/context/useAuth';
 import type { Rol } from '../features/auth/models/Sesion';
-import { NOMBRE_ROL } from '../features/auth/permisos';
+import { NOMBRE_ROL, type Seccion } from '../features/auth/permisos';
 import type { Campana } from '../features/campanas/models/Campana';
 import { campanaService } from '../features/campanas/services/campanaService';
 import { etiquetaCampana, type Catalogos } from '../features/campanas/utils/etiquetas';
 import type { Cosecha } from '../features/cosechas/models/Cosecha';
 import { cosechaService } from '../features/cosechas/services/cosechaService';
 import { cultivoService } from '../features/cultivos/services/cultivoService';
-import type { Insumo } from '../features/insumos/models/Insumo';
+import { CATEGORIAS, categoria, type Insumo } from '../features/insumos/models/Insumo';
 import { insumoService } from '../features/insumos/services/insumoService';
 import type { AsignacionLabor, Labor } from '../features/labores/models/Labor';
 import { laborService } from '../features/labores/services/laborService';
@@ -20,6 +22,7 @@ import { predioService } from '../features/predios/services/predioService';
 import type { Usuario } from '../features/usuarios/models/Usuario';
 import { usuarioService } from '../features/usuarios/services/usuarioService';
 import { useCarga } from '../hooks/useCarga';
+import { ICONO_SECCION, iconoLabor } from '../shared/utils/iconos';
 import { formatArea } from '../utils/area';
 import { formatCantidad, formatFecha } from '../utils/formato';
 
@@ -61,8 +64,37 @@ const SALUDO: Record<Rol, string> = {
   SUPERVISOR: 'Indicadores de la operación: avance de campañas, labores y producción.',
 };
 
+const ACCESOS: { seccion: Exclude<Seccion, 'inicio'>; nombre: string; detalle: string }[] = [
+  { seccion: 'predios', nombre: 'Predios', detalle: 'Campos y ubicaciones' },
+  { seccion: 'parcelas', nombre: 'Parcelas', detalle: 'Lotes y superficies' },
+  { seccion: 'cultivos', nombre: 'Cultivos', detalle: 'Catálogo de cultivos' },
+  { seccion: 'campanas', nombre: 'Campañas', detalle: 'Planificación por temporada' },
+  { seccion: 'labores', nombre: 'Labores', detalle: 'Trabajo en el campo' },
+  { seccion: 'insumos', nombre: 'Insumos', detalle: 'Inventario y movimientos' },
+  { seccion: 'cosechas', nombre: 'Cosechas', detalle: 'Producción registrada' },
+  { seccion: 'incidencias', nombre: 'Incidencias', detalle: 'Problemas reportados' },
+  { seccion: 'usuarios', nombre: 'Usuarios', detalle: 'Cuentas y roles' },
+  { seccion: 'auditoria', nombre: 'Auditoría', detalle: 'Historial de cambios' },
+];
+
+const fechaDeHoy = () =>
+  new Date().toLocaleDateString('es-BO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+function Fila({ icono: Icono, children }: { icono: LucideIcon; children: ReactNode }) {
+  return (
+    <span className="fila">
+      <span className="fila__icono"><Icono size={16} aria-hidden /></span>
+      <span>{children}</span>
+    </span>
+  );
+}
+
+function Enlace({ to, children }: { to: string; children: ReactNode }) {
+  return <Link className="button-link" to={to}>{children}<ArrowRight size={16} aria-hidden /></Link>;
+}
+
 export default function DashboardPage() {
-  const { sesion } = useAuth();
+  const { sesion, puedeVer } = useAuth();
   const rol = sesion?.rol ?? 'SUPERVISOR';
   const { datos, loading, error } = useCarga(cargarResumen(rol), vacio, rol);
   const { predios, parcelas, cultivos, campanas, labores, insumos, cosechas, usuarios, asignaciones } = datos;
@@ -78,6 +110,8 @@ export default function DashboardPage() {
   const toneladas = cosechas.filter((c) => c.unidadMedida === 't').reduce((suma, c) => suma + c.cantidad, 0);
   const avance = labores.length === 0 ? 0 : Math.round(((labores.length - pendientes.length) / labores.length) * 100);
   const campana = (id: number) => campanas.find((item) => item.id === id);
+  const contarLabores = (estado: Labor['estado']) => labores.filter((labor) => labor.estado === estado).length;
+  const [hoy] = useState(fechaDeHoy);
 
   const stats: Record<Rol, { etiqueta: string; valor: string | number }[]> = {
     ADMINISTRADOR: [
@@ -113,42 +147,42 @@ export default function DashboardPage() {
 
   const tarjetaLabores = (
     <article className="list-card">
-      <h3>{rol === 'OPERARIO' ? 'Mis próximas labores' : 'Próximas labores'}</h3>
+      <h3><Tractor size={18} aria-hidden />{rol === 'OPERARIO' ? 'Mis próximas labores' : 'Próximas labores'}</h3>
       {proximasLabores.length === 0 ? (
-        <p className="muted">No hay labores pendientes.</p>
+        <EmptyState title="No hay labores pendientes." description="Cuando se planifiquen aparecerán aquí." />
       ) : (
         <ul>
           {proximasLabores.map((labor) => {
             const campanaLabor = campana(labor.campanaId);
             return (
               <li key={labor.id}>
-                <span>
+                <Fila icono={iconoLabor(labor.tipo)}>
                   <strong>{labor.tipo.replace(/_/g, ' ')}</strong>
                   <br />
                   <small className="muted">
                     {campanaLabor ? etiquetaCampana(campanaLabor, catalogos) : `Campaña ${labor.campanaId}`}
                   </small>
-                </span>
+                </Fila>
                 <span>{formatFecha(labor.fechaPlan)}</span>
               </li>
             );
           })}
         </ul>
       )}
-      <Link className="button-link" to="/labores">{rol === 'OPERARIO' ? 'Ir a mis labores' : 'Ver labores'}</Link>
+      <Enlace to="/labores">{rol === 'OPERARIO' ? 'Ir a mis labores' : 'Ver labores'}</Enlace>
     </article>
   );
 
   const tarjetaStock = (
     <article className="list-card">
-      <h3>Insumos con menos stock</h3>
+      <h3><Warehouse size={18} aria-hidden />Insumos con menos stock</h3>
       {stockBajo.length === 0 ? (
-        <p className="muted">No hay insumos registrados.</p>
+        <EmptyState title="No hay insumos registrados." description="El inventario aparecerá aquí." />
       ) : (
         <ul>
           {stockBajo.map((insumo) => (
             <li key={insumo.id}>
-              <span>{insumo.nombre}</span>
+              <Fila icono={categoria(insumo.categoria).icono}>{insumo.nombre}</Fila>
               <strong className={insumo.stockActual <= 0 ? 'field-error' : ''}>
                 {formatCantidad(insumo.stockActual, insumo.unidadMedida)}
               </strong>
@@ -156,52 +190,91 @@ export default function DashboardPage() {
           ))}
         </ul>
       )}
-      <Link className="button-link" to="/insumos">Ver inventario</Link>
+      <Enlace to="/insumos">Ver inventario</Enlace>
     </article>
   );
 
   const tarjetaCosechas = (
     <article className="list-card">
-      <h3>Últimas cosechas</h3>
+      <h3><Wheat size={18} aria-hidden />Últimas cosechas</h3>
       {cosechas.length === 0 ? (
-        <p className="muted">No hay cosechas registradas.</p>
+        <EmptyState title="No hay cosechas registradas." description="Las últimas aparecerán aquí." />
       ) : (
         <ul>
           {[...cosechas].sort((a, b) => b.fecha.localeCompare(a.fecha)).slice(0, 5).map((cosecha) => {
             const campanaCosecha = campana(cosecha.campanaId);
             return (
               <li key={cosecha.id}>
-                <span>
+                <Fila icono={Wheat}>
                   {campanaCosecha ? etiquetaCampana(campanaCosecha, catalogos) : `Campaña ${cosecha.campanaId}`}
                   <br />
                   <small className="muted">{formatFecha(cosecha.fecha)}</small>
-                </span>
+                </Fila>
                 <strong>{formatCantidad(cosecha.cantidad, cosecha.unidadMedida)}</strong>
               </li>
             );
           })}
         </ul>
       )}
-      <Link className="button-link" to="/cosechas">Ver cosechas</Link>
+      <Enlace to="/cosechas">Ver cosechas</Enlace>
+    </article>
+  );
+
+  const tarjetaAvance = (
+    <article className="list-card">
+      <h3><ChartPie size={18} aria-hidden />{rol === 'OPERARIO' ? 'Mi avance' : 'Avance de labores'}</h3>
+      {labores.length === 0 ? (
+        <EmptyState title="Aún no hay labores." description="El avance se calcula con las labores ejecutadas." />
+      ) : (
+        <div className="avance-anillo">
+          <div
+            className="avance-anillo__circulo"
+            role="img"
+            aria-label={`${avance} % de labores ejecutadas`}
+            style={{ '--avance': `${avance}%` } as CSSProperties}
+          >
+            <strong>{avance} %</strong>
+          </div>
+          <ul>
+            <li><span>Planificadas</span><strong>{contarLabores('PLANIFICADA')}</strong></li>
+            <li><span>En curso</span><strong>{contarLabores('EN_CURSO')}</strong></li>
+            <li><span>Ejecutadas</span><strong>{contarLabores('EJECUTADA')}</strong></li>
+          </ul>
+        </div>
+      )}
+    </article>
+  );
+
+  const tarjetaCategorias = (
+    <article className="list-card">
+      <h3><ChartPie size={18} aria-hidden />Inventario por categoría</h3>
+      <ul>
+        {CATEGORIAS.map((c) => (
+          <li key={c.valor}>
+            <Fila icono={c.icono}>{c.nombre}</Fila>
+            <strong>{insumos.filter((insumo) => insumo.categoria === c.valor).length}</strong>
+          </li>
+        ))}
+      </ul>
     </article>
   );
 
   const tarjetas: Record<Rol, ReactNode[]> = {
-    ADMINISTRADOR: [tarjetaLabores, tarjetaStock],
-    JEFE_DE_CAMPO: [tarjetaLabores, tarjetaStock],
-    OPERARIO: [tarjetaLabores],
-    ALMACENERO: [tarjetaStock, tarjetaCosechas],
-    SUPERVISOR: [tarjetaLabores, tarjetaCosechas],
+    ADMINISTRADOR: [tarjetaLabores, tarjetaAvance, tarjetaStock],
+    JEFE_DE_CAMPO: [tarjetaLabores, tarjetaAvance, tarjetaStock],
+    OPERARIO: [tarjetaLabores, tarjetaAvance],
+    ALMACENERO: [tarjetaStock, tarjetaCategorias, tarjetaCosechas],
+    SUPERVISOR: [tarjetaLabores, tarjetaAvance, tarjetaCosechas],
   };
 
   return (
     <section className="feature-page">
-      <div className="page-heading">
-        <div>
-          <p className="eyebrow">PANEL · {NOMBRE_ROL[rol].toUpperCase()}</p>
-          <h1>Hola, {sesion?.nombreCompleto.split(' ')[0]}</h1>
-          <p>{SALUDO[rol]}</p>
-        </div>
+      <div className="inicio-hero">
+        <p className="eyebrow">PANEL · {NOMBRE_ROL[rol].toUpperCase()}</p>
+        <h1>Hola, {sesion?.nombreCompleto.split(' ')[0]}</h1>
+        <p>{SALUDO[rol]}</p>
+        <span className="inicio-hero__fecha"><CalendarDays size={15} aria-hidden />{hoy}</span>
+        <Sprout className="inicio-hero__dibujo" size={190} strokeWidth={1.25} aria-hidden />
       </div>
 
       {loading && <div className="state-card">Cargando resumen...</div>}
@@ -209,6 +282,21 @@ export default function DashboardPage() {
       {!loading && !error && (
         <>
           <StatsGrid stats={stats[rol]} />
+          <h2 className="inicio-titulo">Accesos rápidos</h2>
+          <nav className="accesos-grid" aria-label="Accesos rápidos">
+            {ACCESOS.filter((acceso) => puedeVer(acceso.seccion)).map(({ seccion, nombre, detalle }) => {
+              const Icono = ICONO_SECCION[seccion];
+              return (
+                <Link key={seccion} className="acceso" to={`/${seccion}`}>
+                  <span className="acceso__icono"><Icono size={19} aria-hidden /></span>
+                  <span>
+                    <strong>{seccion === 'labores' && rol === 'OPERARIO' ? 'Mis labores' : nombre}</strong>
+                    <small>{detalle}</small>
+                  </span>
+                </Link>
+              );
+            })}
+          </nav>
           <div className="dashboard-grid">
             {tarjetas[rol].map((tarjeta, i) => <Fragment key={i}>{tarjeta}</Fragment>)}
           </div>

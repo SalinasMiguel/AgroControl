@@ -11,6 +11,7 @@ import type { RolCatalogo } from '../models/Rol';
 import type { Usuario } from '../models/Usuario';
 import { rolService } from '../services/rolService';
 import { usuarioService } from '../services/usuarioService';
+import Button from '../../../components/ui/Button';
 
 const cargarDatos = async (signal: AbortSignal) => {
   const [usuarios, roles] = await Promise.all([usuarioService.listar(signal), rolService.listar(signal)]);
@@ -39,9 +40,9 @@ export default function UsuariosPage() {
         titulo="Usuarios"
         descripcion="Cuentas del sistema y el rol que define qué ve y qué puede hacer cada una."
         accion={
-          <button type="button" className="btn-primary" onClick={() => setMostrarFormulario((prev) => !prev)}>
+          <Button type="button" onClick={() => setMostrarFormulario((prev) => !prev)}>
             {mostrarFormulario ? 'Cerrar formulario' : '+ Nuevo usuario'}
-          </button>
+          </Button>
         }
       />
 

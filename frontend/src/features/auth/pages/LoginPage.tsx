@@ -3,6 +3,7 @@ import { Navigate, useLocation, useNavigate } from 'react-router';
 import { useAuth } from '../context/useAuth';
 import { NOMBRE_ROL } from '../permisos';
 import type { Rol } from '../models/Sesion';
+import Button from '../../../components/ui/Button';
 
 // Usuarios de V2/V3 (contraseña agro123) para la demo de la defensa.
 const USUARIOS_DEMO: { email: string; rol: Rol }[] = [
@@ -68,18 +69,17 @@ export default function LoginPage() {
           />
         </label>
         {error && <div className="form-error">{error}</div>}
-        <button type="submit" className="btn-primary" disabled={submitting}>
+        <Button type="submit" disabled={submitting}>
           {submitting ? 'Ingresando...' : 'Ingresar'}
-        </button>
+        </Button>
 
         <div className="login-demo">
           <p className="muted">Usuarios de prueba (contraseña <code>agro123</code>):</p>
           <div className="login-demo__list">
             {USUARIOS_DEMO.map((usuario) => (
-              <button
+              <Button variant="secondary" size="sm"
                 key={usuario.email}
                 type="button"
-                className="btn-link"
                 onClick={() => {
                   setEmail(usuario.email);
                   setPassword('agro123');
@@ -87,7 +87,7 @@ export default function LoginPage() {
                 }}
               >
                 {NOMBRE_ROL[usuario.rol]}
-              </button>
+              </Button>
             ))}
           </div>
         </div>

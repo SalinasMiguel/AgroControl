@@ -5,6 +5,7 @@ import type { Campana } from '../../campanas/models/Campana';
 import { etiquetaCampana, type Catalogos } from '../../campanas/utils/etiquetas';
 import { TIPOS_LABOR, type Labor } from '../models/Labor';
 import { laborService } from '../services/laborService';
+import Button from '../../../components/ui/Button';
 
 interface LaborFormProps {
   campanas: Campana[];
@@ -83,9 +84,9 @@ export default function LaborForm({ campanas, catalogos, onCreated }: LaborFormP
       {mensaje && <div className="form-success">{mensaje}</div>}
       {apiError && <div className="form-error">{apiError}</div>}
       <div className="form-actions">
-        <button type="submit" className="btn-primary" disabled={submitting}>
+        <Button type="submit" disabled={submitting}>
           {submitting ? 'Guardando...' : 'Planificar labor'}
-        </button>
+        </Button>
       </div>
     </form>
   );

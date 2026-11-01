@@ -91,10 +91,9 @@ Desarrollar un sistema web/móvil para planificar campañas, registrar labores e
 - Dashboard 
 ## 5. Fuera de alcance
  - Sensores IoT
-- Barreras físicas 
 - Facturación fiscal
 - GPS en tiempo real 
-- IA para autorizar reservas o calcular precios
+- IA para prescribir dosis o tratamientos (RN-10)
  ## 6. Stack objetivo del semestre 
 - Backend: Java 21 + Spring Boot
 - Base de datos: PostgreSQL + Flyway 

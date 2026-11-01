@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { hoyISO } from '../../utils/formato';
+import Button from '../ui/Button';
 
 interface FechaAccionPanelProps {
   titulo: string;
@@ -43,12 +44,12 @@ export default function FechaAccionPanel({ titulo, etiqueta, textoBoton, onConfi
       </div>
       {error && <div className="form-error">{error}</div>}
       <div className="form-actions">
-        <button type="button" className="btn-secondary" onClick={onCancelar} disabled={submitting}>
+        <Button variant="secondary" type="button" onClick={onCancelar} disabled={submitting}>
           Cancelar
-        </button>
-        <button type="submit" className="btn-primary" disabled={submitting}>
+        </Button>
+        <Button type="submit" disabled={submitting}>
           {submitting ? 'Guardando...' : textoBoton}
-        </button>
+        </Button>
       </div>
     </form>
   );

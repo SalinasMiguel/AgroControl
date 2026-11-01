@@ -23,6 +23,8 @@ import LaborForm from '../components/LaborForm';
 import LaborTable from '../components/LaborTable';
 import type { AsignacionLabor, Labor } from '../models/Labor';
 import { laborService } from '../services/laborService';
+import Button from '../../../components/ui/Button';
+import EmptyState from '../../../components/ui/EmptyState';
 
 // Para el operario el backend ya devuelve solo sus labores asignadas (RN-05);
 // las asignaciones y los roles solo se piden si el rol planifica.
@@ -125,9 +127,9 @@ export default function LaboresPage() {
         }
         accion={
           puedePlanificar ? (
-            <button type="button" className="btn-primary" onClick={() => setMostrarFormulario((prev) => !prev)}>
+            <Button type="button" onClick={() => setMostrarFormulario((prev) => !prev)}>
               {mostrarFormulario ? 'Cerrar formulario' : '+ Nueva labor'}
-            </button>
+            </Button>
           ) : undefined
         }
       />
@@ -211,7 +213,7 @@ export default function LaboresPage() {
             </select>
           </div>
           {esOperario && labores.length === 0 ? (
-            <div className="empty-state">Todavía no tiene labores asignadas.</div>
+            <EmptyState title="Todavía no tiene labores asignadas." />
           ) : (
             <LaborTable
               labores={visibles}

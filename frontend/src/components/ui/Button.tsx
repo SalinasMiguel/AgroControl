@@ -1,4 +1,5 @@
-import type { ButtonHTMLAttributes } from 'react';
+import { createElement, type ButtonHTMLAttributes } from 'react';
+import { iconoBoton } from '../../shared/utils/iconos';
 
 type Variant = 'primary' | 'secondary' | 'danger' | 'ghost';
 type Size = 'md' | 'sm';
@@ -36,10 +37,17 @@ export default function Button({
   children,
   ...rest
 }: ButtonProps) {
-  const clase = [size === 'sm' ? clasesSm[variant] : clasesMd[variant], className].filter(Boolean).join(' ');
+  const contenido = loading && loadingText ? loadingText : children;
+  // El ícono sale del texto del botón; el "+" de "+ Nuevo..." lo reemplaza el ícono.
+  const texto = typeof contenido === 'string' ? contenido : '';
+  const Icono = iconoBoton(texto);
+  const clase = [size === 'sm' ? clasesSm[variant] : clasesMd[variant], Icono && 'btn-con-icono', className]
+    .filter(Boolean)
+    .join(' ');
   return (
     <button type={type} className={clase} disabled={disabled || loading} aria-busy={loading || undefined} {...rest}>
-      {loading && loadingText ? loadingText : children}
+      {Icono && createElement(Icono, { size: size === 'sm' ? 14 : 16, 'aria-hidden': true })}
+      {Icono ? texto.replace(/^\+\s*/, '') : contenido}
     </button>
   );
 }

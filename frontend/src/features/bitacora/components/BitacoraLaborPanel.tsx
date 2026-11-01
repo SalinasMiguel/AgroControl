@@ -7,6 +7,7 @@ import type { Usuario } from '../../usuarios/models/Usuario';
 import { nombreUsuario, usuarioService } from '../../usuarios/services/usuarioService';
 import type { EntradaBitacora } from '../models/Bitacora';
 import { bitacoraService } from '../services/bitacoraService';
+import Button from '../../../components/ui/Button';
 
 interface BitacoraLaborPanelProps {
   labor: Labor;
@@ -93,15 +94,15 @@ export default function BitacoraLaborPanel({ labor, puedeRegistrar, onCerrar }: 
           </div>
           {errorForm && <div className="form-error">{errorForm}</div>}
           <div className="form-actions">
-            <button type="button" className="btn-secondary" onClick={onCerrar} disabled={submitting}>Cerrar</button>
-            <button type="submit" className="btn-primary" disabled={submitting}>
+            <Button variant="secondary" type="button" onClick={onCerrar} disabled={submitting}>Cerrar</Button>
+            <Button type="submit" disabled={submitting}>
               {submitting ? 'Guardando...' : 'Agregar a la bitácora'}
-            </button>
+            </Button>
           </div>
         </form>
       ) : (
         <div className="form-actions">
-          <button type="button" className="btn-secondary" onClick={onCerrar}>Cerrar</button>
+          <Button variant="secondary" type="button" onClick={onCerrar}>Cerrar</Button>
         </div>
       )}
     </div>

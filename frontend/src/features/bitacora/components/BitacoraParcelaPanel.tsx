@@ -7,6 +7,7 @@ import type { Usuario } from '../../usuarios/models/Usuario';
 import { nombreUsuario, usuarioService } from '../../usuarios/services/usuarioService';
 import type { EntradaBitacora } from '../models/Bitacora';
 import { bitacoraService } from '../services/bitacoraService';
+import Button from '../../../components/ui/Button';
 
 interface BitacoraParcelaPanelProps {
   parcela: Parcela;
@@ -62,7 +63,7 @@ export default function BitacoraParcelaPanel({ parcela, nombrePredio, onCerrar }
       )}
 
       <div className="form-actions">
-        <button type="button" className="btn-secondary" onClick={onCerrar}>Cerrar</button>
+        <Button variant="secondary" type="button" onClick={onCerrar}>Cerrar</Button>
       </div>
     </div>
   );

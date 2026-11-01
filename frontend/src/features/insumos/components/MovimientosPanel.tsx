@@ -7,6 +7,7 @@ import type { Usuario } from '../../usuarios/models/Usuario';
 import { nombreUsuario } from '../../usuarios/services/usuarioService';
 import type { Insumo, MovimientoInsumo, TipoMovimiento } from '../models/Insumo';
 import { insumoService } from '../services/insumoService';
+import Button from '../../../components/ui/Button';
 
 interface MovimientosPanelProps {
   insumo: Insumo;
@@ -64,7 +65,7 @@ export default function MovimientosPanel({ insumo, usuarios, puedeRegistrar, onM
 
       {!puedeRegistrar && (
         <div className="form-actions">
-          <button type="button" className="btn-secondary" onClick={onCerrar}>Cerrar</button>
+          <Button variant="secondary" type="button" onClick={onCerrar}>Cerrar</Button>
         </div>
       )}
       {puedeRegistrar && (
@@ -92,10 +93,10 @@ export default function MovimientosPanel({ insumo, usuarios, puedeRegistrar, onM
         </div>
         {errorForm && <div className="form-error">{errorForm}</div>}
         <div className="form-actions">
-          <button type="button" className="btn-secondary" onClick={onCerrar} disabled={submitting}>Cerrar</button>
-          <button type="submit" className="btn-primary" disabled={submitting}>
+          <Button variant="secondary" type="button" onClick={onCerrar} disabled={submitting}>Cerrar</Button>
+          <Button type="submit" disabled={submitting}>
             {submitting ? 'Guardando...' : 'Registrar movimiento'}
-          </button>
+          </Button>
         </div>
       </form>
       )}

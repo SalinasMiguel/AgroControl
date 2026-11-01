@@ -31,10 +31,8 @@ export function ResumenCampo({ parcelas }: Props) {
         const visual = ESTADO_VISUAL[estado];
         return (
           <View key={estado} style={styles.leyenda}>
-            <View style={[styles.punto, { backgroundColor: visual.color }]} />
-            <Text style={styles.leyendaTexto}>
-              {visual.icono} {visual.texto}
-            </Text>
+            <visual.icono size={16} color={visual.color} />
+            <Text style={styles.leyendaTexto}>{visual.texto}</Text>
             <Text style={styles.leyendaValor}>
               {ha} ha · {total ? Math.round((ha / total) * 100) : 0}%
             </Text>
@@ -50,7 +48,6 @@ const styles = StyleSheet.create({
   titulo: { fontSize: 16, fontWeight: "700", color: PALETTE.texto },
   barra: { flexDirection: "row", height: 16, borderRadius: 8, overflow: "hidden", gap: 2 },
   leyenda: { flexDirection: "row", alignItems: "center", gap: 8 },
-  punto: { width: 10, height: 10, borderRadius: 5 },
   leyendaTexto: { flex: 1, fontSize: 14, color: PALETTE.texto },
   leyendaValor: { fontSize: 14, fontWeight: "600", color: PALETTE.textoSuave },
 });

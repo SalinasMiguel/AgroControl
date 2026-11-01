@@ -1,4 +1,5 @@
 import { useId } from 'react';
+import Button from './Button';
 
 interface PaginationProps {
   page: number;
@@ -29,20 +30,19 @@ export default function Pagination({
         {desde}–{hasta} de {totalItems}
       </p>
       <div className="pagination__controls">
-        <button type="button" className="btn-secondary" onClick={() => onPageChange(page - 1)} disabled={page <= 1}>
+        <Button variant="secondary" type="button" onClick={() => onPageChange(page - 1)} disabled={page <= 1}>
           Anterior
-        </button>
+        </Button>
         <span aria-current="page">
           Página {page} de {totalPages}
         </span>
-        <button
+        <Button variant="secondary"
           type="button"
-          className="btn-secondary"
           onClick={() => onPageChange(page + 1)}
           disabled={page >= totalPages}
         >
           Siguiente
-        </button>
+        </Button>
       </div>
       <div className="pagination__size">
         <label htmlFor={id}>Por página</label>

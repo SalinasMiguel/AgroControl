@@ -9,6 +9,8 @@
 services:
   db:
     image: postgres:17
+    # Vuelve sola al reiniciar la PC, igual que la app: sin ella la app no arranca
+    restart: unless-stopped
     environment:
       POSTGRES_DB: agrocontrol
       POSTGRES_USER: postgres

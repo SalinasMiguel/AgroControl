@@ -31,6 +31,19 @@ En la pantalla de login también hay un botón por rol que completa el usuario. 
 | "port is already allocated" (8080 o 5433) | Otra cosa usa ese puerto: cerrar el backend que esté corriendo con `mvn`/IntelliJ, o el otro Postgres |
 | "No respondió a tiempo" | Ver el error con `docker compose logs app` |
 | La web dice "Debe iniciar sesión" | La sesión venció (dura 8 h): volver a entrar |
+| La app se reinicia sola y el log dice `UnknownHostException: db` | La base quedó apagada: volver a ejecutar `iniciar` |
+
+### Actualizar a una versión nueva
+
+Tus datos se conservan: al arrancar, Flyway aplica solo las migraciones que falten.
+
+```bash
+docker compose exec db pg_dump -U postgres agrocontrol > respaldo.sql   # 1. con la app encendida, por si acaso
+git pull                                                                # 2. baja la versión nueva
+./iniciar.sh                                                            # 3. o doble clic en iniciar.cmd
+```
+
+Si una migración falla, el error sale en `docker compose logs app`. V10 se detiene a propósito si encuentra una cosecha con una unidad distinta de t, kg o qq (o sus variantes en palabras).
 
 ### Para programar
 

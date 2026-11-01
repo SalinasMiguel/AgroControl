@@ -1,5 +1,5 @@
 import {
-  ArrowDownToLine, Ban, CloudLightning, KeyRound, SlidersHorizontal, Undo2, ArrowLeftRight, ArrowUpFromLine, BookOpen, CalendarClock, CalendarDays, CalendarPlus, CalendarRange,
+  ArrowDown, ArrowUp, Minus, ArrowDownToLine, Ban, CloudLightning, KeyRound, SlidersHorizontal, Undo2, ArrowLeftRight, ArrowUpFromLine, BookOpen, CalendarClock, CalendarDays, CalendarPlus, CalendarRange,
   ChartColumn, ChevronLeft, ChevronRight, CircleAlert, CircleCheck, CircleCheckBig, CircleOff, ClipboardList,
   ClipboardPlus, Clock, Eraser, FlaskConical, Flag, Fuel, Grid2x2, Hand, House, Inbox, Layers, Leaf, LandPlot, LogIn,
   LogOut, Moon, Package, PackageX, Pencil, Play, Plus, RotateCw, Save, ScrollText, SearchX, ShieldCheck, SprayCan,
@@ -54,6 +54,9 @@ export const ICONO_ESTADO: Record<string, LucideIcon> = {
   EN_ATENCION: Wrench,
   EN_DESCANSO: Moon,
   INACTIVO: CircleOff,
+  BAJA: ArrowDown,
+  MEDIA: Minus,
+  ALTA: ArrowUp,
 };
 
 const REGLAS_BOTON: Regla[] = [

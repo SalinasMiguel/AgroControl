@@ -16,7 +16,13 @@ interface CosechaFormProps {
   onCreated: (cosecha: Cosecha) => void;
 }
 
-type Errores = Partial<Record<'campanaId' | 'cantidad' | 'fecha', string>>;
+type Errores = Partial<Record<'campanaId' | 'cantidad' | 'fecha' | 'humedadPct' | 'impurezasPct' | 'numeroBoleta', string>>;
+
+const porcentajeInvalido = (valor: string) => {
+  if (!valor.trim()) return false;
+  const numero = Number(valor);
+  return !Number.isFinite(numero) || numero < 0 || numero > 100;
+};
 
 export default function CosechaForm({ campanas, catalogos, onCreated }: CosechaFormProps) {
   const sesion = useSesion();
@@ -24,6 +30,9 @@ export default function CosechaForm({ campanas, catalogos, onCreated }: CosechaF
   const [cantidad, setCantidad] = useState('');
   const [unidadMedida, setUnidadMedida] = useState('t');
   const [fecha, setFecha] = useState(hoyISO());
+  const [humedad, setHumedad] = useState('');
+  const [impurezas, setImpurezas] = useState('');
+  const [numeroBoleta, setNumeroBoleta] = useState('');
   const [errors, setErrors] = useState<Errores>({});
   const [mensaje, setMensaje] = useState('');
   const [apiError, setApiError] = useState('');
@@ -42,6 +51,9 @@ export default function CosechaForm({ campanas, catalogos, onCreated }: CosechaF
     if (errorCantidad) errores.cantidad = errorCantidad;
     if (!fecha) errores.fecha = 'La fecha es obligatoria.';
     else if (fecha > hoyISO()) errores.fecha = 'La fecha no puede ser futura.';
+    if (porcentajeInvalido(humedad)) errores.humedadPct = 'Use un valor entre 0 y 100.';
+    if (porcentajeInvalido(impurezas)) errores.impurezasPct = 'Use un valor entre 0 y 100.';
+    if (numeroBoleta.trim().length > 30) errores.numeroBoleta = 'Use como máximo 30 caracteres.';
     setErrors(errores);
     if (Object.keys(errores).length > 0) return;
 
@@ -52,9 +64,15 @@ export default function CosechaForm({ campanas, catalogos, onCreated }: CosechaF
         cantidad: Number(cantidad),
         unidadMedida,
         fecha,
+        humedadPct: humedad.trim() ? Number(humedad) : null,
+        impurezasPct: impurezas.trim() ? Number(impurezas) : null,
+        numeroBoleta: numeroBoleta.trim() || null,
       });
       onCreated(creada);
       setCantidad('');
+      setHumedad('');
+      setImpurezas('');
+      setNumeroBoleta('');
       setMensaje('Cosecha registrada correctamente.');
     } catch (err) {
       if (err instanceof ApiError) setErrors(err.campos);
@@ -92,6 +110,21 @@ export default function CosechaForm({ campanas, catalogos, onCreated }: CosechaF
           Fecha
           <input type="date" max={hoyISO()} value={fecha} onChange={(e) => setFecha(e.target.value)} />
           {errors.fecha && <small className="field-error">{errors.fecha}</small>}
+        </label>
+        <label>
+          N.º de boleta (opcional)
+          <input value={numeroBoleta} onChange={(e) => setNumeroBoleta(e.target.value)} placeholder="Ej.: B-00123" maxLength={30} />
+          {errors.numeroBoleta && <small className="field-error">{errors.numeroBoleta}</small>}
+        </label>
+        <label>
+          Humedad % (opcional)
+          <input type="number" step="0.01" min="0" max="100" value={humedad} onChange={(e) => setHumedad(e.target.value)} placeholder="Ej.: 14" />
+          {errors.humedadPct && <small className="field-error">{errors.humedadPct}</small>}
+        </label>
+        <label>
+          Impurezas % (opcional)
+          <input type="number" step="0.01" min="0" max="100" value={impurezas} onChange={(e) => setImpurezas(e.target.value)} placeholder="Ej.: 1,5" />
+          {errors.impurezasPct && <small className="field-error">{errors.impurezasPct}</small>}
         </label>
         <label>
           Registrado por

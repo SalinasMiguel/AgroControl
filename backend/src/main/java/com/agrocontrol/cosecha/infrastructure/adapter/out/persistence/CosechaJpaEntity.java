@@ -39,11 +39,21 @@ public class CosechaJpaEntity {
     @Embedded
     private AnulacionEmbeddable anulacion;
 
+    @Column(name = "humedad_pct", precision = 5, scale = 2)
+    private BigDecimal humedadPct;
+
+    @Column(name = "impurezas_pct", precision = 5, scale = 2)
+    private BigDecimal impurezasPct;
+
+    @Column(name = "numero_boleta", length = 30)
+    private String numeroBoleta;
+
     protected CosechaJpaEntity() {
     }
 
     public CosechaJpaEntity(Long id, Long campanaId, BigDecimal cantidad, String unidadMedida, LocalDate fecha,
-                            Long usuarioId, AnulacionEmbeddable anulacion) {
+                            Long usuarioId, AnulacionEmbeddable anulacion, BigDecimal humedadPct, BigDecimal impurezasPct,
+                            String numeroBoleta) {
         this.id = id;
         this.campanaId = campanaId;
         this.cantidad = cantidad;
@@ -51,9 +61,15 @@ public class CosechaJpaEntity {
         this.fecha = fecha;
         this.usuarioId = usuarioId;
         this.anulacion = anulacion;
+        this.humedadPct = humedadPct;
+        this.impurezasPct = impurezasPct;
+        this.numeroBoleta = numeroBoleta;
     }
 
     public Long getId() { return id; }
+    public BigDecimal getHumedadPct() { return humedadPct; }
+    public BigDecimal getImpurezasPct() { return impurezasPct; }
+    public String getNumeroBoleta() { return numeroBoleta; }
     public Long getCampanaId() { return campanaId; }
     public BigDecimal getCantidad() { return cantidad; }
     public String getUnidadMedida() { return unidadMedida; }

@@ -40,7 +40,8 @@ public class IncidenciaController {
     public ResponseEntity<IncidenciaResponse> registrar(@Valid @RequestBody RegistrarIncidenciaRequest request,
                                                         @AuthenticationPrincipal Jwt jwt) {
         return ResponseEntity.status(HttpStatus.CREATED).body(IncidenciaResponse.desde(service.registrar(
-                request.parcelaId(), request.campanaId(), request.laborId(), request.descripcion(), UsuarioAutenticado.id(jwt))));
+                request.parcelaId(), request.campanaId(), request.laborId(), request.descripcion(),
+                request.tipo(), request.gravedad(), UsuarioAutenticado.id(jwt))));
     }
 
     @PostMapping("/{id}/atender")

@@ -10,4 +10,7 @@ export interface Cosecha {
   motivoAnulacion: string | null;
   anuladoPor: number | null;
   anuladoEn: string | null;
+  humedadPct: number | null;
+  impurezasPct: number | null;
+  numeroBoleta: string | null;
 }

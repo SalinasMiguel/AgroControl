@@ -14,6 +14,7 @@ public class Cosecha {
     private LocalDate fecha = LocalDate.now();
     private Long usuarioId;
     private Anulacion anulacion;
+    private CalidadCosecha calidad = CalidadCosecha.VACIA;
 
     private Cosecha() {
     }
@@ -21,6 +22,11 @@ public class Cosecha {
     // Rehidrata un registro ya guardado (lo usa el mapper de persistencia): no repite las validaciones de alta.
     public static Cosecha reconstruir(Long id, Long campanaId, BigDecimal cantidad, String unidadMedida,
                                       LocalDate fecha, Long usuarioId, Anulacion anulacion) {
+        return reconstruir(id, campanaId, cantidad, unidadMedida, fecha, usuarioId, anulacion, CalidadCosecha.VACIA);
+    }
+
+    public static Cosecha reconstruir(Long id, Long campanaId, BigDecimal cantidad, String unidadMedida,
+                                      LocalDate fecha, Long usuarioId, Anulacion anulacion, CalidadCosecha calidad) {
         Cosecha c = new Cosecha();
         c.id = id;
         c.campanaId = campanaId;
@@ -29,6 +35,7 @@ public class Cosecha {
         c.fecha = fecha;
         c.usuarioId = usuarioId;
         c.anulacion = anulacion;
+        c.calidad = calidad;
         return c;
     }
 
@@ -58,6 +65,10 @@ public class Cosecha {
         this.usuarioId = usuarioId;
     }
 
+    public void registrarCalidad(CalidadCosecha calidad) {
+        this.calidad = calidad;
+    }
+
     public void anular(String motivo, Long usuarioId) {
         if (isAnulado()) {
             throw new IllegalStateException("La cosecha ya está anulada");
@@ -78,4 +89,5 @@ public class Cosecha {
     public LocalDate getFecha() { return fecha; }
     public Long getUsuarioId() { return usuarioId; }
     public Anulacion getAnulacion() { return anulacion; }
+    public CalidadCosecha getCalidad() { return calidad; }
 }

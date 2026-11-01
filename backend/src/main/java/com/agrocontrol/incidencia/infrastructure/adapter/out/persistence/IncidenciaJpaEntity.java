@@ -1,6 +1,8 @@
 package com.agrocontrol.incidencia.infrastructure.adapter.out.persistence;
 
 import com.agrocontrol.incidencia.domain.EstadoIncidencia;
+import com.agrocontrol.incidencia.domain.GravedadIncidencia;
+import com.agrocontrol.incidencia.domain.TipoIncidencia;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -58,13 +60,21 @@ public class IncidenciaJpaEntity {
     @Column(name = "anulado_en")
     private LocalDateTime anuladoEn;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo", nullable = false, length = 20)
+    private TipoIncidencia tipo;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "gravedad", nullable = false, length = 10)
+    private GravedadIncidencia gravedad;
+
     protected IncidenciaJpaEntity() {
     }
 
     public IncidenciaJpaEntity(Long id, Long parcelaId, Long campanaId, Long laborId, String descripcion,
                                Long usuarioId, LocalDateTime fecha, EstadoIncidencia estado, String resolucion,
                                LocalDateTime resueltaEn, String motivoAnulacion, Long anuladoPor,
-                               LocalDateTime anuladoEn) {
+                               LocalDateTime anuladoEn, TipoIncidencia tipo, GravedadIncidencia gravedad) {
         this.id = id;
         this.parcelaId = parcelaId;
         this.campanaId = campanaId;
@@ -78,9 +88,13 @@ public class IncidenciaJpaEntity {
         this.motivoAnulacion = motivoAnulacion;
         this.anuladoPor = anuladoPor;
         this.anuladoEn = anuladoEn;
+        this.tipo = tipo;
+        this.gravedad = gravedad;
     }
 
     public Long getId() { return id; }
+    public TipoIncidencia getTipo() { return tipo; }
+    public GravedadIncidencia getGravedad() { return gravedad; }
     public Long getParcelaId() { return parcelaId; }
     public Long getCampanaId() { return campanaId; }
     public Long getLaborId() { return laborId; }

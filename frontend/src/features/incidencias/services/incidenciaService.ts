@@ -1,7 +1,7 @@
 import { apiFetch } from '../../../api/apiClient';
 import type { Incidencia } from '../models/Incidencia';
 
-export type IncidenciaCreateRequest = Pick<Incidencia, 'parcelaId' | 'campanaId' | 'laborId' | 'descripcion'>;
+export type IncidenciaCreateRequest = Pick<Incidencia, 'parcelaId' | 'campanaId' | 'laborId' | 'descripcion' | 'tipo' | 'gravedad'>;
 
 export const incidenciaService = {
   listar(signal?: AbortSignal): Promise<Incidencia[]> {

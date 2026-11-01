@@ -5,7 +5,7 @@ import type { Campana } from '../../campanas/models/Campana';
 import { etiquetaCampana, etiquetaParcela, type Catalogos } from '../../campanas/utils/etiquetas';
 import type { Labor } from '../../labores/models/Labor';
 import { useSesion } from '../../auth/context/useAuth';
-import type { Incidencia } from '../models/Incidencia';
+import { TIPOS_INCIDENCIA, type GravedadIncidencia, type Incidencia, type TipoIncidencia } from '../models/Incidencia';
 import { incidenciaService } from '../services/incidenciaService';
 import Button from '../../../components/ui/Button';
 
@@ -16,7 +16,7 @@ interface IncidenciaFormProps {
   onCreated: (incidencia: Incidencia) => void;
 }
 
-type Errores = Partial<Record<'parcelaId' | 'descripcion', string>>;
+type Errores = Partial<Record<'parcelaId' | 'descripcion' | 'tipo', string>>;
 
 // Parcela, campaña y labor se eligen en cascada: cada lista se filtra por la anterior,
 // así el backend nunca recibe una combinación que no coincide.
@@ -26,6 +26,8 @@ export default function IncidenciaForm({ campanas, labores, catalogos, onCreated
   const [campanaId, setCampanaId] = useState('');
   const [laborId, setLaborId] = useState('');
   const [descripcion, setDescripcion] = useState('');
+  const [tipo, setTipo] = useState<TipoIncidencia | ''>('');
+  const [gravedad, setGravedad] = useState<GravedadIncidencia>('MEDIA');
   const [errors, setErrors] = useState<Errores>({});
   const [mensaje, setMensaje] = useState('');
   const [apiError, setApiError] = useState('');
@@ -51,10 +53,11 @@ export default function IncidenciaForm({ campanas, labores, catalogos, onCreated
     setApiError('');
     const errores: Errores = {};
     if (!parcelaId) errores.parcelaId = 'Debe seleccionar la parcela afectada.';
+    if (!tipo) errores.tipo = 'Indique qué tipo de problema es.';
     if (!descripcion.trim()) errores.descripcion = 'Describa lo ocurrido.';
     else if (descripcion.trim().length > 1000) errores.descripcion = 'Use como máximo 1000 caracteres.';
     setErrors(errores);
-    if (Object.keys(errores).length > 0) return;
+    if (Object.keys(errores).length > 0 || !tipo) return;
 
     try {
       setSubmitting(true);
@@ -63,9 +66,13 @@ export default function IncidenciaForm({ campanas, labores, catalogos, onCreated
         campanaId: campanaId ? Number(campanaId) : null,
         laborId: laborId ? Number(laborId) : null,
         descripcion: descripcion.trim(),
+        tipo,
+        gravedad,
       });
       onCreated(creada);
       setDescripcion('');
+      setTipo('');
+      setGravedad('MEDIA');
       setMensaje('Incidencia registrada correctamente.');
     } catch (err) {
       if (err instanceof ApiError) setErrors(err.campos);
@@ -78,6 +85,22 @@ export default function IncidenciaForm({ campanas, labores, catalogos, onCreated
   return (
     <form className="entity-form" onSubmit={handleSubmit} noValidate>
       <div className="form-grid">
+        <label>
+          Tipo de problema
+          <select value={tipo} onChange={(e) => setTipo(e.target.value as TipoIncidencia | '')}>
+            <option value="">Seleccione el tipo</option>
+            {TIPOS_INCIDENCIA.map((item) => <option key={item.valor} value={item.valor}>{item.nombre}</option>)}
+          </select>
+          {errors.tipo && <small className="field-error">{errors.tipo}</small>}
+        </label>
+        <label>
+          Gravedad
+          <select value={gravedad} onChange={(e) => setGravedad(e.target.value as GravedadIncidencia)}>
+            <option value="BAJA">Baja: puede esperar</option>
+            <option value="MEDIA">Media: atender pronto</option>
+            <option value="ALTA">Alta: urgente</option>
+          </select>
+        </label>
         <label>
           Parcela
           <select value={parcelaId} onChange={(e) => cambiarParcela(e.target.value)}>

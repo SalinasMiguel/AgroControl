@@ -3,8 +3,10 @@ package com.agrocontrol.incidencia.application;
 import com.agrocontrol.auditoria.application.Auditable;
 import com.agrocontrol.campana.domain.Campana;
 import com.agrocontrol.campana.domain.CampanaRepository;
+import com.agrocontrol.incidencia.domain.GravedadIncidencia;
 import com.agrocontrol.incidencia.domain.Incidencia;
 import com.agrocontrol.incidencia.domain.IncidenciaRepository;
+import com.agrocontrol.incidencia.domain.TipoIncidencia;
 import com.agrocontrol.labor.domain.Labor;
 import com.agrocontrol.labor.domain.LaborRepository;
 import com.agrocontrol.parcela.domain.ParcelaRepository;
@@ -47,7 +49,8 @@ public class IncidenciaService {
     // Lo que no se envía se deduce del nivel más específico: labor -> campaña -> parcela,
     // y si se envía, debe coincidir con lo deducido.
     @Transactional
-    public Incidencia registrar(Long parcelaId, Long campanaId, Long laborId, String descripcion, Long usuarioId) {
+    public Incidencia registrar(Long parcelaId, Long campanaId, Long laborId, String descripcion,
+                                TipoIncidencia tipo, GravedadIncidencia gravedad, Long usuarioId) {
         if (parcelaId == null && campanaId == null && laborId == null) {
             throw new IllegalArgumentException("La incidencia debe referirse a una parcela, una campaña o una labor");
         }
@@ -70,7 +73,9 @@ public class IncidenciaService {
         if (usuarioRepository.buscarPorId(usuarioId).isEmpty()) {
             throw new UsuarioNoEncontradoException(usuarioId);
         }
-        return incidenciaRepository.guardar(new Incidencia(null, parcelaId, campanaId, laborId, descripcion.trim(), usuarioId));
+        Incidencia incidencia = new Incidencia(null, parcelaId, campanaId, laborId, descripcion.trim(), usuarioId);
+        incidencia.clasificar(tipo, gravedad);
+        return incidenciaRepository.guardar(incidencia);
     }
 
     @Auditable(entidad = "INCIDENCIA", accion = "ATENDER")

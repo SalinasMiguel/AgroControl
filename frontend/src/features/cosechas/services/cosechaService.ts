@@ -2,7 +2,7 @@ import { apiFetch } from '../../../api/apiClient';
 import type { Cosecha } from '../models/Cosecha';
 
 // usuarioId no se envía: el backend lo toma del token
-export type CosechaCreateRequest = Pick<Cosecha, 'campanaId' | 'cantidad' | 'unidadMedida' | 'fecha'>;
+export type CosechaCreateRequest = Pick<Cosecha, 'campanaId' | 'cantidad' | 'unidadMedida' | 'fecha' | 'humedadPct' | 'impurezasPct' | 'numeroBoleta'>;
 
 export const cosechaService = {
   listar(signal?: AbortSignal): Promise<Cosecha[]> {

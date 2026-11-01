@@ -19,7 +19,7 @@ import { useAuth } from '../../auth/context/useAuth';
 import StatusBadge from '../../../components/ui/StatusBadge';
 import IncidenciaForm from '../components/IncidenciaForm';
 import ResolverPanel from '../components/ResolverPanel';
-import type { Incidencia } from '../models/Incidencia';
+import { nombreTipoIncidencia, type Incidencia } from '../models/Incidencia';
 import { incidenciaService } from '../services/incidenciaService';
 import Button from '../../../components/ui/Button';
 import EmptyState from '../../../components/ui/EmptyState';
@@ -143,12 +143,14 @@ export default function IncidenciasPage() {
               <div className="table-responsive">
                 <table className="data-table">
                   <thead>
-                    <tr><th>Fecha</th><th>Parcela</th><th>Cultivo</th><th>Labor</th><th>Descripción</th><th>Reportado por</th><th>Estado</th>{puedeGestionar && <th>Acciones</th>}</tr>
+                    <tr><th>Fecha</th><th>Tipo</th><th>Gravedad</th><th>Parcela</th><th>Cultivo</th><th>Labor</th><th>Descripción</th><th>Reportado por</th><th>Estado</th>{puedeGestionar && <th>Acciones</th>}</tr>
                   </thead>
                   <tbody>
                     {incidencias.map((incidencia) => (
                       <tr key={incidencia.id} title={incidencia.motivoAnulacion ?? undefined}>
                         <td>{formatFecha(incidencia.fecha)}</td>
+                        <td>{nombreTipoIncidencia(incidencia.tipo)}</td>
+                        <td><StatusBadge estado={incidencia.gravedad} /></td>
                         <td>{incidencia.parcelaId ? etiquetaParcela(incidencia.parcelaId, catalogos) : '—'}</td>
                         <td>{cultivoDeCampana(incidencia.campanaId)}</td>
                         <td>{tipoLabor(incidencia.laborId)}</td>

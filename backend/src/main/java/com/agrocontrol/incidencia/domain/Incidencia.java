@@ -17,6 +17,8 @@ public class Incidencia {
     private String resolucion;
     private LocalDateTime resueltaEn;
     private Anulacion anulacion;
+    private TipoIncidencia tipo = TipoIncidencia.OTRO;
+    private GravedadIncidencia gravedad = GravedadIncidencia.MEDIA;
 
     private Incidencia() {
     }
@@ -24,7 +26,8 @@ public class Incidencia {
     // Rehidrata un registro ya guardado (lo usa el mapper de persistencia): no repite las validaciones de alta.
     public static Incidencia reconstruir(Long id, Long parcelaId, Long campanaId, Long laborId, String descripcion,
                                          Long usuarioId, LocalDateTime fecha, EstadoIncidencia estado,
-                                         String resolucion, LocalDateTime resueltaEn, Anulacion anulacion) {
+                                         String resolucion, LocalDateTime resueltaEn, Anulacion anulacion,
+                                         TipoIncidencia tipo, GravedadIncidencia gravedad) {
         Incidencia i = new Incidencia();
         i.id = id;
         i.parcelaId = parcelaId;
@@ -37,6 +40,8 @@ public class Incidencia {
         i.resolucion = resolucion;
         i.resueltaEn = resueltaEn;
         i.anulacion = anulacion;
+        i.tipo = tipo;
+        i.gravedad = gravedad;
         return i;
     }
 
@@ -53,6 +58,12 @@ public class Incidencia {
         this.laborId = laborId;
         this.descripcion = descripcion;
         this.usuarioId = usuarioId;
+    }
+
+    // Sin clasificar queda como OTRO y MEDIA, igual que las incidencias anteriores
+    public void clasificar(TipoIncidencia tipo, GravedadIncidencia gravedad) {
+        this.tipo = tipo == null ? TipoIncidencia.OTRO : tipo;
+        this.gravedad = gravedad == null ? GravedadIncidencia.MEDIA : gravedad;
     }
 
     // Alguien se hace cargo: ya no está sin atender
@@ -99,4 +110,6 @@ public class Incidencia {
     public String getResolucion() { return resolucion; }
     public LocalDateTime getResueltaEn() { return resueltaEn; }
     public Anulacion getAnulacion() { return anulacion; }
+    public TipoIncidencia getTipo() { return tipo; }
+    public GravedadIncidencia getGravedad() { return gravedad; }
 }

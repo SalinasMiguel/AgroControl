@@ -4,6 +4,7 @@ import com.agrocontrol.auditoria.application.Auditable;
 import com.agrocontrol.campana.domain.Campana;
 import com.agrocontrol.campana.domain.CampanaRepository;
 import com.agrocontrol.campana.domain.EstadoCampana;
+import com.agrocontrol.cosecha.domain.CalidadCosecha;
 import com.agrocontrol.cosecha.domain.Cosecha;
 import com.agrocontrol.cosecha.domain.CosechaRepository;
 import com.agrocontrol.shared.domain.ConflictoException;
@@ -39,7 +40,8 @@ public class CosechaService {
 
     @Auditable(entidad = "COSECHA", accion = "REGISTRAR")
     @Transactional
-    public Cosecha registrar(Long campanaId, BigDecimal cantidad, String unidadMedida, LocalDate fecha, Long usuarioId) {
+    public Cosecha registrar(Long campanaId, BigDecimal cantidad, String unidadMedida, LocalDate fecha,
+                             CalidadCosecha calidad, Long usuarioId) {
         Campana campana = campanaRepository.buscarPorId(campanaId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("No existe la campaña con id: " + campanaId));
         // RN-06: una cosecha tardía exige reabrir la campaña
@@ -56,7 +58,9 @@ public class CosechaService {
         if (usuarioRepository.buscarPorId(usuarioId).isEmpty()) {
             throw new UsuarioNoEncontradoException(usuarioId);
         }
-        return cosechaRepository.guardar(new Cosecha(null, campanaId, cantidad, unidadMedida.trim(), fechaCosecha, usuarioId));
+        Cosecha cosecha = new Cosecha(null, campanaId, cantidad, unidadMedida.trim(), fechaCosecha, usuarioId);
+        cosecha.registrarCalidad(calidad);
+        return cosechaRepository.guardar(cosecha);
     }
 
     @Auditable(entidad = "COSECHA", accion = "ANULAR")

@@ -13,7 +13,8 @@ public final class IncidenciaPersistenceMapper {
                                       entity.getDescripcion(), entity.getUsuarioId(), entity.getFecha(),
                                       entity.getEstado(), entity.getResolucion(), entity.getResueltaEn(),
                                       entity.getAnuladoEn() == null ? null : new Anulacion(entity.getMotivoAnulacion(),
-                                              entity.getAnuladoPor(), entity.getAnuladoEn()));
+                                              entity.getAnuladoPor(), entity.getAnuladoEn()),
+                                      entity.getTipo(), entity.getGravedad());
     }
 
     public static IncidenciaJpaEntity toEntity(Incidencia i) {
@@ -23,6 +24,7 @@ public final class IncidenciaPersistenceMapper {
                                        i.getResolucion(), i.getResueltaEn(),
                                        anulacion == null ? null : anulacion.motivo(),
                                        anulacion == null ? null : anulacion.usuarioId(),
-                                       anulacion == null ? null : anulacion.fecha());
+                                       anulacion == null ? null : anulacion.fecha(),
+                                       i.getTipo(), i.getGravedad());
     }
 }

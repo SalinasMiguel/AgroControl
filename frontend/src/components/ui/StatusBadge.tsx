@@ -20,6 +20,9 @@ const clasePorEstado: Record<string, string> = {
   EN_DESCANSO: 'status-neutral',
   INACTIVO: 'status-inactive',
   SALIDA: 'status-inactive',
+  BAJA: 'status-planned',
+  MEDIA: 'status-progress',
+  ALTA: 'status-inactive',
 };
 
 interface StatusBadgeProps {

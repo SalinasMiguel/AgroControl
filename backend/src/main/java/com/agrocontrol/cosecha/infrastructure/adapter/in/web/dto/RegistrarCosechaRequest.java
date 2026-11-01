@@ -1,5 +1,7 @@
 package com.agrocontrol.cosecha.infrastructure.adapter.in.web.dto;
 
+import com.agrocontrol.cosecha.domain.CalidadCosecha;
+import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
@@ -23,6 +25,21 @@ public record RegistrarCosechaRequest(
         String unidadMedida,
 
         // Opcional: sin fecha, se registra con la de hoy
-        LocalDate fecha
+        LocalDate fecha,
+
+        // Opcionales: lo que dice la boleta de balanza
+        @DecimalMin(value = "0", message = "La humedad no puede ser negativa.")
+        @DecimalMax(value = "100", message = "La humedad no puede superar el 100 %.")
+        BigDecimal humedadPct,
+
+        @DecimalMin(value = "0", message = "Las impurezas no pueden ser negativas.")
+        @DecimalMax(value = "100", message = "Las impurezas no pueden superar el 100 %.")
+        BigDecimal impurezasPct,
+
+        @Size(max = 30, message = "La boleta admite como máximo 30 caracteres.")
+        String numeroBoleta
 ) {
+    public CalidadCosecha calidad() {
+        return new CalidadCosecha(humedadPct, impurezasPct, numeroBoleta);
+    }
 }

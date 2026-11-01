@@ -9,6 +9,10 @@ import com.agrocontrol.campana.application.AvanceCampanaService;
 import com.agrocontrol.campana.application.CampanaService;
 import com.agrocontrol.campana.domain.Campana;
 import com.agrocontrol.campana.domain.PlanSiembra;
+import com.agrocontrol.cosecha.application.CosechaService;
+import com.agrocontrol.cosecha.domain.CalidadCosecha;
+import com.agrocontrol.incidencia.domain.GravedadIncidencia;
+import com.agrocontrol.incidencia.domain.TipoIncidencia;
 import com.agrocontrol.campana.domain.EstadoCampana;
 import com.agrocontrol.incidencia.application.IncidenciaService;
 import com.agrocontrol.insumo.application.InventarioService;
@@ -50,6 +54,9 @@ class PersistenciaPostgresTest {
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:17");
 
     @Autowired
+    private CosechaService cosechaService;
+
+    @Autowired
     private ParcelaRepository parcelaRepository;
     @Autowired
     private CampanaService campanaService;
@@ -77,7 +84,7 @@ class PersistenciaPostgresTest {
         assertThat(parcelaRepository.listarTodas()).isNotEmpty();
         BigDecimal version = jdbc.queryForObject(
                 "SELECT max(version::numeric) FROM flyway_schema_history WHERE success", BigDecimal.class);
-        assertThat(version).isEqualByComparingTo("11");
+        assertThat(version).isEqualByComparingTo("12");
     }
 
     @Test
@@ -188,7 +195,7 @@ class PersistenciaPostgresTest {
     void laIncidenciaResueltaGuardaComoYCuando() {
         Long usuarioId = jdbc.queryForObject("SELECT min(id_usuario) FROM agrocontrol.usuario", Long.class);
         Long parcelaId = jdbc.queryForObject("SELECT min(id_parcela) FROM agrocontrol.parcela", Long.class);
-        Long id = incidenciaService.registrar(parcelaId, null, null, "Granizo en el lote norte", usuarioId).getId();
+        Long id = incidenciaService.registrar(parcelaId, null, null, "Granizo en el lote norte", null, null, usuarioId).getId();
 
         incidenciaService.resolver(id, "Se resembró 1 ha");
 
@@ -261,6 +268,32 @@ class PersistenciaPostgresTest {
         assertThat(leida.variedad()).isEqualTo("Híbrido de prueba");
         assertThat(leida.fechaCosechaEstimada()).isEqualTo(hoy.plusDays(120));
         campanaService.cancelar(creada.getId(), "Fin de la prueba");
+    }
+
+    @Test
+    void laCalidadDeLaCosechaYElTipoDeIncidenciaSeGuardanYSeLeen() {
+        Long usuarioId = jdbc.queryForObject("SELECT min(id_usuario) FROM agrocontrol.usuario", Long.class);
+        Long parcelaId = jdbc.queryForObject(
+                "SELECT min(id_parcela) FROM agrocontrol.parcela p WHERE NOT EXISTS "
+                        + "(SELECT 1 FROM agrocontrol.campana c WHERE c.id_parcela = p.id_parcela AND c.estado IN ('PLANIFICADA', 'EN_CURSO'))",
+                Long.class);
+        Long cultivoId = jdbc.queryForObject("SELECT min(id_cultivo) FROM agrocontrol.cultivo", Long.class);
+        Campana campana = campanaService.crear(parcelaId, cultivoId, LocalDate.now(), PlanSiembra.VACIO);
+        campanaService.iniciar(campana.getId());
+
+        Long cosechaId = cosechaService.registrar(campana.getId(), new BigDecimal("10"), "t", LocalDate.now(),
+                new CalidadCosecha(new BigDecimal("14.5"), new BigDecimal("1.25"), "B-120"), usuarioId).getId();
+        Long incidenciaId = incidenciaService.registrar(parcelaId, null, null, "Rodamiento roto",
+                TipoIncidencia.MAQUINARIA, GravedadIncidencia.ALTA, usuarioId).getId();
+
+        CalidadCosecha calidad = cosechaService.listar(campana.getId()).stream()
+                .filter(cosecha -> cosecha.getId().equals(cosechaId)).findFirst().orElseThrow().getCalidad();
+        assertThat(calidad.humedadPct()).isEqualByComparingTo("14.5");
+        assertThat(calidad.impurezasPct()).isEqualByComparingTo("1.25");
+        assertThat(calidad.numeroBoleta()).isEqualTo("B-120");
+        assertThat(jdbc.queryForObject("SELECT tipo || '/' || gravedad FROM agrocontrol.incidencia WHERE id_incidencia = ?",
+                String.class, incidenciaId)).isEqualTo("MAQUINARIA/ALTA");
+        campanaService.finalizar(campana.getId(), LocalDate.now());
     }
 
     @Test

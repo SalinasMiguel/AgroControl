@@ -3,7 +3,9 @@ package com.agrocontrol.incidencia.application;
 import com.agrocontrol.campana.domain.Campana;
 import com.agrocontrol.campana.domain.CampanaRepository;
 import com.agrocontrol.incidencia.domain.EstadoIncidencia;
+import com.agrocontrol.incidencia.domain.GravedadIncidencia;
 import com.agrocontrol.incidencia.domain.Incidencia;
+import com.agrocontrol.incidencia.domain.TipoIncidencia;
 import com.agrocontrol.incidencia.domain.IncidenciaRepository;
 import com.agrocontrol.labor.domain.Labor;
 import com.agrocontrol.labor.domain.LaborRepository;
@@ -61,12 +63,24 @@ class IncidenciaServiceTest {
     }
 
     @Test
+    void sinClasificarQuedaComoOtroYMedia() {
+        Incidencia incidencia = new Incidencia(1L, 3L, null, null, "Algo pasó", 7L);
+        incidencia.clasificar(null, null);
+        assertThat(incidencia.getTipo()).isEqualTo(TipoIncidencia.OTRO);
+        assertThat(incidencia.getGravedad()).isEqualTo(GravedadIncidencia.MEDIA);
+
+        incidencia.clasificar(TipoIncidencia.MAQUINARIA, GravedadIncidencia.ALTA);
+        assertThat(incidencia.getTipo()).isEqualTo(TipoIncidencia.MAQUINARIA);
+        assertThat(incidencia.getGravedad()).isEqualTo(GravedadIncidencia.ALTA);
+    }
+
+    @Test
     void registraSobreUnaParcela() {
         existeParcela(3L);
         existeUsuario(7L);
         guardaLoRecibido();
 
-        Incidencia incidencia = service.registrar(3L, null, null, "  Plaga de gusano  ", 7L);
+        Incidencia incidencia = service.registrar(3L, null, null, "  Plaga de gusano  ", null, null, 7L);
 
         assertThat(incidencia.getParcelaId()).isEqualTo(3L);
         assertThat(incidencia.getDescripcion()).isEqualTo("Plaga de gusano");
@@ -80,7 +94,7 @@ class IncidenciaServiceTest {
         existeUsuario(7L);
         guardaLoRecibido();
 
-        Incidencia incidencia = service.registrar(null, null, 9L, "Bomba de riego averiada", 7L);
+        Incidencia incidencia = service.registrar(null, null, 9L, "Bomba de riego averiada", null, null, 7L);
 
         assertThat(incidencia.getCampanaId()).isEqualTo(5L);
         assertThat(incidencia.getParcelaId()).isEqualTo(3L);
@@ -90,14 +104,14 @@ class IncidenciaServiceTest {
     void campanaDeOtraParcelaLanza409() {
         when(campanaRepository.buscarPorId(5L)).thenReturn(Optional.of(new Campana(5L, 3L, 1L, LocalDate.now())));
 
-        assertThatThrownBy(() -> service.registrar(4L, 5L, null, "Helada", 7L))
+        assertThatThrownBy(() -> service.registrar(4L, 5L, null, "Helada", null, null, 7L))
                 .isInstanceOf(ConflictoException.class);
         verify(incidenciaRepository, never()).guardar(any());
     }
 
     @Test
     void sinReferenciaLanza400() {
-        assertThatThrownBy(() -> service.registrar(null, null, null, "Algo pasó", 7L))
+        assertThatThrownBy(() -> service.registrar(null, null, null, "Algo pasó", null, null, 7L))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -105,7 +119,7 @@ class IncidenciaServiceTest {
     void laborInexistenteLanza404() {
         when(laborRepository.buscarPorId(9L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.registrar(null, null, 9L, "Algo pasó", 7L))
+        assertThatThrownBy(() -> service.registrar(null, null, 9L, "Algo pasó", null, null, 7L))
                 .isInstanceOf(RecursoNoEncontradoException.class);
     }
 
@@ -114,7 +128,7 @@ class IncidenciaServiceTest {
         existeParcela(3L);
         when(usuarioRepository.buscarPorId(7L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.registrar(3L, null, null, "Algo pasó", 7L))
+        assertThatThrownBy(() -> service.registrar(3L, null, null, "Algo pasó", null, null, 7L))
                 .isInstanceOf(UsuarioNoEncontradoException.class);
     }
 

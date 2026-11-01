@@ -18,7 +18,10 @@ public record CosechaResponse(
         boolean anulado,
         String motivoAnulacion,
         Long anuladoPor,
-        LocalDateTime anuladoEn
+        LocalDateTime anuladoEn,
+        BigDecimal humedadPct,
+        BigDecimal impurezasPct,
+        String numeroBoleta
 ) {
     public static CosechaResponse desde(Cosecha cosecha) {
         Anulacion anulacion = cosecha.getAnulacion();
@@ -33,7 +36,10 @@ public record CosechaResponse(
                 cosecha.isAnulado(),
                 anulacion == null ? null : anulacion.motivo(),
                 anulacion == null ? null : anulacion.usuarioId(),
-                anulacion == null ? null : anulacion.fecha()
+                anulacion == null ? null : anulacion.fecha(),
+                cosecha.getCalidad().humedadPct(),
+                cosecha.getCalidad().impurezasPct(),
+                cosecha.getCalidad().numeroBoleta()
         );
     }
 }

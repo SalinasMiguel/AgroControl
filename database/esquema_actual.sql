@@ -227,6 +227,9 @@ CREATE TABLE agrocontrol.cosecha (
     motivo_anulacion character varying(200),
     anulado_por integer,
     anulado_en timestamp without time zone,
+    humedad_pct numeric(5,2),
+    impurezas_pct numeric(5,2),
+    numero_boleta character varying(30),
     CONSTRAINT cosecha_anulado_check CHECK (((NOT anulado) OR ((motivo_anulacion IS NOT NULL) AND (anulado_por IS NOT NULL) AND (anulado_en IS NOT NULL)))),
     CONSTRAINT cosecha_cantidad_check CHECK ((cantidad > (0)::numeric)),
     CONSTRAINT cosecha_unidad_check CHECK (((unidad_medida)::text = ANY ((ARRAY['t'::character varying, 'kg'::character varying, 'qq'::character varying])::text[])))
@@ -303,6 +306,8 @@ CREATE TABLE agrocontrol.incidencia (
     motivo_anulacion character varying(200),
     anulado_por integer,
     anulado_en timestamp without time zone,
+    tipo character varying(20) DEFAULT 'OTRO'::character varying NOT NULL,
+    gravedad character varying(10) DEFAULT 'MEDIA'::character varying NOT NULL,
     CONSTRAINT incidencia_anulada_check CHECK ((((estado)::text <> 'ANULADA'::text) OR ((motivo_anulacion IS NOT NULL) AND (anulado_por IS NOT NULL) AND (anulado_en IS NOT NULL)))),
     CONSTRAINT incidencia_estado_check CHECK (((estado)::text = ANY ((ARRAY['ABIERTA'::character varying, 'EN_ATENCION'::character varying, 'RESUELTA'::character varying, 'ANULADA'::character varying])::text[]))),
     CONSTRAINT incidencia_resuelta_check CHECK ((((estado)::text <> 'RESUELTA'::text) OR ((resolucion IS NOT NULL) AND (resuelta_en IS NOT NULL))))

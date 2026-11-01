@@ -3,6 +3,7 @@ package com.agrocontrol.cosecha.application;
 import com.agrocontrol.campana.domain.Campana;
 import com.agrocontrol.campana.domain.CampanaRepository;
 import com.agrocontrol.campana.domain.EstadoCampana;
+import com.agrocontrol.cosecha.domain.CalidadCosecha;
 import com.agrocontrol.cosecha.domain.Cosecha;
 import com.agrocontrol.cosecha.domain.CosechaRepository;
 import com.agrocontrol.shared.domain.ConflictoException;
@@ -41,10 +42,20 @@ class CosechaServiceTest {
     private CosechaService service;
 
     @Test
+    void laCalidadSeValidaYSeGuarda() {
+        assertThatThrownBy(() -> new CalidadCosecha(new BigDecimal("100.01"), null, null))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("humedad");
+        assertThatThrownBy(() -> new CalidadCosecha(null, new BigDecimal("-1"), null))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("impurezas");
+        assertThat(new CalidadCosecha(null, null, "  ").numeroBoleta()).isNull();
+        assertThat(new CalidadCosecha(null, null, " B-120 ").numeroBoleta()).isEqualTo("B-120");
+    }
+
+    @Test
     void noSeCosechaUnaCampanaSinIniciar() {
         when(campanaRepository.buscarPorId(5L)).thenReturn(Optional.of(new Campana(5L, 3L, 1L, LocalDate.now())));
 
-        assertThatThrownBy(() -> service.registrar(5L, BigDecimal.TEN, "t", null, 7L)).isInstanceOf(ConflictoException.class);
+        assertThatThrownBy(() -> service.registrar(5L, BigDecimal.TEN, "t", null, CalidadCosecha.VACIA, 7L)).isInstanceOf(ConflictoException.class);
     }
 
     @Test
@@ -55,7 +66,7 @@ class CosechaServiceTest {
         when(usuarioRepository.buscarPorId(7L)).thenReturn(Optional.of(mock(Usuario.class)));
         when(cosechaRepository.guardar(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        Cosecha cosecha = service.registrar(5L, new BigDecimal("2.5"), " t ", null, 7L);
+        Cosecha cosecha = service.registrar(5L, new BigDecimal("2.5"), " t ", null, CalidadCosecha.VACIA, 7L);
 
         assertThat(cosecha.getUnidadMedida()).isEqualTo("t");
         assertThat(cosecha.getUsuarioId()).isEqualTo(7L);
@@ -78,14 +89,14 @@ class CosechaServiceTest {
         campanaEn(EstadoCampana.EN_CURSO);
         listoParaGuardar();
 
-        assertThat(service.registrar(5L, BigDecimal.TEN, "t", null, 7L).getFecha()).isEqualTo(LocalDate.now());
+        assertThat(service.registrar(5L, BigDecimal.TEN, "t", null, CalidadCosecha.VACIA, 7L).getFecha()).isEqualTo(LocalDate.now());
     }
 
     @Test
     void fechaFuturaDa400() {
         campanaEn(EstadoCampana.EN_CURSO);
 
-        assertThatThrownBy(() -> service.registrar(5L, BigDecimal.TEN, "t", LocalDate.now().plusDays(1), 7L))
+        assertThatThrownBy(() -> service.registrar(5L, BigDecimal.TEN, "t", LocalDate.now().plusDays(1), CalidadCosecha.VACIA, 7L))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -94,9 +105,9 @@ class CosechaServiceTest {
         campanaEn(EstadoCampana.EN_CURSO);
         listoParaGuardar();
 
-        assertThatThrownBy(() -> service.registrar(5L, BigDecimal.TEN, "t", INICIO.minusDays(1), 7L))
+        assertThatThrownBy(() -> service.registrar(5L, BigDecimal.TEN, "t", INICIO.minusDays(1), CalidadCosecha.VACIA, 7L))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThat(service.registrar(5L, BigDecimal.TEN, "t", INICIO, 7L).getFecha()).isEqualTo(INICIO);
+        assertThat(service.registrar(5L, BigDecimal.TEN, "t", INICIO, CalidadCosecha.VACIA, 7L).getFecha()).isEqualTo(INICIO);
     }
 
     @ParameterizedTest
@@ -104,7 +115,7 @@ class CosechaServiceTest {
     void soloSeCosechaUnaCampanaEnCurso(EstadoCampana estado) {
         campanaEn(estado);
 
-        assertThatThrownBy(() -> service.registrar(5L, BigDecimal.TEN, "t", null, 7L))
+        assertThatThrownBy(() -> service.registrar(5L, BigDecimal.TEN, "t", null, CalidadCosecha.VACIA, 7L))
                 .isInstanceOf(ConflictoException.class);
     }
 

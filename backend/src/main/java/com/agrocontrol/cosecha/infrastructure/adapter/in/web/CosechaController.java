@@ -40,7 +40,7 @@ public class CosechaController {
                                                      @AuthenticationPrincipal Jwt jwt) {
         return ResponseEntity.status(HttpStatus.CREATED).body(CosechaResponse.desde(service.registrar(
                 request.campanaId(), request.cantidad(), request.unidadMedida(), request.fecha(),
-                UsuarioAutenticado.id(jwt))));
+                request.calidad(), UsuarioAutenticado.id(jwt))));
     }
 
     @PostMapping("/{id}/anular")

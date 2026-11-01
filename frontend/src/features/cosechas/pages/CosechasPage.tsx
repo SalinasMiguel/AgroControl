@@ -32,6 +32,8 @@ const cargarDatos = async (signal: AbortSignal) => {
   return { cosechas, campanas, usuarios, catalogos: { predios, parcelas, cultivos } };
 };
 
+const porcentaje = (valor: number | null) => (valor === null ? '—' : `${String(valor).replace('.', ',')} %`);
+
 export default function CosechasPage() {
   const { datos, setDatos, loading, error } = useCarga(cargarDatos, {
     cosechas: [] as Cosecha[],
@@ -100,7 +102,7 @@ export default function CosechasPage() {
               <div className="table-responsive">
                 <table className="data-table">
                   <thead>
-                    <tr><th>Fecha</th><th>Campaña</th><th>Cantidad</th><th>Registrado por</th>{puedeRegistrar && <th>Acciones</th>}</tr>
+                    <tr><th>Fecha</th><th>Boleta</th><th>Campaña</th><th>Cantidad</th><th>Humedad</th><th>Impurezas</th><th>Registrado por</th>{puedeRegistrar && <th>Acciones</th>}</tr>
                   </thead>
                   <tbody>
                     {cosechas.map((cosecha) => {
@@ -108,8 +110,11 @@ export default function CosechasPage() {
                       return (
                         <tr key={cosecha.id} className={cosecha.anulado ? 'fila-anulada' : undefined} title={cosecha.motivoAnulacion ?? undefined}>
                           <td>{formatFecha(cosecha.fecha)}</td>
+                          <td className={cosecha.numeroBoleta ? 'code-cell' : 'muted'}>{cosecha.numeroBoleta ?? '—'}</td>
                           <td>{campanaCosecha ? etiquetaCampana(campanaCosecha, catalogos) : `Campaña ${cosecha.campanaId}`}</td>
                           <td className="code-cell">{formatCantidad(cosecha.cantidad, cosecha.unidadMedida)}</td>
+                          <td>{porcentaje(cosecha.humedadPct)}</td>
+                          <td>{porcentaje(cosecha.impurezasPct)}</td>
                           <td>{nombreUsuario(usuarios, cosecha.usuarioId)}</td>
                           {puedeRegistrar && (
                             <td>

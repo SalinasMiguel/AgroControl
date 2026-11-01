@@ -6,6 +6,7 @@ import { etiquetaCampana, type Catalogos } from '../../campanas/utils/etiquetas'
 import { useSesion } from '../../auth/context/useAuth';
 import type { Cosecha } from '../models/Cosecha';
 import { cosechaService } from '../services/cosechaService';
+import Button from '../../../components/ui/Button';
 
 const UNIDADES = ['t', 'kg', 'qq'];
 
@@ -91,9 +92,9 @@ export default function CosechaForm({ campanas, catalogos, onCreated }: CosechaF
       {mensaje && <div className="form-success">{mensaje}</div>}
       {apiError && <div className="form-error">{apiError}</div>}
       <div className="form-actions">
-        <button type="submit" className="btn-primary" disabled={submitting}>
+        <Button type="submit" disabled={submitting}>
           {submitting ? 'Guardando...' : 'Registrar cosecha'}
-        </button>
+        </Button>
       </div>
     </form>
   );

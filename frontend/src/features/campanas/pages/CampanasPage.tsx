@@ -13,6 +13,7 @@ import CampanaTable from '../components/CampanaTable';
 import type { Campana } from '../models/Campana';
 import { campanaService } from '../services/campanaService';
 import { etiquetaCampana, etiquetaParcela, nombreCultivo } from '../utils/etiquetas';
+import Button from '../../../components/ui/Button';
 
 const cargarDatos = async (signal: AbortSignal) => {
   const [campanas, predios, parcelas, cultivos] = await Promise.all([
@@ -61,9 +62,9 @@ export default function CampanasPage() {
         descripcion="Ciclos de cultivo por parcela: se planifican, se inician y se finalizan."
         accion={
           puedeGestionar ? (
-            <button type="button" className="btn-primary" onClick={() => setMostrarFormulario((prev) => !prev)}>
+            <Button type="button" onClick={() => setMostrarFormulario((prev) => !prev)}>
               {mostrarFormulario ? 'Cerrar formulario' : '+ Nueva campaña'}
-            </button>
+            </Button>
           ) : undefined
         }
       />

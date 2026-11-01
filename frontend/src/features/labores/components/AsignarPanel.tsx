@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import type { Usuario } from '../../usuarios/models/Usuario';
 import type { AsignacionLabor, Labor } from '../models/Labor';
 import { laborService } from '../services/laborService';
+import Button from '../../../components/ui/Button';
 
 interface AsignarPanelProps {
   labor: Labor;
@@ -51,10 +52,10 @@ export default function AsignarPanel({ labor, disponibles, onAsignado, onCerrar 
       </div>
       {error && <div className="form-error">{error}</div>}
       <div className="form-actions">
-        <button type="button" className="btn-secondary" onClick={onCerrar} disabled={submitting}>Cerrar</button>
-        <button type="submit" className="btn-primary" disabled={submitting || disponibles.length === 0}>
+        <Button variant="secondary" type="button" onClick={onCerrar} disabled={submitting}>Cerrar</Button>
+        <Button type="submit" disabled={submitting || disponibles.length === 0}>
           {submitting ? 'Asignando...' : 'Asignar'}
-        </button>
+        </Button>
       </div>
     </form>
   );

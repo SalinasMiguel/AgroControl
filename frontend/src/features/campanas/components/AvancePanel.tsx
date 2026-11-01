@@ -4,6 +4,7 @@ import CategoriaIcono from '../../insumos/components/CategoriaIcono';
 import type { AvanceCampana } from '../models/AvanceCampana';
 import type { Campana } from '../models/Campana';
 import { campanaService } from '../services/campanaService';
+import Button from '../../../components/ui/Button';
 
 interface AvancePanelProps {
   campana: Campana;
@@ -92,7 +93,7 @@ export default function AvancePanel({ campana, titulo, onCerrar }: AvancePanelPr
         </>
       )}
       <div className="form-actions">
-        <button type="button" className="btn-secondary" onClick={onCerrar}>Cerrar</button>
+        <Button variant="secondary" type="button" onClick={onCerrar}>Cerrar</Button>
       </div>
     </div>
   );

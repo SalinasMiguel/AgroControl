@@ -4,6 +4,7 @@ import { hoyISO } from '../../../utils/formato';
 import type { Campana } from '../models/Campana';
 import { campanaService } from '../services/campanaService';
 import { etiquetaParcela, type Catalogos } from '../utils/etiquetas';
+import Button from '../../../components/ui/Button';
 
 interface CampanaFormProps {
   catalogos: Catalogos;
@@ -90,9 +91,9 @@ export default function CampanaForm({ catalogos, campanas, onCreated }: CampanaF
       {mensaje && <div className="form-success">{mensaje}</div>}
       {apiError && <div className="form-error">{apiError}</div>}
       <div className="form-actions">
-        <button type="submit" className="btn-primary" disabled={submitting}>
+        <Button type="submit" disabled={submitting}>
           {submitting ? 'Guardando...' : 'Planificar campaña'}
-        </button>
+        </Button>
       </div>
     </form>
   );

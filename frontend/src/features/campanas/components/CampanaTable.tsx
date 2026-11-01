@@ -2,6 +2,8 @@ import StatusBadge from '../../../components/ui/StatusBadge';
 import { formatFecha } from '../../../utils/formato';
 import type { Campana } from '../models/Campana';
 import { etiquetaParcela, nombreCultivo, type Catalogos } from '../utils/etiquetas';
+import Button from '../../../components/ui/Button';
+import EmptyState from '../../../components/ui/EmptyState';
 
 interface CampanaTableProps {
   campanas: Campana[];
@@ -16,7 +18,7 @@ export default function CampanaTable({ campanas, catalogos, onIniciar, onFinaliz
   const conAcciones = Boolean(onIniciar || onFinalizar || onAvance);
 
   if (campanas.length === 0) {
-    return <div className="empty-state">No hay campañas registradas.</div>;
+    return <EmptyState title="No hay campañas registradas." />;
   }
 
   return (
@@ -47,13 +49,13 @@ export default function CampanaTable({ campanas, catalogos, onIniciar, onFinaliz
                 <td>
                   <div className="table-actions">
                     {onIniciar && campana.estado === 'PLANIFICADA' && (
-                      <button type="button" className="btn-link" onClick={() => onIniciar(campana)}>Iniciar</button>
+                      <Button variant="secondary" size="sm" type="button" onClick={() => onIniciar(campana)}>Iniciar</Button>
                     )}
                     {onFinalizar && campana.estado !== 'FINALIZADA' && (
-                      <button type="button" className="btn-link" onClick={() => onFinalizar(campana)}>Finalizar</button>
+                      <Button variant="secondary" size="sm" type="button" onClick={() => onFinalizar(campana)}>Finalizar</Button>
                     )}
                     {onAvance && (
-                      <button type="button" className="btn-link" onClick={() => onAvance(campana)}>Avance</button>
+                      <Button variant="secondary" size="sm" type="button" onClick={() => onAvance(campana)}>Avance</Button>
                     )}
                   </div>
                 </td>

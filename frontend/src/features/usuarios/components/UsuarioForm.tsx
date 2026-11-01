@@ -5,6 +5,7 @@ import type { Rol } from '../../auth/models/Sesion';
 import type { RolCatalogo } from '../models/Rol';
 import type { Usuario } from '../models/Usuario';
 import { usuarioService } from '../services/usuarioService';
+import Button from '../../../components/ui/Button';
 
 interface UsuarioFormProps {
   roles: RolCatalogo[];
@@ -88,9 +89,9 @@ export default function UsuarioForm({ roles, onCreated }: UsuarioFormProps) {
       {mensaje && <div className="form-success">{mensaje}</div>}
       {apiError && <div className="form-error">{apiError}</div>}
       <div className="form-actions">
-        <button type="submit" className="btn-primary" disabled={submitting}>
+        <Button type="submit" disabled={submitting}>
           {submitting ? 'Guardando...' : 'Crear usuario'}
-        </button>
+        </Button>
       </div>
     </form>
   );

@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import type { Incidencia } from '../models/Incidencia';
 import { incidenciaService } from '../services/incidenciaService';
+import Button from '../../../components/ui/Button';
 
 interface ResolverPanelProps {
   incidencia: Incidencia;
@@ -43,10 +44,10 @@ export default function ResolverPanel({ incidencia, onResuelta, onCerrar }: Reso
       </div>
       {error && <div className="form-error">{error}</div>}
       <div className="form-actions">
-        <button type="button" className="btn-secondary" onClick={onCerrar} disabled={submitting}>Cancelar</button>
-        <button type="submit" className="btn-primary" disabled={submitting}>
+        <Button variant="secondary" type="button" onClick={onCerrar} disabled={submitting}>Cancelar</Button>
+        <Button type="submit" disabled={submitting}>
           {submitting ? 'Guardando...' : 'Marcar como resuelta'}
-        </button>
+        </Button>
       </div>
     </form>
   );

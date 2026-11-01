@@ -15,6 +15,8 @@ import { useAuth } from '../../auth/context/useAuth';
 import CosechaForm from '../components/CosechaForm';
 import type { Cosecha } from '../models/Cosecha';
 import { cosechaService } from '../services/cosechaService';
+import Button from '../../../components/ui/Button';
+import EmptyState from '../../../components/ui/EmptyState';
 
 const cargarDatos = async (signal: AbortSignal) => {
   const [cosechas, campanas, predios, parcelas, cultivos, usuarios] = await Promise.all([
@@ -51,9 +53,9 @@ export default function CosechasPage() {
         descripcion="Producción obtenida por campaña y quién la registró."
         accion={
           puedeRegistrar ? (
-            <button type="button" className="btn-primary" onClick={() => setMostrarFormulario((prev) => !prev)}>
+            <Button type="button" onClick={() => setMostrarFormulario((prev) => !prev)}>
               {mostrarFormulario ? 'Cerrar formulario' : '+ Registrar cosecha'}
-            </button>
+            </Button>
           ) : undefined
         }
       />
@@ -78,7 +80,7 @@ export default function CosechasPage() {
             ]}
           />
           {cosechas.length === 0 ? (
-            <div className="empty-state">No hay cosechas registradas.</div>
+            <EmptyState title="No hay cosechas registradas." />
           ) : (
             <div className="table-card">
               <div className="table-responsive">

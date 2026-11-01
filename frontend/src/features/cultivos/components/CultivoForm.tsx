@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { ApiError } from '../../../api/apiClient';
 import type { Cultivo } from '../models/Cultivo';
 import { cultivoService } from '../services/cultivoService';
+import Button from '../../../components/ui/Button';
 
 interface CultivoFormProps {
   onCreated: (cultivo: Cultivo) => void;
@@ -70,9 +71,9 @@ export default function CultivoForm({ onCreated }: CultivoFormProps) {
       {mensaje && <div className="form-success">{mensaje}</div>}
       {apiError && <div className="form-error">{apiError}</div>}
       <div className="form-actions">
-        <button type="submit" className="btn-primary" disabled={submitting}>
+        <Button type="submit" disabled={submitting}>
           {submitting ? 'Guardando...' : 'Guardar cultivo'}
-        </button>
+        </Button>
       </div>
     </form>
   );

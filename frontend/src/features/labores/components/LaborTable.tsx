@@ -3,6 +3,8 @@ import { formatFecha } from '../../../utils/formato';
 import type { Campana } from '../../campanas/models/Campana';
 import { etiquetaCampana, type Catalogos } from '../../campanas/utils/etiquetas';
 import type { Labor } from '../models/Labor';
+import Button from '../../../components/ui/Button';
+import EmptyState from '../../../components/ui/EmptyState';
 
 interface LaborTableProps {
   labores: Labor[];
@@ -32,7 +34,7 @@ export default function LaborTable({
   const campana = (id: number) => campanas.find((item) => item.id === id);
 
   if (labores.length === 0) {
-    return <div className="empty-state">No hay labores para mostrar.</div>;
+    return <EmptyState title="No hay labores para mostrar." />;
   }
 
   return (
@@ -65,16 +67,16 @@ export default function LaborTable({
                   <td>
                     <div className="table-actions">
                       {onAsignar && labor.estado !== 'EJECUTADA' && (
-                        <button type="button" className="btn-link" onClick={() => onAsignar(labor)}>Asignar</button>
+                        <Button variant="secondary" size="sm" type="button" onClick={() => onAsignar(labor)}>Asignar</Button>
                       )}
                       {onIniciar && labor.estado === 'PLANIFICADA' && (
-                        <button type="button" className="btn-link" onClick={() => onIniciar(labor)}>Iniciar</button>
+                        <Button variant="secondary" size="sm" type="button" onClick={() => onIniciar(labor)}>Iniciar</Button>
                       )}
                       {onEjecutar && labor.estado !== 'EJECUTADA' && (
-                        <button type="button" className="btn-link" onClick={() => onEjecutar(labor)}>Ejecutar</button>
+                        <Button variant="secondary" size="sm" type="button" onClick={() => onEjecutar(labor)}>Ejecutar</Button>
                       )}
-                      <button type="button" className="btn-link" onClick={() => onInsumos(labor)}>Insumos</button>
-                      <button type="button" className="btn-link" onClick={() => onBitacora(labor)}>Bitácora</button>
+                      <Button variant="secondary" size="sm" type="button" onClick={() => onInsumos(labor)}>Insumos</Button>
+                      <Button variant="secondary" size="sm" type="button" onClick={() => onBitacora(labor)}>Bitácora</Button>
                     </div>
                   </td>
                 </tr>

@@ -7,6 +7,7 @@ import type { Labor } from '../../labores/models/Labor';
 import { useSesion } from '../../auth/context/useAuth';
 import type { Incidencia } from '../models/Incidencia';
 import { incidenciaService } from '../services/incidenciaService';
+import Button from '../../../components/ui/Button';
 
 interface IncidenciaFormProps {
   campanas: Campana[];
@@ -118,9 +119,9 @@ export default function IncidenciaForm({ campanas, labores, catalogos, onCreated
       {mensaje && <div className="form-success">{mensaje}</div>}
       {apiError && <div className="form-error">{apiError}</div>}
       <div className="form-actions">
-        <button type="submit" className="btn-primary" disabled={submitting}>
+        <Button type="submit" disabled={submitting}>
           {submitting ? 'Guardando...' : 'Registrar incidencia'}
-        </button>
+        </Button>
       </div>
     </form>
   );

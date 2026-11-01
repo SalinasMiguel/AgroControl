@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router';
 import { useAuth } from '../../features/auth/context/useAuth';
 import { NOMBRE_ROL } from '../../features/auth/permisos';
+import Button from '../ui/Button';
 
 export default function Header() {
   const { sesion, cerrarSesion } = useAuth();
@@ -19,16 +20,15 @@ export default function Header() {
             <small>{sesion.email}</small>
           </div>
           <span className="topbar__status">{NOMBRE_ROL[sesion.rol]}</span>
-          <button
+          <Button variant="secondary"
             type="button"
-            className="btn-secondary"
             onClick={() => {
               cerrarSesion();
               navigate('/login', { replace: true });
             }}
           >
             Salir
-          </button>
+          </Button>
         </div>
       )}
     </header>

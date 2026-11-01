@@ -19,6 +19,8 @@ import IncidenciaForm from '../components/IncidenciaForm';
 import ResolverPanel from '../components/ResolverPanel';
 import type { Incidencia } from '../models/Incidencia';
 import { incidenciaService } from '../services/incidenciaService';
+import Button from '../../../components/ui/Button';
+import EmptyState from '../../../components/ui/EmptyState';
 
 const cargarDatos = async (signal: AbortSignal) => {
   const [incidencias, campanas, labores, predios, parcelas, cultivos, usuarios] = await Promise.all([
@@ -83,9 +85,9 @@ export default function IncidenciasPage() {
         descripcion="Problemas reportados en campo: plagas, clima, fallas de equipo."
         accion={
           puedeReportar ? (
-            <button type="button" className="btn-primary" onClick={() => setMostrarFormulario((prev) => !prev)}>
+            <Button type="button" onClick={() => setMostrarFormulario((prev) => !prev)}>
               {mostrarFormulario ? 'Cerrar formulario' : '+ Reportar incidencia'}
-            </button>
+            </Button>
           ) : undefined
         }
       />
@@ -126,7 +128,7 @@ export default function IncidenciasPage() {
             ]}
           />
           {incidencias.length === 0 ? (
-            <div className="empty-state">No hay incidencias registradas.</div>
+            <EmptyState title="No hay incidencias registradas." />
           ) : (
             <div className="table-card">
               <div className="table-responsive">
@@ -151,10 +153,10 @@ export default function IncidenciasPage() {
                           <td>
                             <div className="table-actions">
                               {incidencia.estado === 'ABIERTA' && (
-                                <button type="button" className="btn-link" onClick={() => atender(incidencia)}>Atender</button>
+                                <Button variant="secondary" size="sm" type="button" onClick={() => atender(incidencia)}>Atender</Button>
                               )}
                               {incidencia.estado !== 'RESUELTA' ? (
-                                <button type="button" className="btn-link" onClick={() => setResolviendo(incidencia)}>Resolver</button>
+                                <Button variant="secondary" size="sm" type="button" onClick={() => setResolviendo(incidencia)}>Resolver</Button>
                               ) : (
                                 <span className="muted">—</span>
                               )}

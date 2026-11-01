@@ -12,10 +12,13 @@ public record InsumoResponse(
         BigDecimal stockActual,
         CategoriaInsumo categoria,
         BigDecimal stockMinimo,
-        boolean porAgotarse
+        boolean porAgotarse,
+        String codigo,
+        String marca
 ) {
     public static InsumoResponse desde(Insumo insumo) {
         return new InsumoResponse(insumo.getId(), insumo.getNombre(), insumo.getUnidadMedida(), insumo.getStockActual(),
-                insumo.getCategoria(), insumo.getStockMinimo(), insumo.porAgotarse());
+                insumo.getCategoria(), insumo.getStockMinimo(), insumo.porAgotarse(),
+                insumo.getCodigo(), insumo.getMarca());
     }
 }

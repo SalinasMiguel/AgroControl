@@ -49,13 +49,13 @@ public class InsumoController {
     public ResponseEntity<InsumoResponse> crear(@Valid @RequestBody CrearInsumoRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(InsumoResponse.desde(service.crearInsumo(request.nombre(), request.unidadMedida(),
-                        request.categoria(), request.stockMinimo())));
+                        request.categoria(), request.stockMinimo(), request.codigo(), request.marca())));
     }
 
     @PutMapping("/{id}")
     public InsumoResponse actualizar(@PathVariable Long id, @Valid @RequestBody CrearInsumoRequest request) {
         return InsumoResponse.desde(service.actualizarInsumo(id, request.nombre(), request.unidadMedida(),
-                request.categoria(), request.stockMinimo()));
+                request.categoria(), request.stockMinimo(), request.codigo(), request.marca()));
     }
 
     // Por defecto, lo que va del mes: cuánto combustible, repuestos, etc. salió del almacén

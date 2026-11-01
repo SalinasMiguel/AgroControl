@@ -63,9 +63,9 @@ class PersistenciaPostgresTest {
     @Test
     void lasMigracionesCreanElEsquemaYCarganLaSemilla() {
         assertThat(parcelaRepository.listarTodas()).isNotEmpty();
-        Integer version = jdbc.queryForObject(
-                "SELECT max(version::int) FROM flyway_schema_history WHERE success", Integer.class);
-        assertThat(version).isEqualTo(7);
+        BigDecimal version = jdbc.queryForObject(
+                "SELECT max(version::numeric) FROM flyway_schema_history WHERE success", BigDecimal.class);
+        assertThat(version).isEqualByComparingTo("7.1");
     }
 
     @Test
@@ -147,7 +147,7 @@ class PersistenciaPostgresTest {
     @Test
     void salidasSimultaneasNoPierdenStock() throws Exception {
         Long usuarioId = jdbc.queryForObject("SELECT min(id_usuario) FROM agrocontrol.usuario", Long.class);
-        Insumo insumo = inventarioService.crearInsumo("Prueba de concurrencia", "kg", null, null);
+        Insumo insumo = inventarioService.crearInsumo("Prueba de concurrencia", "kg", null, null, null, null);
         inventarioService.registrarMovimiento(insumo.getId(), TipoMovimiento.ENTRADA, new BigDecimal("100"), null, usuarioId);
 
         ExecutorService hilos = Executors.newFixedThreadPool(10);
@@ -163,5 +163,25 @@ class PersistenciaPostgresTest {
 
         assertThat(inventarioService.obtenerInsumo(insumo.getId()).getStockActual()).isEqualByComparingTo("0");
         assertThat(inventarioService.listarMovimientos(insumo.getId())).hasSize(21);
+    }
+
+    @Test
+    void elMismoCodigoDeLaMismaMarcaNoSeRegistraDosVeces() {
+        Insumo rodamiento = inventarioService.crearInsumo(
+                "Rodamiento de prueba", "unidad", null, null, " 6205-2rs1 ", "SKF");
+        assertThat(rodamiento.getCodigo()).isEqualTo("6205-2RS1");
+
+        assertThatThrownBy(() -> inventarioService.crearInsumo(
+                "Otro nombre", "unidad", null, null, "6205-2RS1", "skf"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Rodamiento de prueba");
+
+        // Otra marca con el mismo código es otra pieza
+        assertThat(inventarioService.crearInsumo("Rodamiento FAG", "unidad", null, null, "6205-2RS1", "FAG").getId())
+                .isNotNull();
+        // Y editar el propio insumo sin cambiar el código no choca consigo mismo
+        assertThat(inventarioService.actualizarInsumo(
+                rodamiento.getId(), "Rodamiento renombrado", "unidad", null, null, "6205-2RS1", "SKF").getNombre())
+                .isEqualTo("Rodamiento renombrado");
     }
 }

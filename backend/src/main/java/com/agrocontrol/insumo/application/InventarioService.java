@@ -58,19 +58,37 @@ public class InventarioService {
 
     @Auditable(entidad = "INSUMO", accion = "CREAR")
     @Transactional
-    public Insumo crearInsumo(String nombre, String unidadMedida, CategoriaInsumo categoria, BigDecimal stockMinimo) {
+    public Insumo crearInsumo(String nombre, String unidadMedida, CategoriaInsumo categoria, BigDecimal stockMinimo,
+                              String codigo, String marca) {
         // El stock nace en cero: solo cambia a través de movimientos, para que quede trazado
-        return insumoRepository.guardar(new Insumo(null, nombre.trim(), unidadMedida.trim(), categoria, stockMinimo));
+        Insumo insumo = new Insumo(null, nombre.trim(), unidadMedida.trim(), categoria, stockMinimo, codigo, marca);
+        verificarPiezaNoRepetida(insumo);
+        return insumoRepository.guardar(insumo);
     }
 
-    // Nombre, unidad, categoría y mínimo; el stock no se edita a mano (solo con movimientos)
+    // Nombre, unidad, categoría, mínimo, código y marca; el stock no se edita a mano (solo con movimientos)
     @Auditable(entidad = "INSUMO", accion = "ACTUALIZAR")
     @Transactional
     public Insumo actualizarInsumo(Long id, String nombre, String unidadMedida, CategoriaInsumo categoria,
-                                   BigDecimal stockMinimo) {
+                                   BigDecimal stockMinimo, String codigo, String marca) {
         Insumo insumo = obtenerInsumo(id);
-        insumo.actualizar(nombre.trim(), unidadMedida.trim(), categoria, stockMinimo);
+        insumo.actualizar(nombre.trim(), unidadMedida.trim(), categoria, stockMinimo, codigo, marca);
+        verificarPiezaNoRepetida(insumo);
         return insumoRepository.guardar(insumo);
+    }
+
+    // Avisa con claridad; el índice uq_insumo_codigo_marca lo garantiza si dos personas guardan a la vez
+    private void verificarPiezaNoRepetida(Insumo insumo) {
+        if (insumo.getCodigo() == null) {
+            return;
+        }
+        insumoRepository.listarTodos().stream()
+                .filter(otro -> !otro.getId().equals(insumo.getId()))
+                .filter(otro -> otro.esMismaPieza(insumo.getCodigo(), insumo.getMarca()))
+                .findFirst()
+                .ifPresent(otro -> {
+                    throw new IllegalStateException("Ese código ya está registrado en: " + otro.getNombre());
+                });
     }
 
     // Lo que salió del almacén entre dos fechas, sumado por insumo y ordenado por categoría

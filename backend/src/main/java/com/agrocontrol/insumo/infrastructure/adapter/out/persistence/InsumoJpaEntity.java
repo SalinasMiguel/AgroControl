@@ -37,17 +37,25 @@ public class InsumoJpaEntity {
     @Column(name = "stock_minimo", nullable = false, precision = 12, scale = 2)
     private BigDecimal stockMinimo;
 
+    @Column(name = "codigo", length = 40)
+    private String codigo;
+
+    @Column(name = "marca", length = 60)
+    private String marca;
+
     protected InsumoJpaEntity() {
     }
 
     public InsumoJpaEntity(Long id, String nombre, String unidadMedida, BigDecimal stockActual,
-                           CategoriaInsumo categoria, BigDecimal stockMinimo) {
+                           CategoriaInsumo categoria, BigDecimal stockMinimo, String codigo, String marca) {
         this.id = id;
         this.nombre = nombre;
         this.unidadMedida = unidadMedida;
         this.stockActual = stockActual;
         this.categoria = categoria;
         this.stockMinimo = stockMinimo;
+        this.codigo = codigo;
+        this.marca = marca;
     }
 
     public Long getId() { return id; }
@@ -56,4 +64,6 @@ public class InsumoJpaEntity {
     public BigDecimal getStockActual() { return stockActual; }
     public CategoriaInsumo getCategoria() { return categoria; }
     public BigDecimal getStockMinimo() { return stockMinimo; }
+    public String getCodigo() { return codigo; }
+    public String getMarca() { return marca; }
 }

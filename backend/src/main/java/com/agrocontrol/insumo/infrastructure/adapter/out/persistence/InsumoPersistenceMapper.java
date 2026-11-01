@@ -9,11 +9,12 @@ public final class InsumoPersistenceMapper {
 
     public static Insumo toDomain(InsumoJpaEntity entity) {
         return Insumo.reconstruir(entity.getId(), entity.getNombre(), entity.getUnidadMedida(),
-                                  entity.getStockActual(), entity.getCategoria(), entity.getStockMinimo());
+                                  entity.getStockActual(), entity.getCategoria(), entity.getStockMinimo(),
+                                  entity.getCodigo(), entity.getMarca());
     }
 
     public static InsumoJpaEntity toEntity(Insumo i) {
         return new InsumoJpaEntity(i.getId(), i.getNombre(), i.getUnidadMedida(), i.getStockActual(), i.getCategoria(),
-                                   i.getStockMinimo());
+                                   i.getStockMinimo(), i.getCodigo(), i.getMarca());
     }
 }

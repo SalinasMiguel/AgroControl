@@ -321,6 +321,8 @@ CREATE TABLE agrocontrol.insumo (
     stock_actual numeric(12,2) DEFAULT 0 NOT NULL,
     categoria character varying(20) DEFAULT 'OTRO'::character varying NOT NULL,
     stock_minimo numeric(12,2) DEFAULT 0 NOT NULL,
+    codigo character varying(40),
+    marca character varying(60),
     CONSTRAINT insumo_categoria_check CHECK (((categoria)::text = ANY ((ARRAY['SEMILLA'::character varying, 'FERTILIZANTE'::character varying, 'AGROQUIMICO'::character varying, 'COMBUSTIBLE'::character varying, 'LUBRICANTE'::character varying, 'REPUESTO'::character varying, 'OTRO'::character varying])::text[]))),
     CONSTRAINT insumo_stock_actual_check CHECK ((stock_actual >= (0)::numeric)),
     CONSTRAINT insumo_stock_minimo_check CHECK ((stock_minimo >= (0)::numeric))

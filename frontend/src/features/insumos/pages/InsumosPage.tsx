@@ -13,6 +13,10 @@ import { TriangleAlert } from 'lucide-react';
 import CategoriaIcono from '../components/CategoriaIcono';
 import { CATEGORIAS, type CategoriaInsumo, type Insumo } from '../models/Insumo';
 import { insumoService } from '../services/insumoService';
+import Button from '../../../components/ui/Button';
+import { buscarInsumos } from '../utils/buscarInsumos';
+import SearchInput from '../../../components/ui/SearchInput';
+import EmptyState from '../../../components/ui/EmptyState';
 
 const cargarDatos = async (signal: AbortSignal) => {
   const [insumos, usuarios] = await Promise.all([insumoService.listar(signal), usuarioService.listar(signal)]);
@@ -32,13 +36,14 @@ export default function InsumosPage() {
   const [seleccionadoId, setSeleccionadoId] = useState<number | null>(null);
   const [editando, setEditando] = useState<Insumo | null>(null);
   const [filtro, setFiltro] = useState<CategoriaInsumo | 'TODOS' | 'POR_AGOTARSE'>('TODOS');
+  const [busqueda, setBusqueda] = useState('');
   // Sube con cada movimiento para que el resumen del mes se vuelva a calcular
   const [versionSalidas, setVersionSalidas] = useState(0);
 
   // Se busca por id para que el panel muestre el stock actualizado después de recargar.
   const seleccionado = insumos.find((insumo) => insumo.id === seleccionadoId) ?? null;
   const porAgotarse = insumos.filter((insumo) => insumo.porAgotarse || insumo.stockActual <= 0).length;
-  const visibles = insumos.filter((insumo) =>
+  const visibles = buscarInsumos(insumos, busqueda).filter((insumo) =>
     filtro === 'TODOS' ? true
       : filtro === 'POR_AGOTARSE' ? insumo.porAgotarse || insumo.stockActual <= 0
         : insumo.categoria === filtro);
@@ -62,9 +67,9 @@ export default function InsumosPage() {
         descripcion="Todo lo que entra y sale del almacén: semillas, fertilizantes, agroquímicos, combustible, aceites y repuestos."
         accion={
           puedeGestionar ? (
-            <button type="button" className="btn-primary" onClick={() => setMostrarFormulario((prev) => !prev)}>
+            <Button type="button" onClick={() => setMostrarFormulario((prev) => !prev)}>
               {mostrarFormulario ? 'Cerrar formulario' : '+ Nuevo insumo'}
-            </button>
+            </Button>
           ) : undefined
         }
       />
@@ -116,6 +121,12 @@ export default function InsumosPage() {
 
           {puedeVerMovimientos && <SalidasDelMes version={versionSalidas} />}
 
+          <SearchInput
+            label="Buscar insumo"
+            value={busqueda}
+            onChange={setBusqueda}
+            placeholder="Código, marca o nombre"
+          />
           <div className="chips" role="tablist" aria-label="Filtrar por categoría">
             <button type="button" className={`chip${filtro === 'TODOS' ? ' chip--activo' : ''}`} onClick={() => setFiltro('TODOS')}>
               Todos ({insumos.length})
@@ -133,14 +144,14 @@ export default function InsumosPage() {
           </div>
 
           {visibles.length === 0 ? (
-            <div className="empty-state">{insumos.length === 0 ? 'No hay insumos registrados.' : 'No hay insumos en este filtro.'}</div>
+            <EmptyState title={insumos.length === 0 ? 'No hay insumos registrados.' : 'No hay insumos en este filtro.'} />
           ) : (
             <div className="table-card">
               <div className="table-responsive">
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>Insumo</th><th>Categoría</th><th>Stock actual</th><th>Mínimo</th>
+                      <th>Insumo</th><th>Código</th><th>Marca</th><th>Categoría</th><th>Stock actual</th><th>Mínimo</th>
                       {puedeVerMovimientos && <th>Acciones</th>}
                     </tr>
                   </thead>
@@ -150,6 +161,8 @@ export default function InsumosPage() {
                       return (
                         <tr key={insumo.id}>
                           <td>{insumo.nombre}</td>
+                          <td className={insumo.codigo ? 'code-cell' : 'muted'}>{insumo.codigo ?? '—'}</td>
+                          <td className={insumo.marca ? undefined : 'muted'}>{insumo.marca ?? '—'}</td>
                           <td><CategoriaIcono valor={insumo.categoria} conNombre /></td>
                           <td className={alerta ? 'field-error' : ''}>
                             {formatCantidad(insumo.stockActual, insumo.unidadMedida)}
@@ -159,11 +172,11 @@ export default function InsumosPage() {
                           {puedeVerMovimientos && (
                             <td>
                               <div className="table-actions">
-                                <button type="button" className="btn-link" onClick={() => abrirMovimientos(insumo)}>
+                                <Button variant="secondary" size="sm" type="button" onClick={() => abrirMovimientos(insumo)}>
                                   {puedeGestionar ? 'Entrada / salida' : 'Movimientos'}
-                                </button>
+                                </Button>
                                 {puedeGestionar && (
-                                  <button type="button" className="btn-link" onClick={() => abrirEdicion(insumo)}>Editar</button>
+                                  <Button variant="secondary" size="sm" type="button" onClick={() => abrirEdicion(insumo)}>Editar</Button>
                                 )}
                               </div>
                             </td>

@@ -26,6 +26,8 @@ export interface Insumo {
   categoria: CategoriaInsumo;
   stockMinimo: number;
   porAgotarse: boolean;
+  codigo: string | null;
+  marca: string | null;
 }
 
 // GET /api/insumos/salidas: lo que salió del almacén en el período

@@ -6,6 +6,8 @@ export interface InsumoCreateRequest {
   unidadMedida: string;
   categoria: CategoriaInsumo;
   stockMinimo: number;
+  codigo: string | null;
+  marca: string | null;
 }
 
 export interface MovimientoRequest {

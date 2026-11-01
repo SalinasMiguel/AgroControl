@@ -21,6 +21,13 @@ public record CrearInsumoRequest(
         CategoriaInsumo categoria,
 
         @PositiveOrZero(message = "El stock mínimo no puede ser negativo.")
-        BigDecimal stockMinimo
+        BigDecimal stockMinimo,
+
+        // Opcionales: identifican la pieza exacta (ej.: 6205-2RS1 de SKF)
+        @Size(max = 40, message = "El código admite como máximo 40 caracteres.")
+        String codigo,
+
+        @Size(max = 60, message = "La marca admite como máximo 60 caracteres.")
+        String marca
 ) {
 }

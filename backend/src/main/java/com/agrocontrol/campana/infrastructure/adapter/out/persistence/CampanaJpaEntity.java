@@ -11,6 +11,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
@@ -41,11 +42,21 @@ public class CampanaJpaEntity {
     @Column(name = "motivo_cierre", length = 200)
     private String motivoCierre;
 
+    @Column(name = "area_sembrada_ha", precision = 10, scale = 2)
+    private BigDecimal areaSembradaHa;
+
+    @Column(name = "variedad", length = 80)
+    private String variedad;
+
+    @Column(name = "fecha_cosecha_estimada")
+    private LocalDate fechaCosechaEstimada;
+
     protected CampanaJpaEntity() {
     }
 
     public CampanaJpaEntity(Long id, Long parcelaId, Long cultivoId, LocalDate fechaInicio, LocalDate fechaFin,
-                            EstadoCampana estado, String motivoCierre) {
+                            EstadoCampana estado, String motivoCierre, BigDecimal areaSembradaHa, String variedad,
+                            LocalDate fechaCosechaEstimada) {
         this.id = id;
         this.parcelaId = parcelaId;
         this.cultivoId = cultivoId;
@@ -53,6 +64,9 @@ public class CampanaJpaEntity {
         this.fechaFin = fechaFin;
         this.estado = estado;
         this.motivoCierre = motivoCierre;
+        this.areaSembradaHa = areaSembradaHa;
+        this.variedad = variedad;
+        this.fechaCosechaEstimada = fechaCosechaEstimada;
     }
 
     public Long getId() { return id; }
@@ -62,4 +76,7 @@ public class CampanaJpaEntity {
     public LocalDate getFechaFin() { return fechaFin; }
     public EstadoCampana getEstado() { return estado; }
     public String getMotivoCierre() { return motivoCierre; }
+    public BigDecimal getAreaSembradaHa() { return areaSembradaHa; }
+    public String getVariedad() { return variedad; }
+    public LocalDate getFechaCosechaEstimada() { return fechaCosechaEstimada; }
 }

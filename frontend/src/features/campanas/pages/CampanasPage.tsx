@@ -2,8 +2,14 @@ import { useState } from 'react';
 import FechaAccionPanel from '../../../components/common/FechaAccionPanel';
 import PageHeading from '../../../components/common/PageHeading';
 import StatsGrid from '../../../components/common/StatsGrid';
+import EmptyState from '../../../components/ui/EmptyState';
 import MotivoDialog from '../../../components/ui/MotivoDialog';
+import SearchInput from '../../../components/ui/SearchInput';
+import SelectFilter from '../../../components/ui/SelectFilter';
 import { useCarga } from '../../../hooks/useCarga';
+import { formatArea } from '../../../utils/area';
+import { cosechaService } from '../../cosechas/services/cosechaService';
+import type { Cosecha } from '../../cosechas/models/Cosecha';
 import { cultivoService } from '../../cultivos/services/cultivoService';
 import { parcelaService } from '../../parcelas/services/parcelaService';
 import { predioService } from '../../predios/services/predioService';
@@ -11,22 +17,34 @@ import { useAuth } from '../../auth/context/useAuth';
 import CampanaForm from '../components/CampanaForm';
 import AvancePanel from '../components/AvancePanel';
 import CampanaTable from '../components/CampanaTable';
-import type { Campana } from '../models/Campana';
+import type { Campana, EstadoCampana } from '../models/Campana';
 import { campanaService } from '../services/campanaService';
 import { etiquetaCampana, etiquetaParcela, nombreCultivo } from '../utils/etiquetas';
+import { filtrarCampanas } from '../utils/filtrarCampanas';
+import { rendimientos, superficie } from '../utils/rendimiento';
 import Button from '../../../components/ui/Button';
 
 const cargarDatos = async (signal: AbortSignal) => {
-  const [campanas, predios, parcelas, cultivos] = await Promise.all([
+  const [campanas, predios, parcelas, cultivos, cosechas] = await Promise.all([
     campanaService.listar(signal),
     predioService.listar(signal),
     parcelaService.listar(signal),
     cultivoService.listar(signal),
+    cosechaService.listar(signal),
   ]);
-  return { campanas, catalogos: { predios, parcelas, cultivos } };
+  return { campanas, catalogos: { predios, parcelas, cultivos }, cosechas };
 };
 
 type Accion = 'cancelar' | 'perder' | 'reabrir';
+
+const OPCIONES_ESTADO = [
+  { value: '', label: 'Todos los estados' },
+  { value: 'PLANIFICADA', label: 'Planificadas' },
+  { value: 'EN_CURSO', label: 'En curso' },
+  { value: 'FINALIZADA', label: 'Finalizadas' },
+  { value: 'CANCELADA', label: 'Canceladas' },
+  { value: 'PERDIDA', label: 'Perdidas' },
+];
 
 const AVISO_INSUMOS = 'Los insumos ya registrados no vuelven al almacén; anúlelos por separado';
 
@@ -40,8 +58,12 @@ export default function CampanasPage() {
   const { datos, setDatos, loading, error, recargar } = useCarga(cargarDatos, {
     campanas: [] as Campana[],
     catalogos: { predios: [], parcelas: [], cultivos: [] },
+    cosechas: [] as Cosecha[],
   });
-  const { campanas, catalogos } = datos;
+  const { campanas, catalogos, cosechas } = datos;
+  const [busqueda, setBusqueda] = useState('');
+  const [estadoFiltro, setEstadoFiltro] = useState<EstadoCampana | ''>('');
+  const [cultivoFiltro, setCultivoFiltro] = useState('');
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const puedeGestionar = useAuth().puede('campanas.gestionar');
   const [finalizando, setFinalizando] = useState<Campana | null>(null);
@@ -77,6 +99,15 @@ export default function CampanasPage() {
   };
 
   const contar = (estado: Campana['estado']) => campanas.filter((campana) => campana.estado === estado).length;
+
+  const visibles = filtrarCampanas(campanas, catalogos, { busqueda, estado: estadoFiltro, cultivoId: cultivoFiltro });
+  const opcionesCultivo = [
+    { value: '', label: 'Todos los cultivos' },
+    ...catalogos.cultivos.map((cultivo) => ({ value: String(cultivo.id), label: cultivo.nombre })),
+  ];
+  const hectareasEnCurso = campanas
+    .filter((campana) => campana.estado === 'EN_CURSO')
+    .reduce((suma, campana) => suma + (superficie(campana, catalogos.parcelas) ?? 0), 0);
 
   return (
     <section className="feature-page">
@@ -139,8 +170,14 @@ export default function CampanasPage() {
               { etiqueta: 'Planificadas', valor: contar('PLANIFICADA') },
               { etiqueta: 'En curso', valor: contar('EN_CURSO') },
               { etiqueta: 'Finalizadas', valor: contar('FINALIZADA') },
+              { etiqueta: 'Hectáreas en curso', valor: formatArea(hectareasEnCurso) },
             ]}
           />
+          <div className="filter-bar">
+            <SearchInput label="Buscar campaña" value={busqueda} onChange={setBusqueda} placeholder="Parcela, cultivo o variedad" />
+            <SelectFilter label="Estado" value={estadoFiltro} onChange={(valor) => setEstadoFiltro(valor as EstadoCampana | '')} options={OPCIONES_ESTADO} />
+            <SelectFilter label="Cultivo" value={cultivoFiltro} onChange={setCultivoFiltro} options={opcionesCultivo} />
+          </div>
           {conAvance && (
             <AvancePanel
               key={conAvance.id}
@@ -149,9 +186,13 @@ export default function CampanasPage() {
               onCerrar={() => setConAvance(null)}
             />
           )}
+          {campanas.length > 0 && visibles.length === 0 ? (
+            <EmptyState title="Sin resultados." description="Ninguna campaña coincide con la búsqueda o los filtros." />
+          ) : (
           <CampanaTable
-            campanas={campanas}
+            campanas={visibles}
             catalogos={catalogos}
+            rendimientos={rendimientos(campanas, cosechas, catalogos.parcelas)}
             onAvance={setConAvance}
             onEditar={puedeGestionar ? setEditando : undefined}
             onIniciar={puedeGestionar ? iniciar : undefined}
@@ -167,6 +208,7 @@ export default function CampanasPage() {
                 : undefined
             }
           />
+          )}
         </>
       )}
 

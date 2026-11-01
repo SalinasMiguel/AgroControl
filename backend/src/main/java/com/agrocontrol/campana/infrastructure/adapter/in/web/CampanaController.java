@@ -49,7 +49,7 @@ public class CampanaController {
     @PostMapping
     public ResponseEntity<CampanaResponse> crear(@Valid @RequestBody CrearCampanaRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(CampanaResponse.desde(
-                service.crear(request.parcelaId(), request.cultivoId(), request.fechaInicio())));
+                service.crear(request.parcelaId(), request.cultivoId(), request.fechaInicio(), request.plan())));
     }
 
     // Transiciones de estado como acciones: no es un PUT del recurso completo.
@@ -65,7 +65,7 @@ public class CampanaController {
 
     @PutMapping("/{id}")
     public CampanaResponse editar(@PathVariable Long id, @Valid @RequestBody EditarCampanaRequest request) {
-        return CampanaResponse.desde(service.editar(id, request.cultivoId(), request.fechaInicio()));
+        return CampanaResponse.desde(service.editar(id, request.cultivoId(), request.fechaInicio(), request.plan()));
     }
 
     @PostMapping("/{id}/cancelar")

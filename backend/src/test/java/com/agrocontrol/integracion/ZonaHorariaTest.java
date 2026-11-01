@@ -2,6 +2,7 @@ package com.agrocontrol.integracion;
 
 import com.agrocontrol.campana.application.CampanaService;
 import com.agrocontrol.campana.domain.Campana;
+import com.agrocontrol.campana.domain.PlanSiembra;
 import com.agrocontrol.insumo.application.InventarioService;
 import com.agrocontrol.insumo.domain.CategoriaInsumo;
 import com.agrocontrol.insumo.domain.MovimientoInsumo;
@@ -76,7 +77,7 @@ class ZonaHorariaTest {
                 (SELECT 1 FROM agrocontrol.campana c WHERE c.id_parcela = p.id_parcela AND c.estado IN ('PLANIFICADA', 'EN_CURSO'))""", Long.class);
         Long cultivo = jdbc.queryForObject("SELECT min(id_cultivo) FROM agrocontrol.cultivo", Long.class);
 
-        Campana campana = campanaService.crear(parcela, cultivo, LocalDate.of(2026, 11, 2));
+        Campana campana = campanaService.crear(parcela, cultivo, LocalDate.of(2026, 11, 2), PlanSiembra.VACIO);
 
         assertThat(campanaService.obtener(campana.getId()).getFechaInicio()).isEqualTo(LocalDate.of(2026, 11, 2));
         assertThat(jdbc.queryForObject("SELECT fecha_inicio::text FROM agrocontrol.campana WHERE id_campana = ?",

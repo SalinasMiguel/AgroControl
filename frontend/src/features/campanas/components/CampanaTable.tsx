@@ -1,13 +1,19 @@
 import StatusBadge from '../../../components/ui/StatusBadge';
-import { formatFecha } from '../../../utils/formato';
+import { campanaAbierta } from '../../../shared/utils/estados';
+import { diasAtraso } from '../../../shared/utils/resumenInicio';
+import { formatArea } from '../../../utils/area';
+import { formatFecha, hoyISO } from '../../../utils/formato';
 import type { Campana } from '../models/Campana';
 import { etiquetaParcela, nombreCultivo, type Catalogos } from '../utils/etiquetas';
+import { superficie } from '../utils/rendimiento';
 import Button from '../../../components/ui/Button';
 import EmptyState from '../../../components/ui/EmptyState';
 
 interface CampanaTableProps {
   campanas: Campana[];
   catalogos: Catalogos;
+  // Toneladas por hectárea, por id de campaña
+  rendimientos?: Record<number, number>;
   // Sin handlers (rol de solo lectura) no se muestra la columna de acciones
   onEditar?: (campana: Campana) => void;
   onIniciar?: (campana: Campana) => void;
@@ -21,6 +27,7 @@ interface CampanaTableProps {
 export default function CampanaTable({
   campanas,
   catalogos,
+  rendimientos = {},
   onEditar,
   onIniciar,
   onCancelar,
@@ -30,6 +37,8 @@ export default function CampanaTable({
   onAvance,
 }: CampanaTableProps) {
   const conAcciones = Boolean(onIniciar || onFinalizar || onAvance);
+
+  const hoy = hoyISO();
 
   if (campanas.length === 0) {
     return <EmptyState title="No hay campañas registradas." />;
@@ -41,28 +50,41 @@ export default function CampanaTable({
         <table className="data-table">
           <thead>
             <tr>
-              <th>ID</th>
+              <th>Campaña</th>
               <th>Parcela</th>
-              <th>Cultivo</th>
+              <th>Sembrado</th>
               <th>Inicio</th>
-              <th>Fin</th>
+              <th>Cosecha</th>
+              <th>Rendimiento</th>
               <th>Estado</th>
               {conAcciones && <th>Acciones</th>}
             </tr>
           </thead>
           <tbody>
-            {campanas.map((campana) => (
+            {campanas.map((campana) => {
+              const abierta = campanaAbierta(campana);
+              const atraso = abierta && campana.fechaCosechaEstimada ? diasAtraso(campana.fechaCosechaEstimada, hoy) : 0;
+              const rendimiento = rendimientos[campana.id];
+              return (
               <tr key={campana.id} title={campana.motivoCierre ?? undefined}>
-                <td>{campana.id}</td>
+                <td>
+                  <strong>{nombreCultivo(campana.cultivoId, catalogos)}</strong>
+                  <small className="celda-nota muted">{campana.variedad ?? `Campaña ${campana.fechaInicio.slice(0, 4)}`}</small>
+                </td>
                 <td>{etiquetaParcela(campana.parcelaId, catalogos)}</td>
-                <td>{nombreCultivo(campana.cultivoId, catalogos)}</td>
+                <td>{formatArea(superficie(campana, catalogos.parcelas))}</td>
                 <td>{formatFecha(campana.fechaInicio)}</td>
-                <td>{formatFecha(campana.fechaFin)}</td>
+                <td>
+                  {formatFecha(abierta ? campana.fechaCosechaEstimada : campana.fechaFin)}
+                  {abierta && campana.fechaCosechaEstimada && <small className="celda-nota muted">estimada</small>}
+                  {atraso > 0 && <small className="celda-nota field-error">Atrasada · {atraso} días</small>}
+                </td>
+                <td>{rendimiento ? `${rendimiento.toFixed(2).replace('.', ',')} t/ha` : '—'}</td>
                 <td><StatusBadge estado={campana.estado} /></td>
                 {conAcciones && (
                 <td>
                   <div className="table-actions">
-                    {onEditar && campana.estado === 'PLANIFICADA' && (
+                    {onEditar && abierta && (
                       <Button variant="secondary" size="sm" type="button" onClick={() => onEditar(campana)}>Editar</Button>
                     )}
                     {onIniciar && campana.estado === 'PLANIFICADA' && (
@@ -87,7 +109,8 @@ export default function CampanaTable({
                 </td>
                 )}
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>

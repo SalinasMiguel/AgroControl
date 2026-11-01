@@ -2,7 +2,8 @@ import { apiFetch } from '../../../api/apiClient';
 import type { AvanceCampana } from '../models/AvanceCampana';
 import type { Campana } from '../models/Campana';
 
-export type CampanaCreateRequest = Pick<Campana, 'parcelaId' | 'cultivoId' | 'fechaInicio'>;
+type DatosSiembra = 'areaSembradaHa' | 'variedad' | 'fechaCosechaEstimada';
+export type CampanaCreateRequest = Pick<Campana, 'parcelaId' | 'cultivoId' | 'fechaInicio' | DatosSiembra>;
 
 export const campanaService = {
   avance(id: number, signal?: AbortSignal): Promise<AvanceCampana> {
@@ -31,7 +32,7 @@ export const campanaService = {
     });
   },
 
-  editar(id: number, data: Pick<Campana, 'cultivoId' | 'fechaInicio'>): Promise<Campana> {
+  editar(id: number, data: Pick<Campana, 'cultivoId' | 'fechaInicio' | DatosSiembra>): Promise<Campana> {
     return apiFetch<Campana>(`/campanas/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),

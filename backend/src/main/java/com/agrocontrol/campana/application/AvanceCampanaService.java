@@ -132,10 +132,10 @@ public class AvanceCampanaService {
                 .toList();
     }
 
-    // Toneladas por hectárea, si la parcela tiene área cargada
+    // Toneladas por hectárea sembrada; sin ese dato se usa el área de la parcela
     private BigDecimal rendimiento(Campana campana, BigDecimal toneladas) {
-        BigDecimal area = parcelaRepository.buscarPorId(campana.getParcelaId())
-                .map(parcela -> parcela.getAreaHa()).orElse(null);
+        BigDecimal area = campana.getAreaSembradaHa() != null ? campana.getAreaSembradaHa()
+                : parcelaRepository.buscarPorId(campana.getParcelaId()).map(parcela -> parcela.getAreaHa()).orElse(null);
         if (area == null || area.signum() == 0 || toneladas.signum() == 0) {
             return null;
         }

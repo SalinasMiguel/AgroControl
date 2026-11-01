@@ -8,4 +8,7 @@ export interface Campana {
   fechaFin: string | null;
   estado: EstadoCampana;
   motivoCierre: string | null;
+  areaSembradaHa: number | null;
+  variedad: string | null;
+  fechaCosechaEstimada: string | null;
 }

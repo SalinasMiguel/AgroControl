@@ -3,6 +3,8 @@ package com.agrocontrol.campana.application;
 import com.agrocontrol.auditoria.application.Auditable;
 import com.agrocontrol.campana.domain.Campana;
 import com.agrocontrol.campana.domain.CampanaRepository;
+import com.agrocontrol.campana.domain.PlanSiembra;
+import com.agrocontrol.parcela.domain.Parcela;
 import com.agrocontrol.cultivo.domain.CultivoRepository;
 import com.agrocontrol.labor.domain.Labor;
 import com.agrocontrol.labor.domain.LaborRepository;
@@ -13,6 +15,7 @@ import com.agrocontrol.shared.domain.ConflictoException;
 import com.agrocontrol.shared.domain.RecursoNoEncontradoException;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -49,10 +52,8 @@ public class CampanaService {
 
     @Auditable(entidad = "CAMPANA", accion = "CREAR")
     @Transactional
-    public Campana crear(Long parcelaId, Long cultivoId, LocalDate fechaInicio) {
-        if (parcelaRepository.buscarPorId(parcelaId).isEmpty()) {
-            throw new RecursoNoEncontradoException("No existe la parcela con id: " + parcelaId);
-        }
+    public Campana crear(Long parcelaId, Long cultivoId, LocalDate fechaInicio, PlanSiembra plan) {
+        verificarSuperficie(parcelaId, plan);
         if (!cultivoRepository.existePorId(cultivoId)) {
             throw new RecursoNoEncontradoException("No existe el cultivo con id: " + cultivoId);
         }
@@ -60,7 +61,20 @@ public class CampanaService {
         if (campanaRepository.existeAbiertaEnParcela(parcelaId)) {
             throw new ConflictoException("La parcela " + parcelaId + " ya tiene una campaña abierta");
         }
-        return campanaRepository.guardar(new Campana(null, parcelaId, cultivoId, fechaInicio));
+        Campana campana = new Campana(null, parcelaId, cultivoId, fechaInicio);
+        campana.definirSiembra(plan);
+        return campanaRepository.guardar(campana);
+    }
+
+    // No se puede sembrar más de lo que mide la parcela (si tiene el área cargada)
+    private void verificarSuperficie(Long parcelaId, PlanSiembra plan) {
+        Parcela parcela = parcelaRepository.buscarPorId(parcelaId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("No existe la parcela con id: " + parcelaId));
+        BigDecimal area = parcela.getAreaHa();
+        if (plan.areaSembradaHa() != null && area != null && plan.areaSembradaHa().compareTo(area) > 0) {
+            throw new IllegalArgumentException(
+                    "La superficie sembrada no puede superar las " + area.toPlainString() + " ha de la parcela");
+        }
     }
 
     @Auditable(entidad = "CAMPANA", accion = "INICIAR")
@@ -85,12 +99,13 @@ public class CampanaService {
 
     @Auditable(entidad = "CAMPANA", accion = "EDITAR")
     @Transactional
-    public Campana editar(Long id, Long cultivoId, LocalDate fechaInicio) {
+    public Campana editar(Long id, Long cultivoId, LocalDate fechaInicio, PlanSiembra plan) {
         Campana campana = obtener(id);
+        verificarSuperficie(campana.getParcelaId(), plan);
         if (!cultivoRepository.existePorId(cultivoId)) {
             throw new RecursoNoEncontradoException("No existe el cultivo con id: " + cultivoId);
         }
-        campana.editarPlan(cultivoId, fechaInicio);
+        campana.corregir(cultivoId, fechaInicio, plan);
         return campanaRepository.guardar(campana);
     }
 

@@ -3,6 +3,7 @@ package com.agrocontrol.campana.infrastructure.adapter.in.web.dto;
 import com.agrocontrol.campana.domain.EstadoCampana;
 import com.agrocontrol.campana.domain.Campana;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record CampanaResponse(
@@ -12,7 +13,10 @@ public record CampanaResponse(
         LocalDate fechaInicio,
         LocalDate fechaFin,
         EstadoCampana estado,
-        String motivoCierre
+        String motivoCierre,
+        BigDecimal areaSembradaHa,
+        String variedad,
+        LocalDate fechaCosechaEstimada
 ) {
     public static CampanaResponse desde(Campana campana) {
         return new CampanaResponse(
@@ -22,7 +26,10 @@ public record CampanaResponse(
                 campana.getFechaInicio(),
                 campana.getFechaFin(),
                 campana.getEstado(),
-                campana.getMotivoCierre()
+                campana.getMotivoCierre(),
+                campana.getPlan().areaSembradaHa(),
+                campana.getPlan().variedad(),
+                campana.getPlan().fechaCosechaEstimada()
         );
     }
 }

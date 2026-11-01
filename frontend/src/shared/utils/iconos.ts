@@ -99,6 +99,7 @@ const REGLAS_STAT: Regla[] = [
   [/atrasad/i, CalendarClock],
   [/sin resolver/i, CircleAlert],
   [/inactiv/i, CircleOff],
+  [/hect[aá]rea/i, LandPlot],
   [/pendiente/i, Clock],
   [/en curso/i, Play],
   [/planificad/i, CalendarClock],

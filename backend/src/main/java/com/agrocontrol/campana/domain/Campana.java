@@ -1,5 +1,6 @@
 package com.agrocontrol.campana.domain;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class Campana {
@@ -11,6 +12,7 @@ public class Campana {
     private LocalDate fechaFin;
     private EstadoCampana estado;
     private String motivoCierre;
+    private PlanSiembra plan = PlanSiembra.VACIO;
 
     private Campana() {
     }
@@ -18,6 +20,11 @@ public class Campana {
     // Rehidrata un registro ya guardado (lo usa el mapper de persistencia): no repite las validaciones de alta.
     public static Campana reconstruir(Long id, Long parcelaId, Long cultivoId, LocalDate fechaInicio,
                                       LocalDate fechaFin, EstadoCampana estado, String motivoCierre) {
+        return reconstruir(id, parcelaId, cultivoId, fechaInicio, fechaFin, estado, motivoCierre, PlanSiembra.VACIO);
+    }
+
+    public static Campana reconstruir(Long id, Long parcelaId, Long cultivoId, LocalDate fechaInicio,
+                                      LocalDate fechaFin, EstadoCampana estado, String motivoCierre, PlanSiembra plan) {
         Campana c = new Campana();
         c.id = id;
         c.parcelaId = parcelaId;
@@ -26,6 +33,7 @@ public class Campana {
         c.fechaFin = fechaFin;
         c.estado = estado;
         c.motivoCierre = motivoCierre;
+        c.plan = plan;
         return c;
     }
 
@@ -63,6 +71,23 @@ public class Campana {
         validarFechaFin(fechaFin);
         this.fechaFin = fechaFin;
         this.estado = EstadoCampana.FINALIZADA;
+    }
+
+    public void definirSiembra(PlanSiembra plan) {
+        if (plan.fechaCosechaEstimada() != null && plan.fechaCosechaEstimada().isBefore(fechaInicio)) {
+            throw new IllegalArgumentException("La cosecha estimada no puede ser anterior a la fecha de inicio");
+        }
+        this.plan = plan;
+    }
+
+    // En curso la siembra ya ocurrió: se corrige lo sembrado, pero no el cultivo ni la fecha de inicio.
+    public void corregir(Long cultivoId, LocalDate fechaInicio, PlanSiembra plan) {
+        if (estado != EstadoCampana.EN_CURSO) {
+            editarPlan(cultivoId, fechaInicio);
+        } else if (!this.cultivoId.equals(cultivoId) || !this.fechaInicio.equals(fechaInicio)) {
+            throw new IllegalStateException("Una campaña EN_CURSO no puede cambiar de cultivo ni de fecha de inicio");
+        }
+        definirSiembra(plan);
     }
 
     public void editarPlan(Long cultivoId, LocalDate fechaInicio) {
@@ -138,4 +163,6 @@ public class Campana {
     public LocalDate getFechaFin() { return fechaFin; }
     public EstadoCampana getEstado() { return estado; }
     public String getMotivoCierre() { return motivoCierre; }
+    public PlanSiembra getPlan() { return plan; }
+    public BigDecimal getAreaSembradaHa() { return plan.areaSembradaHa(); }
 }

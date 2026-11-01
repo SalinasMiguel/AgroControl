@@ -8,6 +8,7 @@ import com.agrocontrol.bitacora.application.BitacoraService;
 import com.agrocontrol.campana.application.AvanceCampanaService;
 import com.agrocontrol.campana.application.CampanaService;
 import com.agrocontrol.campana.domain.Campana;
+import com.agrocontrol.campana.domain.PlanSiembra;
 import com.agrocontrol.campana.domain.EstadoCampana;
 import com.agrocontrol.incidencia.application.IncidenciaService;
 import com.agrocontrol.insumo.application.InventarioService;
@@ -76,7 +77,7 @@ class PersistenciaPostgresTest {
         assertThat(parcelaRepository.listarTodas()).isNotEmpty();
         BigDecimal version = jdbc.queryForObject(
                 "SELECT max(version::numeric) FROM flyway_schema_history WHERE success", BigDecimal.class);
-        assertThat(version).isEqualByComparingTo("10");
+        assertThat(version).isEqualByComparingTo("11");
     }
 
     @Test
@@ -115,11 +116,11 @@ class PersistenciaPostgresTest {
                         + "(SELECT 1 FROM agrocontrol.campana c WHERE c.id_parcela = p.id_parcela AND c.estado IN ('PLANIFICADA', 'EN_CURSO'))",
                 Long.class);
         Long cultivoId = jdbc.queryForObject("SELECT min(id_cultivo) FROM agrocontrol.cultivo", Long.class);
-        Campana primera = campanaService.crear(parcelaId, cultivoId, LocalDate.now());
+        Campana primera = campanaService.crear(parcelaId, cultivoId, LocalDate.now(), PlanSiembra.VACIO);
 
         campanaService.cancelar(primera.getId(), "Sin semilla");
 
-        Campana segunda = campanaService.crear(parcelaId, cultivoId, LocalDate.now());
+        Campana segunda = campanaService.crear(parcelaId, cultivoId, LocalDate.now(), PlanSiembra.VACIO);
         assertThat(segunda.getEstado()).isEqualTo(EstadoCampana.PLANIFICADA);
         campanaService.cancelar(segunda.getId(), "Fin de la prueba");
         assertThat(campanaService.obtener(primera.getId()).getMotivoCierre()).isEqualTo("Sin semilla");
@@ -132,7 +133,7 @@ class PersistenciaPostgresTest {
                         + "(SELECT 1 FROM agrocontrol.campana c WHERE c.id_parcela = p.id_parcela AND c.estado IN ('PLANIFICADA', 'EN_CURSO'))",
                 Long.class);
         Long cultivoId = jdbc.queryForObject("SELECT min(id_cultivo) FROM agrocontrol.cultivo", Long.class);
-        Campana campana = campanaService.crear(parcelaId, cultivoId, LocalDate.now());
+        Campana campana = campanaService.crear(parcelaId, cultivoId, LocalDate.now(), PlanSiembra.VACIO);
 
         campanaService.iniciar(campana.getId());
 
@@ -172,7 +173,7 @@ class PersistenciaPostgresTest {
                         + "(SELECT 1 FROM agrocontrol.campana c WHERE c.id_parcela = p.id_parcela AND c.estado IN ('PLANIFICADA', 'EN_CURSO'))",
                 Long.class);
         Long cultivoId = jdbc.queryForObject("SELECT min(id_cultivo) FROM agrocontrol.cultivo", Long.class);
-        Campana creada = campanaService.crear(parcelaId, cultivoId, LocalDate.now());
+        Campana creada = campanaService.crear(parcelaId, cultivoId, LocalDate.now(), PlanSiembra.VACIO);
 
         campanaService.iniciar(creada.getId());
 
@@ -241,6 +242,25 @@ class PersistenciaPostgresTest {
 
         assertThat(inventarioService.obtenerInsumo(insumo.getId()).getStockActual()).isEqualByComparingTo("0");
         assertThat(inventarioService.listarMovimientos(insumo.getId())).hasSize(21);
+    }
+
+    @Test
+    void laSiembraDeLaCampanaSeGuardaYSeLee() {
+        Long parcelaId = jdbc.queryForObject(
+                "SELECT min(id_parcela) FROM agrocontrol.parcela p WHERE area_ha >= 2 AND NOT EXISTS "
+                        + "(SELECT 1 FROM agrocontrol.campana c WHERE c.id_parcela = p.id_parcela AND c.estado IN ('PLANIFICADA', 'EN_CURSO'))",
+                Long.class);
+        Long cultivoId = jdbc.queryForObject("SELECT min(id_cultivo) FROM agrocontrol.cultivo", Long.class);
+        LocalDate hoy = LocalDate.now();
+        Campana creada = campanaService.crear(parcelaId, cultivoId, hoy,
+                new PlanSiembra(new BigDecimal("1.50"), "Híbrido de prueba", hoy.plusDays(120)));
+
+        PlanSiembra leida = campanaService.obtener(creada.getId()).getPlan();
+
+        assertThat(leida.areaSembradaHa()).isEqualByComparingTo("1.5");
+        assertThat(leida.variedad()).isEqualTo("Híbrido de prueba");
+        assertThat(leida.fechaCosechaEstimada()).isEqualTo(hoy.plusDays(120));
+        campanaService.cancelar(creada.getId(), "Fin de la prueba");
     }
 
     @Test

@@ -3,6 +3,7 @@ package com.agrocontrol.campana.application;
 import com.agrocontrol.campana.domain.Campana;
 import com.agrocontrol.campana.domain.CampanaRepository;
 import com.agrocontrol.campana.domain.EstadoCampana;
+import com.agrocontrol.campana.domain.PlanSiembra;
 import com.agrocontrol.cultivo.domain.CultivoRepository;
 import com.agrocontrol.labor.domain.EstadoLabor;
 import com.agrocontrol.labor.domain.Labor;
@@ -19,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -131,8 +133,41 @@ class CampanaServiceTest {
         existente(EstadoCampana.PLANIFICADA);
         when(cultivoRepository.existePorId(9L)).thenReturn(false);
 
-        assertThatThrownBy(() -> service.editar(5L, 9L, INICIO))
+        assertThatThrownBy(() -> service.editar(5L, 9L, INICIO, PlanSiembra.VACIO))
                 .isInstanceOf(com.agrocontrol.shared.domain.RecursoNoEncontradoException.class);
+    }
+
+    @Test
+    void noSeSiembraMasDeLoQueMideLaParcela() {
+        when(parcelaRepository.buscarPorId(3L)).thenReturn(Optional.of(new Parcela(3L, 1L, "P-01", new BigDecimal("40"))));
+        existente(EstadoCampana.PLANIFICADA);
+        when(cultivoRepository.existePorId(1L)).thenReturn(true);
+
+        assertThatThrownBy(() -> service.editar(5L, 1L, INICIO, new PlanSiembra(new BigDecimal("40.01"), null, null)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("40");
+
+        Campana editada = service.editar(5L, 1L, INICIO, new PlanSiembra(new BigDecimal("40"), " Soya RR ", INICIO.plusDays(120)));
+        assertThat(editada.getPlan().variedad()).isEqualTo("Soya RR");
+    }
+
+    @Test
+    void enCursoSeCorrigeLaSiembraPeroNoElCultivo() {
+        existente(EstadoCampana.EN_CURSO);
+        when(cultivoRepository.existePorId(any())).thenReturn(true);
+        PlanSiembra plan = new PlanSiembra(new BigDecimal("12.5"), null, null);
+
+        assertThat(service.editar(5L, 1L, INICIO, plan).getAreaSembradaHa()).isEqualByComparingTo("12.5");
+        assertThatThrownBy(() -> service.editar(5L, 2L, INICIO, plan)).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void laCosechaEstimadaNoPuedeSerAnteriorAlInicio() {
+        existente(EstadoCampana.PLANIFICADA);
+        when(cultivoRepository.existePorId(1L)).thenReturn(true);
+
+        assertThatThrownBy(() -> service.editar(5L, 1L, INICIO, new PlanSiembra(null, null, INICIO.minusDays(1))))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

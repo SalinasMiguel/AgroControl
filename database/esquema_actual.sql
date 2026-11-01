@@ -145,6 +145,9 @@ CREATE TABLE agrocontrol.campana (
     fecha_fin date,
     estado character varying(20) DEFAULT 'PLANIFICADA'::character varying NOT NULL,
     motivo_cierre character varying(200),
+    area_sembrada_ha numeric(10,2),
+    variedad character varying(80),
+    fecha_cosecha_estimada date,
     CONSTRAINT campana_check CHECK (((fecha_fin IS NULL) OR (fecha_fin >= fecha_inicio))),
     CONSTRAINT campana_estado_check CHECK (((estado)::text = ANY ((ARRAY['PLANIFICADA'::character varying, 'EN_CURSO'::character varying, 'FINALIZADA'::character varying, 'CANCELADA'::character varying, 'PERDIDA'::character varying])::text[])))
 );

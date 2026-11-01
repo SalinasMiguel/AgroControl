@@ -8,7 +8,7 @@ import { cosechaService } from '../services/cosechaService';
 
 vi.mock('../../../config/env', () => ({ API_URL: '/api' }));
 
-const CAMPANA = { id: 7, parcelaId: 1, cultivoId: 1, fechaInicio: '2026-01-01', fechaFin: null, estado: 'EN_CURSO' as const, motivoCierre: null };
+const CAMPANA = { id: 7, parcelaId: 1, cultivoId: 1, fechaInicio: '2026-01-01', fechaFin: null, estado: 'EN_CURSO' as const, motivoCierre: null, areaSembradaHa: null, variedad: null, fechaCosechaEstimada: null, };
 
 function montar() {
   const sesion = { nombreCompleto: 'Ana' } as AuthContextValue['sesion'];

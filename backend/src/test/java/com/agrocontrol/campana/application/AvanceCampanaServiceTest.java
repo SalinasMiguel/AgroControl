@@ -1,6 +1,7 @@
 package com.agrocontrol.campana.application;
 
 import com.agrocontrol.campana.domain.Campana;
+import com.agrocontrol.campana.domain.PlanSiembra;
 import com.agrocontrol.campana.domain.CampanaRepository;
 import com.agrocontrol.cosecha.domain.Cosecha;
 import com.agrocontrol.cosecha.domain.CosechaRepository;
@@ -159,6 +160,23 @@ class AvanceCampanaServiceTest {
         assertThat(avance.rendimientoToneladasPorHa()).isNull();
         assertThat(avance.incidenciasTotal()).isZero();
         assertThat(avance.incidenciasAbiertas()).isZero();
+    }
+
+    @Test
+    void elRendimientoUsaLoSembradoYNoTodaLaParcela() {
+        LocalDate inicio = LocalDate.of(2026, 9, 1);
+        Campana campana = new Campana(5L, 3L, 1L, inicio);
+        campana.definirSiembra(new PlanSiembra(new BigDecimal("4"), null, null));
+        when(campanaRepository.buscarPorId(5L)).thenReturn(Optional.of(campana));
+        when(cultivoRepository.buscarPorId(1L)).thenReturn(Optional.of(new Cultivo(1L, "Soya", 120)));
+        when(laborRepository.listarPorCampana(5L)).thenReturn(List.of());
+        when(insumoRepository.listarTodos()).thenReturn(List.of());
+        when(incidenciaRepository.listarPorParcela(3L)).thenReturn(List.of());
+        when(cosechaRepository.listarPorCampana(5L)).thenReturn(List.of(new Cosecha(1L, 5L, new BigDecimal("10"), "t", 7L)));
+
+        AvanceCampana avance = service.calcular(5L, inicio.plusDays(1));
+
+        assertThat(avance.rendimientoToneladasPorHa()).isEqualByComparingTo("2.50");
     }
 
     @Test

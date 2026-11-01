@@ -78,6 +78,17 @@ public class IncidenciaService {
         return incidenciaRepository.guardar(incidencia);
     }
 
+    @Auditable(entidad = "INCIDENCIA", accion = "ASIGNAR_RESPONSABLE")
+    @Transactional
+    public Incidencia asignarResponsable(Long id, Long responsableId) {
+        Incidencia incidencia = obtener(id);
+        if (usuarioRepository.buscarPorId(responsableId).isEmpty()) {
+            throw new UsuarioNoEncontradoException(responsableId);
+        }
+        incidencia.asignarResponsable(responsableId);
+        return incidenciaRepository.guardar(incidencia);
+    }
+
     @Auditable(entidad = "INCIDENCIA", accion = "ATENDER")
     @Transactional
     public Incidencia atender(Long id) {

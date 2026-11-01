@@ -7,6 +7,7 @@ import com.agrocontrol.insumo.infrastructure.adapter.in.web.dto.AjusteStockReque
 import com.agrocontrol.insumo.infrastructure.adapter.in.web.dto.CrearInsumoRequest;
 import com.agrocontrol.insumo.infrastructure.adapter.in.web.dto.InsumoResponse;
 import com.agrocontrol.insumo.infrastructure.adapter.in.web.dto.MovimientoResponse;
+import com.agrocontrol.insumo.infrastructure.adapter.in.web.dto.RegistrarCompraRequest;
 import com.agrocontrol.insumo.infrastructure.adapter.in.web.dto.RegistrarMovimientoRequest;
 import com.agrocontrol.shared.web.MotivoRequest;
 import jakarta.validation.Valid;
@@ -81,6 +82,14 @@ public class InsumoController {
                                                       @AuthenticationPrincipal Jwt jwt) {
         return ResponseEntity.status(HttpStatus.CREATED).body(MovimientoResponse.desde(
                 service.ajustarStock(id, request.stockContado(), request.motivo(), UsuarioAutenticado.id(jwt))));
+    }
+
+    @PostMapping("/{id}/compras")
+    public ResponseEntity<MovimientoResponse> registrarCompra(@PathVariable Long id,
+                                                              @Valid @RequestBody RegistrarCompraRequest request,
+                                                              @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(MovimientoResponse.desde(service.registrarCompra(
+                id, request.cantidad(), request.motivo(), request.documento(), UsuarioAutenticado.id(jwt))));
     }
 
     @GetMapping("/{id}/movimientos")

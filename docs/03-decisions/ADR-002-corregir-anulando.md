@@ -15,5 +15,5 @@ No había forma de corregir un error de carga. RN-09 prohíbe eliminar el histor
 - **Bloqueo optimista:** ante un doble clic daría un error de versión; el bloqueo pesimista hace que la segunda anulación espere y responda "ya anulado".
 
 ## Consecuencias
-- Corregir una cantidad son dos pasos: anular y volver a registrar.
+- Corregir una cantidad son dos pasos: anular y volver a registrar. En cosechas, `POST /api/cosechas/{id}/corregir` los hace juntos en una transacción, con motivo obligatorio y bloqueo de la fila.
 - Cada anulación bloquea primero el registro y luego el insumo. Dos índices únicos en V9 lo respaldan en la base.

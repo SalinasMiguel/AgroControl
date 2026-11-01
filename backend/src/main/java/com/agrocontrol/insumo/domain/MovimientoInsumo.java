@@ -20,6 +20,7 @@ public class MovimientoInsumo {
     private OrigenMovimiento origen = OrigenMovimiento.MANUAL;
     private Long consumoId;
     private Long movimientoAnuladoId;
+    private DocumentoCompra documento = DocumentoCompra.VACIO;
 
     private MovimientoInsumo() {
     }
@@ -40,6 +41,23 @@ public class MovimientoInsumo {
         m.origen = origen;
         m.consumoId = consumoId;
         m.movimientoAnuladoId = movimientoAnuladoId;
+        return m;
+    }
+
+    public static MovimientoInsumo reconstruir(Long id, Long insumoId, TipoMovimiento tipo, BigDecimal cantidad,
+                                               String motivo, Long usuarioId, LocalDateTime fecha, Anulacion anulacion,
+                                               OrigenMovimiento origen, Long consumoId, Long movimientoAnuladoId,
+                                               DocumentoCompra documento) {
+        MovimientoInsumo m = reconstruir(id, insumoId, tipo, cantidad, motivo, usuarioId, fecha, anulacion,
+                                         origen, consumoId, movimientoAnuladoId);
+        m.documento = documento;
+        return m;
+    }
+
+    public static MovimientoInsumo deCompra(Long insumoId, BigDecimal cantidad, String motivo,
+                                            DocumentoCompra documento, Long usuarioId) {
+        MovimientoInsumo m = new MovimientoInsumo(null, insumoId, TipoMovimiento.ENTRADA, cantidad, motivo, usuarioId);
+        m.documento = documento;
         return m;
     }
 
@@ -101,6 +119,7 @@ public class MovimientoInsumo {
 
     public boolean isAnulado() { return anulacion != null; }
 
+    public DocumentoCompra getDocumento() { return documento; }
     public Long getId() { return id; }
     public Long getInsumoId() { return insumoId; }
     public TipoMovimiento getTipo() { return tipo; }

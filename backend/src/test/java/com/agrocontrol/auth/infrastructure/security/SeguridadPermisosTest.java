@@ -80,6 +80,7 @@ class SeguridadPermisosTest {
     private static Stream<Arguments> matriz() {
         List<Arguments> casos = new ArrayList<>();
         agregar(casos, "POST", "/api/incidencias/1/anular", "ADMINISTRADOR", "JEFE_DE_CAMPO", "SUPERVISOR");
+        agregar(casos, "POST", "/api/incidencias/1/responsable", "ADMINISTRADOR", "JEFE_DE_CAMPO", "SUPERVISOR");
         agregar(casos, "POST", "/api/cosechas/1/anular", "ADMINISTRADOR", "JEFE_DE_CAMPO", "ALMACENERO");
         agregar(casos, "POST", "/api/labores/1/consumos/2/anular", "ADMINISTRADOR", "JEFE_DE_CAMPO");
         agregar(casos, "POST", "/api/insumos/1/movimientos/2/anular", "ADMINISTRADOR", "ALMACENERO");

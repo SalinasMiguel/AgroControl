@@ -2,6 +2,7 @@ package com.agrocontrol.cosecha.infrastructure.adapter.in.web;
 
 import com.agrocontrol.auth.infrastructure.security.UsuarioAutenticado;
 import com.agrocontrol.cosecha.application.CosechaService;
+import com.agrocontrol.cosecha.infrastructure.adapter.in.web.dto.CorregirCosechaRequest;
 import com.agrocontrol.cosecha.infrastructure.adapter.in.web.dto.CosechaResponse;
 import com.agrocontrol.cosecha.infrastructure.adapter.in.web.dto.RegistrarCosechaRequest;
 import com.agrocontrol.shared.web.MotivoRequest;
@@ -40,6 +41,14 @@ public class CosechaController {
                                                      @AuthenticationPrincipal Jwt jwt) {
         return ResponseEntity.status(HttpStatus.CREATED).body(CosechaResponse.desde(service.registrar(
                 request.campanaId(), request.cantidad(), request.unidadMedida(), request.fecha(),
+                request.calidad(), UsuarioAutenticado.id(jwt))));
+    }
+
+    @PostMapping("/{id}/corregir")
+    public ResponseEntity<CosechaResponse> corregir(@PathVariable Long id, @Valid @RequestBody CorregirCosechaRequest request,
+                                                    @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(CosechaResponse.desde(service.corregir(
+                id, request.motivo(), request.cantidad(), request.unidadMedida(), request.fecha(),
                 request.calidad(), UsuarioAutenticado.id(jwt))));
     }
 

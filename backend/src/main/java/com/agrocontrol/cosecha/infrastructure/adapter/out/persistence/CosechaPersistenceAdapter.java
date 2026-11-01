@@ -28,6 +28,11 @@ public class CosechaPersistenceAdapter implements CosechaRepository {
     }
 
     @Override
+    public Optional<Cosecha> buscarParaActualizar(Long id) {
+        return jpaRepository.findByIdParaActualizar(id).map(CosechaPersistenceMapper::toDomain);
+    }
+
+    @Override
     public List<Cosecha> listarTodas() {
         return jpaRepository.findAll(Sort.by(Sort.Direction.DESC, "fecha"))
                 .stream().map(CosechaPersistenceMapper::toDomain).toList();

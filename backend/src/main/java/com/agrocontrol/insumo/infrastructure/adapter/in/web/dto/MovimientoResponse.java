@@ -20,7 +20,9 @@ public record MovimientoResponse(
         boolean anulado,
         String motivoAnulacion,
         Long anuladoPor,
-        LocalDateTime anuladoEn
+        LocalDateTime anuladoEn,
+        String proveedor,
+        String numeroFactura
 ) {
     public static MovimientoResponse desde(MovimientoInsumo movimiento) {
         Anulacion anulacion = movimiento.getAnulacion();
@@ -36,7 +38,9 @@ public record MovimientoResponse(
                 movimiento.isAnulado(),
                 anulacion == null ? null : anulacion.motivo(),
                 anulacion == null ? null : anulacion.usuarioId(),
-                anulacion == null ? null : anulacion.fecha()
+                anulacion == null ? null : anulacion.fecha(),
+                movimiento.getDocumento().proveedor(),
+                movimiento.getDocumento().numeroFactura()
         );
     }
 }

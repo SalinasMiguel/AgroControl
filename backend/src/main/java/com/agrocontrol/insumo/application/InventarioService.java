@@ -5,6 +5,7 @@ import com.agrocontrol.campana.domain.CampanaRepository;
 import com.agrocontrol.insumo.domain.CategoriaInsumo;
 import com.agrocontrol.insumo.domain.ConsumoLabor;
 import com.agrocontrol.insumo.domain.ConsumoLaborRepository;
+import com.agrocontrol.insumo.domain.DocumentoCompra;
 import com.agrocontrol.insumo.domain.Insumo;
 import com.agrocontrol.insumo.domain.InsumoRepository;
 import com.agrocontrol.insumo.domain.MovimientoInsumo;
@@ -128,6 +129,18 @@ public class InventarioService {
         aplicar(insumo, tipo, cantidad);
         insumoRepository.guardar(insumo);
         return movimientoRepository.guardar(new MovimientoInsumo(null, insumoId, tipo, cantidad, motivo, usuarioId));
+    }
+
+    // Entrada al almacén con su proveedor y factura
+    @Auditable(entidad = "MOVIMIENTO_INSUMO", accion = "REGISTRAR_COMPRA")
+    @Transactional
+    public MovimientoInsumo registrarCompra(Long insumoId, BigDecimal cantidad, String motivo,
+                                            DocumentoCompra documento, Long usuarioId) {
+        Insumo insumo = obtenerInsumoParaActualizar(insumoId);
+        verificarUsuario(usuarioId);
+        aplicar(insumo, TipoMovimiento.ENTRADA, cantidad);
+        insumoRepository.guardar(insumo);
+        return movimientoRepository.guardar(MovimientoInsumo.deCompra(insumoId, cantidad, motivo, documento, usuarioId));
     }
 
     @Transactional(readOnly = true)

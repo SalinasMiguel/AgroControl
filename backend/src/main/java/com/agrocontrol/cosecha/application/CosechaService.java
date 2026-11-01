@@ -63,6 +63,18 @@ public class CosechaService {
         return cosechaRepository.guardar(cosecha);
     }
 
+    // ADR-002: un hecho no se pisa. Corregir anula la carga y registra la buena, juntas o ninguna.
+    @Auditable(entidad = "COSECHA", accion = "CORREGIR")
+    @Transactional
+    public Cosecha corregir(Long id, String motivo, BigDecimal cantidad, String unidadMedida, LocalDate fecha,
+                            CalidadCosecha calidad, Long usuarioId) {
+        Cosecha original = cosechaRepository.buscarParaActualizar(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("No existe la cosecha con id: " + id));
+        original.anular(motivo, usuarioId);
+        cosechaRepository.guardar(original);
+        return registrar(original.getCampanaId(), cantidad, unidadMedida, fecha, calidad, usuarioId);
+    }
+
     @Auditable(entidad = "COSECHA", accion = "ANULAR")
     @Transactional
     public Cosecha anular(Long id, String motivo, Long usuarioId) {

@@ -83,6 +83,9 @@ public class AvanceCampanaService {
                 .toList();
 
         BigDecimal toneladas = cosechas.stream().map(Cosecha::getToneladas).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal humedadEstandar = cultivo == null ? null : cultivo.getHumedadEstandarPct();
+        BigDecimal netas = cosechas.stream().map(c -> c.getToneladasNetas(humedadEstandar))
+                .reduce(BigDecimal.ZERO, BigDecimal::add).setScale(3, RoundingMode.HALF_UP);
 
         return new AvanceCampana(
                 campanaId,
@@ -96,7 +99,8 @@ public class AvanceCampanaService {
                 insumosConsumidos(labores),
                 totalesDeCosecha(cosechas),
                 toneladas,
-                rendimiento(campana, toneladas),
+                netas,
+                rendimiento(campana, netas),
                 (int) incidencias.stream().filter(Incidencia::estaAbierta).count(),
                 incidencias.size()
         );

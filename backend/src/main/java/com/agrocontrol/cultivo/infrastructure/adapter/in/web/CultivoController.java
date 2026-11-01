@@ -34,11 +34,11 @@ public class CultivoController {
     @PostMapping
     public ResponseEntity<CultivoResponse> crear(@Valid @RequestBody CrearCultivoRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(CultivoResponse.desde(service.crear(request.nombre(), request.cicloDias())));
+                .body(CultivoResponse.desde(service.crear(request.nombre(), request.cicloDias(), request.humedadEstandarPct())));
     }
 
     @PutMapping("/{id}")
     public CultivoResponse actualizar(@PathVariable Long id, @Valid @RequestBody CrearCultivoRequest request) {
-        return CultivoResponse.desde(service.actualizar(id, request.nombre(), request.cicloDias()));
+        return CultivoResponse.desde(service.actualizar(id, request.nombre(), request.cicloDias(), request.humedadEstandarPct()));
     }
 }

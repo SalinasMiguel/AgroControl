@@ -84,7 +84,7 @@ class PersistenciaPostgresTest {
         assertThat(parcelaRepository.listarTodas()).isNotEmpty();
         BigDecimal version = jdbc.queryForObject(
                 "SELECT max(version::numeric) FROM flyway_schema_history WHERE success", BigDecimal.class);
-        assertThat(version).isEqualByComparingTo("12");
+        assertThat(version).isEqualByComparingTo("13");
     }
 
     @Test

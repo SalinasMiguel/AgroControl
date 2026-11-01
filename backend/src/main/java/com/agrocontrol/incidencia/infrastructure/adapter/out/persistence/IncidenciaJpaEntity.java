@@ -68,13 +68,17 @@ public class IncidenciaJpaEntity {
     @Column(name = "gravedad", nullable = false, length = 10)
     private GravedadIncidencia gravedad;
 
+    @Column(name = "id_responsable")
+    private Long responsableId;
+
     protected IncidenciaJpaEntity() {
     }
 
     public IncidenciaJpaEntity(Long id, Long parcelaId, Long campanaId, Long laborId, String descripcion,
                                Long usuarioId, LocalDateTime fecha, EstadoIncidencia estado, String resolucion,
                                LocalDateTime resueltaEn, String motivoAnulacion, Long anuladoPor,
-                               LocalDateTime anuladoEn, TipoIncidencia tipo, GravedadIncidencia gravedad) {
+                               LocalDateTime anuladoEn, TipoIncidencia tipo, GravedadIncidencia gravedad,
+                               Long responsableId) {
         this.id = id;
         this.parcelaId = parcelaId;
         this.campanaId = campanaId;
@@ -90,9 +94,11 @@ public class IncidenciaJpaEntity {
         this.anuladoEn = anuladoEn;
         this.tipo = tipo;
         this.gravedad = gravedad;
+        this.responsableId = responsableId;
     }
 
     public Long getId() { return id; }
+    public Long getResponsableId() { return responsableId; }
     public TipoIncidencia getTipo() { return tipo; }
     public GravedadIncidencia getGravedad() { return gravedad; }
     public Long getParcelaId() { return parcelaId; }

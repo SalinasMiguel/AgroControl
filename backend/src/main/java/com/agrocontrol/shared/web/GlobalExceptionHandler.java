@@ -15,6 +15,7 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.LinkedHashMap;
@@ -53,6 +54,11 @@ public class GlobalExceptionHandler {
     }
 
     // Reglas de los constructores del dominio que no cubre @Valid.
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ProblemDetail archivoMuyGrande(MaxUploadSizeExceededException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.PAYLOAD_TOO_LARGE, "La foto no puede pesar más de 5 MB");
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ProblemDetail argumentoInvalido(IllegalArgumentException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());

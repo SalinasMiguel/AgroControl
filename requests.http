@@ -530,3 +530,35 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 { "predioId": 1, "codigo": "P-01", "areaHa": 10, "estado": "EN_PRODUCCION" }
+
+### Pestañas: responsable de una incidencia
+POST http://localhost:8080/api/incidencias/1/responsable
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "usuarioId": 2 }
+
+### Pestañas: fotos de una incidencia (GET lista; POST multipart con el campo "foto"; máx. 5 fotos de 5 MB)
+GET http://localhost:8080/api/incidencias/1/fotos
+Authorization: Bearer {{token}}
+
+### Pestañas: corregir una cosecha (anula la carga y registra la buena)
+POST http://localhost:8080/api/cosechas/1/corregir
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "motivo": "La boleta decía 12 t", "cantidad": 12, "unidadMedida": "t", "humedadPct": 15, "impurezasPct": 1 }
+
+### Pestañas: compra con proveedor y factura
+POST http://localhost:8080/api/insumos/1/compras
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "cantidad": 5, "motivo": "Compra", "proveedor": "Agro SRL", "numeroFactura": "F-77" }
+
+### Pestañas: equivalentes de un insumo (POST vincula, DELETE .../{equivalenteId} quita)
+POST http://localhost:8080/api/insumos/1/equivalencias
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "equivalenteId": 2 }

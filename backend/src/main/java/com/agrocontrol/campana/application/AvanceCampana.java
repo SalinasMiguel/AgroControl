@@ -25,6 +25,7 @@ public record AvanceCampana(
         List<InsumoConsumido> insumos,
         List<CosechaTotal> cosecha,
         BigDecimal cosechaToneladas,
+        BigDecimal cosechaToneladasNetas,
         BigDecimal rendimientoToneladasPorHa,
         int incidenciasAbiertas,
         int incidenciasTotal

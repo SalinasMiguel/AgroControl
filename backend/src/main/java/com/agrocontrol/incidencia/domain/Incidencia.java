@@ -19,6 +19,7 @@ public class Incidencia {
     private Anulacion anulacion;
     private TipoIncidencia tipo = TipoIncidencia.OTRO;
     private GravedadIncidencia gravedad = GravedadIncidencia.MEDIA;
+    private Long responsableId;
 
     private Incidencia() {
     }
@@ -42,6 +43,16 @@ public class Incidencia {
         i.anulacion = anulacion;
         i.tipo = tipo;
         i.gravedad = gravedad;
+        return i;
+    }
+
+    public static Incidencia reconstruir(Long id, Long parcelaId, Long campanaId, Long laborId, String descripcion,
+                                         Long usuarioId, LocalDateTime fecha, EstadoIncidencia estado,
+                                         String resolucion, LocalDateTime resueltaEn, Anulacion anulacion,
+                                         TipoIncidencia tipo, GravedadIncidencia gravedad, Long responsableId) {
+        Incidencia i = reconstruir(id, parcelaId, campanaId, laborId, descripcion, usuarioId, fecha, estado,
+                                   resolucion, resueltaEn, anulacion, tipo, gravedad);
+        i.responsableId = responsableId;
         return i;
     }
 
@@ -95,10 +106,18 @@ public class Incidencia {
         this.estado = EstadoIncidencia.ANULADA;
     }
 
+    public void asignarResponsable(Long usuarioId) {
+        if (!estaAbierta()) {
+            throw new IllegalStateException("Solo se asigna responsable a una incidencia abierta (estado actual: " + estado + ")");
+        }
+        this.responsableId = usuarioId;
+    }
+
     public boolean estaAbierta() {
         return estado == EstadoIncidencia.ABIERTA || estado == EstadoIncidencia.EN_ATENCION;
     }
 
+    public Long getResponsableId() { return responsableId; }
     public Long getId() { return id; }
     public Long getParcelaId() { return parcelaId; }
     public Long getCampanaId() { return campanaId; }

@@ -3,9 +3,12 @@ package com.agrocontrol.cosecha.domain;
 import com.agrocontrol.shared.domain.Anulacion;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 
 public class Cosecha {
+
+    private static final BigDecimal CIEN = BigDecimal.valueOf(100);
 
     private Long id;
     private Long campanaId;
@@ -80,6 +83,20 @@ public class Cosecha {
 
     public BigDecimal getToneladas() {
         return UnidadCosecha.desde(unidadMedida).aToneladas(cantidad);
+    }
+
+    // Lo que vale la carga: descuenta las impurezas y, si vino más húmeda que el estándar, el agua de más.
+    public BigDecimal getToneladasNetas(BigDecimal humedadEstandarPct) {
+        BigDecimal netas = getToneladas();
+        BigDecimal impurezas = calidad.impurezasPct();
+        if (impurezas != null) {
+            netas = netas.multiply(CIEN.subtract(impurezas)).divide(CIEN, 6, RoundingMode.HALF_UP);
+        }
+        BigDecimal humedad = calidad.humedadPct();
+        if (humedad != null && humedadEstandarPct != null && humedad.compareTo(humedadEstandarPct) > 0) {
+            netas = netas.multiply(CIEN.subtract(humedad)).divide(CIEN.subtract(humedadEstandarPct), 6, RoundingMode.HALF_UP);
+        }
+        return netas;
     }
 
     public Long getId() { return id; }

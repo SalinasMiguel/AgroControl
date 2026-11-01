@@ -6,6 +6,7 @@ import java.util.Optional;
 public interface CosechaRepository {
     Cosecha guardar(Cosecha cosecha);
     Optional<Cosecha> buscarPorId(Long id);
+    Optional<Cosecha> buscarParaActualizar(Long id);
     List<Cosecha> listarTodas();
     List<Cosecha> listarPorCampana(Long campanaId);
 }

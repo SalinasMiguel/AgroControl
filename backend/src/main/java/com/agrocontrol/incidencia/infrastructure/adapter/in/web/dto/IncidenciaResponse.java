@@ -23,7 +23,8 @@ public record IncidenciaResponse(
         Long anuladoPor,
         LocalDateTime anuladoEn,
         TipoIncidencia tipo,
-        GravedadIncidencia gravedad
+        GravedadIncidencia gravedad,
+        Long responsableId
 ) {
     public static IncidenciaResponse desde(Incidencia incidencia) {
         Anulacion anulacion = incidencia.getAnulacion();
@@ -42,7 +43,8 @@ public record IncidenciaResponse(
                 anulacion == null ? null : anulacion.usuarioId(),
                 anulacion == null ? null : anulacion.fecha(),
                 incidencia.getTipo(),
-                incidencia.getGravedad()
+                incidencia.getGravedad(),
+                incidencia.getResponsableId()
         );
     }
 }

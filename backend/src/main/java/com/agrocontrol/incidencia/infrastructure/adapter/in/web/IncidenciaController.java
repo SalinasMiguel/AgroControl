@@ -5,6 +5,7 @@ import com.agrocontrol.incidencia.application.IncidenciaService;
 import com.agrocontrol.incidencia.infrastructure.adapter.in.web.dto.IncidenciaResponse;
 import com.agrocontrol.incidencia.infrastructure.adapter.in.web.dto.RegistrarIncidenciaRequest;
 import com.agrocontrol.incidencia.infrastructure.adapter.in.web.dto.ResolverIncidenciaRequest;
+import com.agrocontrol.incidencia.infrastructure.adapter.in.web.dto.ResponsableRequest;
 import com.agrocontrol.shared.web.MotivoRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -42,6 +43,11 @@ public class IncidenciaController {
         return ResponseEntity.status(HttpStatus.CREATED).body(IncidenciaResponse.desde(service.registrar(
                 request.parcelaId(), request.campanaId(), request.laborId(), request.descripcion(),
                 request.tipo(), request.gravedad(), UsuarioAutenticado.id(jwt))));
+    }
+
+    @PostMapping("/{id}/responsable")
+    public IncidenciaResponse asignarResponsable(@PathVariable Long id, @Valid @RequestBody ResponsableRequest request) {
+        return IncidenciaResponse.desde(service.asignarResponsable(id, request.usuarioId()));
     }
 
     @PostMapping("/{id}/atender")

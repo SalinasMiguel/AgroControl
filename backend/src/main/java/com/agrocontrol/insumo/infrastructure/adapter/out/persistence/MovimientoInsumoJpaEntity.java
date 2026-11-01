@@ -58,12 +58,19 @@ public class MovimientoInsumoJpaEntity {
     @Column(name = "id_movimiento_anulado")
     private Long movimientoAnuladoId;
 
+    @Column(name = "proveedor", length = 120)
+    private String proveedor;
+
+    @Column(name = "numero_factura", length = 40)
+    private String numeroFactura;
+
     protected MovimientoInsumoJpaEntity() {
     }
 
     public MovimientoInsumoJpaEntity(Long id, Long insumoId, TipoMovimiento tipo, BigDecimal cantidad, String motivo,
                                      Long usuarioId, LocalDateTime fecha, AnulacionEmbeddable anulacion,
-                                     OrigenMovimiento origen, Long consumoId, Long movimientoAnuladoId) {
+                                     OrigenMovimiento origen, Long consumoId, Long movimientoAnuladoId,
+                                     String proveedor, String numeroFactura) {
         this.id = id;
         this.insumoId = insumoId;
         this.tipo = tipo;
@@ -75,9 +82,13 @@ public class MovimientoInsumoJpaEntity {
         this.origen = origen;
         this.consumoId = consumoId;
         this.movimientoAnuladoId = movimientoAnuladoId;
+        this.proveedor = proveedor;
+        this.numeroFactura = numeroFactura;
     }
 
     public Long getId() { return id; }
+    public String getProveedor() { return proveedor; }
+    public String getNumeroFactura() { return numeroFactura; }
     public Long getInsumoId() { return insumoId; }
     public TipoMovimiento getTipo() { return tipo; }
     public BigDecimal getCantidad() { return cantidad; }

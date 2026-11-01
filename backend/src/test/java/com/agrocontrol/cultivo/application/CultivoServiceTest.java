@@ -31,7 +31,7 @@ class CultivoServiceTest {
         when(cultivoRepository.buscarPorId(1L)).thenReturn(Optional.of(new Cultivo(1L, "Soya", 120)));
         when(cultivoRepository.existePorNombreEnOtro("Maíz", 1L)).thenReturn(true);
 
-        assertThatThrownBy(() -> service.actualizar(1L, " Maíz ", 100)).isInstanceOf(ConflictoException.class);
+        assertThatThrownBy(() -> service.actualizar(1L, " Maíz ", 100, null)).isInstanceOf(ConflictoException.class);
     }
 
     @Test
@@ -40,7 +40,7 @@ class CultivoServiceTest {
         when(cultivoRepository.existePorNombreEnOtro("Soya", 1L)).thenReturn(false);
         when(cultivoRepository.guardar(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        Cultivo cultivo = service.actualizar(1L, "Soya", 110);
+        Cultivo cultivo = service.actualizar(1L, "Soya", 110, null);
 
         assertThat(cultivo.getCicloDias()).isEqualTo(110);
     }
@@ -49,6 +49,6 @@ class CultivoServiceTest {
     void actualizarCultivoInexistenteDa404() {
         when(cultivoRepository.buscarPorId(9L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.actualizar(9L, "Soya", 110)).isInstanceOf(RecursoNoEncontradoException.class);
+        assertThatThrownBy(() -> service.actualizar(9L, "Soya", 110, null)).isInstanceOf(RecursoNoEncontradoException.class);
     }
 }

@@ -9,3 +9,6 @@ export interface Parcela {
 }
 
 export const ESTADOS_PARCELA: EstadoParcela[] = ['DISPONIBLE', 'EN_PRODUCCION', 'EN_DESCANSO'];
+
+// EN_PRODUCCION lo pone la campaña al iniciar: no se elige a mano.
+export const ESTADOS_MANUALES: EstadoParcela[] = ['DISPONIBLE', 'EN_DESCANSO'];

@@ -6,10 +6,12 @@ import com.agrocontrol.labor.application.LaborService;
 import com.agrocontrol.labor.infrastructure.adapter.in.web.dto.AsignacionResponse;
 import com.agrocontrol.labor.infrastructure.adapter.in.web.dto.AsignarOperarioRequest;
 import com.agrocontrol.labor.infrastructure.adapter.in.web.dto.ConsumoResponse;
+import com.agrocontrol.labor.infrastructure.adapter.in.web.dto.EditarLaborRequest;
 import com.agrocontrol.labor.infrastructure.adapter.in.web.dto.EjecutarLaborRequest;
 import com.agrocontrol.labor.infrastructure.adapter.in.web.dto.LaborResponse;
 import com.agrocontrol.labor.infrastructure.adapter.in.web.dto.PlanificarLaborRequest;
 import com.agrocontrol.labor.infrastructure.adapter.in.web.dto.RegistrarConsumoRequest;
+import com.agrocontrol.shared.web.MotivoRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +20,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -70,6 +73,21 @@ public class LaborController {
                 .body(AsignacionResponse.desde(laborService.asignar(id, request.usuarioId())));
     }
 
+    @PutMapping("/{id}")
+    public LaborResponse editar(@PathVariable Long id, @Valid @RequestBody EditarLaborRequest request) {
+        return LaborResponse.desde(laborService.editar(id, request.tipo(), request.fechaPlan()));
+    }
+
+    @PostMapping("/{id}/cancelar")
+    public LaborResponse cancelar(@PathVariable Long id, @Valid @RequestBody MotivoRequest request) {
+        return LaborResponse.desde(laborService.cancelar(id, request.motivo()));
+    }
+
+    @PostMapping("/{id}/reabrir")
+    public LaborResponse reabrir(@PathVariable Long id, @Valid @RequestBody MotivoRequest request) {
+        return LaborResponse.desde(laborService.reabrir(id, request.motivo()));
+    }
+
     @PostMapping("/{id}/iniciar")
     public LaborResponse iniciar(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
         verificarOperario(id, jwt);
@@ -97,6 +115,12 @@ public class LaborController {
         verificarOperario(id, jwt);
         return ResponseEntity.status(HttpStatus.CREATED).body(ConsumoResponse.desde(
                 inventarioService.registrarConsumo(id, request.insumoId(), request.cantidad(), UsuarioAutenticado.id(jwt))));
+    }
+
+    @PostMapping("/{laborId}/consumos/{id}/anular")
+    public ConsumoResponse anularConsumo(@PathVariable Long laborId, @PathVariable Long id,
+                                         @Valid @RequestBody MotivoRequest request, @AuthenticationPrincipal Jwt jwt) {
+        return ConsumoResponse.desde(inventarioService.anularConsumo(laborId, id, request.motivo(), UsuarioAutenticado.id(jwt)));
     }
 
     private void verificarOperario(Long laborId, Jwt jwt) {

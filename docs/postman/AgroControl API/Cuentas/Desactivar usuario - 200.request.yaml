@@ -1,0 +1,6 @@
+$kind: http-request
+url: "{{baseUrl}}/api/usuarios/3/desactivar"
+method: POST
+headers:
+  Accept: application/json
+order: 3000

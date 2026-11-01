@@ -1,11 +1,14 @@
 package com.agrocontrol.parcela.infrastructure.adapter.in.web;
 
+import com.agrocontrol.auth.application.AuthService;
+import com.agrocontrol.auth.application.EstadoCuenta;
 import com.agrocontrol.auth.infrastructure.security.SecurityConfig;
 import com.agrocontrol.parcela.application.ParcelaService;
 import com.agrocontrol.parcela.domain.Parcela;
 import com.agrocontrol.rol.domain.RolRepository;
 import com.agrocontrol.shared.domain.ConflictoException;
 import com.agrocontrol.shared.domain.RecursoNoEncontradoException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -17,6 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -43,6 +47,14 @@ class ParcelaControllerTest {
     // Lo pide el CommandLineRunner de AgroControlApplication, que también se carga en este slice.
     @MockBean
     private RolRepository rolRepository;
+
+    @MockBean
+    private AuthService authService;
+
+    @BeforeEach
+    void cuentaActiva() {
+        when(authService.estadoCuenta(1L)).thenReturn(Optional.of(new EstadoCuenta(true, 0, false)));
+    }
 
     @Test
     void crearDevuelve201() throws Exception {

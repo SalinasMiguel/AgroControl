@@ -5,13 +5,17 @@ import com.agrocontrol.campana.application.AvanceCampanaService;
 import com.agrocontrol.campana.application.CampanaService;
 import com.agrocontrol.campana.infrastructure.adapter.in.web.dto.CampanaResponse;
 import com.agrocontrol.campana.infrastructure.adapter.in.web.dto.CrearCampanaRequest;
+import com.agrocontrol.campana.infrastructure.adapter.in.web.dto.EditarCampanaRequest;
 import com.agrocontrol.campana.infrastructure.adapter.in.web.dto.FinalizarCampanaRequest;
+import com.agrocontrol.campana.infrastructure.adapter.in.web.dto.MarcarPerdidaRequest;
+import com.agrocontrol.shared.web.MotivoRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -57,6 +61,26 @@ public class CampanaController {
     @PostMapping("/{id}/finalizar")
     public CampanaResponse finalizar(@PathVariable Long id, @Valid @RequestBody FinalizarCampanaRequest request) {
         return CampanaResponse.desde(service.finalizar(id, request.fechaFin()));
+    }
+
+    @PutMapping("/{id}")
+    public CampanaResponse editar(@PathVariable Long id, @Valid @RequestBody EditarCampanaRequest request) {
+        return CampanaResponse.desde(service.editar(id, request.cultivoId(), request.fechaInicio()));
+    }
+
+    @PostMapping("/{id}/cancelar")
+    public CampanaResponse cancelar(@PathVariable Long id, @Valid @RequestBody MotivoRequest request) {
+        return CampanaResponse.desde(service.cancelar(id, request.motivo()));
+    }
+
+    @PostMapping("/{id}/marcar-perdida")
+    public CampanaResponse marcarPerdida(@PathVariable Long id, @Valid @RequestBody MarcarPerdidaRequest request) {
+        return CampanaResponse.desde(service.marcarPerdida(id, request.motivo(), request.fechaFin()));
+    }
+
+    @PostMapping("/{id}/reabrir")
+    public CampanaResponse reabrir(@PathVariable Long id, @Valid @RequestBody MotivoRequest request) {
+        return CampanaResponse.desde(service.reabrir(id, request.motivo()));
     }
 
     // RF-15: labores hechas, insumos gastados, cosecha y problemas abiertos de la campaña

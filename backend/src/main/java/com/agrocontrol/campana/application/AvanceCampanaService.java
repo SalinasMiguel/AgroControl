@@ -28,7 +28,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -64,8 +63,10 @@ public class AvanceCampanaService {
                 .orElseThrow(() -> new RecursoNoEncontradoException("No existe la campaña con id: " + campanaId));
         Cultivo cultivo = cultivoRepository.buscarPorId(campana.getCultivoId()).orElse(null);
 
-        List<Labor> labores = laborRepository.listarPorCampana(campanaId);
-        int planificadas = contar(labores, EstadoLabor.PLANIFICADA);
+        List<Labor> labores = laborRepository.listarPorCampana(campanaId).stream()
+                .filter(labor -> labor.getEstado() != EstadoLabor.CANCELADA)
+                .toList();
+        int planificadas = contar(labores, EstadoLabor.PLANIFICADA) + contar(labores, EstadoLabor.ASIGNADA);
         int enCurso = contar(labores, EstadoLabor.EN_CURSO);
         int ejecutadas = contar(labores, EstadoLabor.EJECUTADA);
 
@@ -73,10 +74,15 @@ public class AvanceCampanaService {
         int dias = (int) Math.max(0, ChronoUnit.DAYS.between(campana.getFechaInicio(), hasta));
         Integer ciclo = cultivo == null ? null : cultivo.getCicloDias();
 
-        List<Cosecha> cosechas = cosechaRepository.listarPorCampana(campanaId);
+        List<Cosecha> cosechas = cosechaRepository.listarPorCampana(campanaId).stream()
+                .filter(cosecha -> !cosecha.isAnulado())
+                .toList();
         List<Incidencia> incidencias = incidenciaRepository.listarPorParcela(campana.getParcelaId()).stream()
                 .filter(incidencia -> campanaId.equals(incidencia.getCampanaId()))
+                .filter(incidencia -> incidencia.getEstado() != EstadoIncidencia.ANULADA)
                 .toList();
+
+        BigDecimal toneladas = cosechas.stream().map(Cosecha::getToneladas).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return new AvanceCampana(
                 campanaId,
@@ -89,8 +95,9 @@ public class AvanceCampanaService {
                 ciclo == null ? null : Math.min(100, porcentaje(dias, ciclo)),
                 insumosConsumidos(labores),
                 totalesDeCosecha(cosechas),
-                rendimiento(campana, cosechas),
-                (int) incidencias.stream().filter(i -> i.getEstado() != EstadoIncidencia.RESUELTA).count(),
+                toneladas,
+                rendimiento(campana, toneladas),
+                (int) incidencias.stream().filter(Incidencia::estaAbierta).count(),
                 incidencias.size()
         );
     }
@@ -99,7 +106,9 @@ public class AvanceCampanaService {
         Map<Long, BigDecimal> porInsumo = new LinkedHashMap<>();
         for (Labor labor : labores) {
             for (ConsumoLabor consumo : consumoRepository.listarPorLabor(labor.getId())) {
-                porInsumo.merge(consumo.getInsumoId(), consumo.getCantidad(), BigDecimal::add);
+                if (!consumo.isAnulado()) {
+                    porInsumo.merge(consumo.getInsumoId(), consumo.getCantidad(), BigDecimal::add);
+                }
             }
         }
         Map<Long, Insumo> insumos = insumoRepository.listarTodos().stream()
@@ -123,18 +132,10 @@ public class AvanceCampanaService {
                 .toList();
     }
 
-    // Toneladas por hectárea: solo con cosechas en t o kg y si la parcela tiene área cargada
-    private BigDecimal rendimiento(Campana campana, List<Cosecha> cosechas) {
+    // Toneladas por hectárea, si la parcela tiene área cargada
+    private BigDecimal rendimiento(Campana campana, BigDecimal toneladas) {
         BigDecimal area = parcelaRepository.buscarPorId(campana.getParcelaId())
                 .map(parcela -> parcela.getAreaHa()).orElse(null);
-        BigDecimal toneladas = cosechas.stream()
-                .map(c -> switch (c.getUnidadMedida()) {
-                    case "t" -> c.getCantidad();
-                    case "kg" -> c.getCantidad().divide(BigDecimal.valueOf(1000), 3, RoundingMode.HALF_UP);
-                    default -> null;
-                })
-                .filter(Objects::nonNull)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
         if (area == null || area.signum() == 0 || toneladas.signum() == 0) {
             return null;
         }

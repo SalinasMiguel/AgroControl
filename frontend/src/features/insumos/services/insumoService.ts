@@ -51,4 +51,18 @@ export const insumoService = {
       body: JSON.stringify(data),
     });
   },
+
+  anularMovimiento(insumoId: number, movimientoId: number, motivo: string): Promise<MovimientoInsumo> {
+    return apiFetch<MovimientoInsumo>(`/insumos/${insumoId}/movimientos/${movimientoId}/anular`, {
+      method: 'POST',
+      body: JSON.stringify({ motivo }),
+    });
+  },
+
+  ajustar(insumoId: number, stockContado: number, motivo: string): Promise<MovimientoInsumo> {
+    return apiFetch<MovimientoInsumo>(`/insumos/${insumoId}/ajustes`, {
+      method: 'POST',
+      body: JSON.stringify({ stockContado, motivo }),
+    });
+  },
 };

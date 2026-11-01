@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import PageHeading from '../../../components/common/PageHeading';
 import StatsGrid from '../../../components/common/StatsGrid';
+import MotivoDialog from '../../../components/ui/MotivoDialog';
 import { useCarga } from '../../../hooks/useCarga';
+import { sinAnulados } from '../../../shared/utils/estados';
 import { formatCantidad, formatFecha } from '../../../utils/formato';
 import type { Campana } from '../../campanas/models/Campana';
 import { campanaService } from '../../campanas/services/campanaService';
@@ -40,10 +42,22 @@ export default function CosechasPage() {
   const { cosechas, campanas, usuarios, catalogos } = datos;
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const puedeRegistrar = useAuth().puede('cosechas.registrar');
+  const [anulando, setAnulando] = useState<Cosecha | null>(null);
+
+  const anular = async (motivo: string) => {
+    if (!anulando) return;
+    const anulada = await cosechaService.anular(anulando.id, motivo);
+    setDatos((prev) => ({
+      ...prev,
+      cosechas: prev.cosechas.map((item) => (item.id === anulada.id ? anulada : item)),
+    }));
+    setAnulando(null);
+  };
 
   const campana = (id: number) => campanas.find((item) => item.id === id);
-  const toneladas = cosechas.filter((c) => c.unidadMedida === 't').reduce((suma, c) => suma + c.cantidad, 0);
-  const campanasCosechadas = new Set(cosechas.map((cosecha) => cosecha.campanaId)).size;
+  const vigentes = sinAnulados(cosechas);
+  const toneladas = vigentes.reduce((suma, c) => suma + c.toneladas, 0);
+  const campanasCosechadas = new Set(vigentes.map((cosecha) => cosecha.campanaId)).size;
 
   return (
     <section className="feature-page">
@@ -74,7 +88,7 @@ export default function CosechasPage() {
         <>
           <StatsGrid
             stats={[
-              { etiqueta: 'Registros', valor: cosechas.length },
+              { etiqueta: 'Registros', valor: vigentes.length },
               { etiqueta: 'Campañas cosechadas', valor: campanasCosechadas },
               { etiqueta: 'Total en toneladas', valor: formatCantidad(toneladas, 't') },
             ]}
@@ -86,17 +100,24 @@ export default function CosechasPage() {
               <div className="table-responsive">
                 <table className="data-table">
                   <thead>
-                    <tr><th>Fecha</th><th>Campaña</th><th>Cantidad</th><th>Registrado por</th></tr>
+                    <tr><th>Fecha</th><th>Campaña</th><th>Cantidad</th><th>Registrado por</th>{puedeRegistrar && <th>Acciones</th>}</tr>
                   </thead>
                   <tbody>
                     {cosechas.map((cosecha) => {
                       const campanaCosecha = campana(cosecha.campanaId);
                       return (
-                        <tr key={cosecha.id}>
+                        <tr key={cosecha.id} className={cosecha.anulado ? 'fila-anulada' : undefined} title={cosecha.motivoAnulacion ?? undefined}>
                           <td>{formatFecha(cosecha.fecha)}</td>
                           <td>{campanaCosecha ? etiquetaCampana(campanaCosecha, catalogos) : `Campaña ${cosecha.campanaId}`}</td>
                           <td className="code-cell">{formatCantidad(cosecha.cantidad, cosecha.unidadMedida)}</td>
                           <td>{nombreUsuario(usuarios, cosecha.usuarioId)}</td>
+                          {puedeRegistrar && (
+                            <td>
+                              {!cosecha.anulado && (
+                                <Button variant="secondary" size="sm" type="button" onClick={() => setAnulando(cosecha)}>Anular</Button>
+                              )}
+                            </td>
+                          )}
                         </tr>
                       );
                     })}
@@ -107,6 +128,15 @@ export default function CosechasPage() {
           )}
         </>
       )}
+
+      <MotivoDialog
+        open={anulando !== null}
+        title="Anular cosecha"
+        confirmLabel="Anular"
+        aviso="La cosecha sale de los totales y queda en el historial."
+        onConfirm={anular}
+        onCancel={() => setAnulando(null)}
+      />
     </section>
   );
 }

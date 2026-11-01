@@ -9,4 +9,5 @@ public interface CultivoRepository {
     List<Cultivo> listarTodos();
     boolean existePorId(Long id);
     boolean existePorNombre(String nombre);
+    boolean existePorNombreEnOtro(String nombre, Long idExcluido);
 }

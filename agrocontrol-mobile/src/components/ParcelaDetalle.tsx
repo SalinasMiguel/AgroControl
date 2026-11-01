@@ -1,6 +1,8 @@
 import {
+  Ban,
   Calendar,
   CircleCheck,
+  CircleHelp,
   Hourglass,
   TriangleAlert,
   Wheat,
@@ -10,9 +12,9 @@ import {
 import { StyleSheet, Text, View } from "react-native";
 import type { EstadoIncidencia, EstadoLabor, Parcela } from "../models/agro";
 import type { DetalleParcela } from "../logic/detalleParcela";
-import { formatearFechaIso } from "../logic/siembra";
+import { esAtrasada, formatearFechaIso } from "../logic/siembra";
 import { PALETTE } from "../theme/palette";
-import { ESTADO_VISUAL } from "../theme/estados";
+import { visualParcela } from "../theme/estados";
 import { CampanaProgreso } from "./CampanaProgreso";
 import { EstadoChip } from "./EstadoChip";
 
@@ -27,17 +29,22 @@ type VisualFila = { icono: LucideIcon; color: string; texto: string };
 const LABOR_VISUAL: Record<EstadoLabor, VisualFila> = {
   EJECUTADA: { icono: CircleCheck, color: PALETTE.acento, texto: "Hecha" },
   EN_CURSO: { icono: Hourglass, color: PALETTE.disponible, texto: "En curso" },
+  ASIGNADA: { icono: Calendar, color: PALETTE.textoSuave, texto: "Pendiente" },
   PLANIFICADA: { icono: Calendar, color: PALETTE.textoSuave, texto: "Pendiente" },
+  CANCELADA: { icono: Ban, color: PALETTE.textoSuave, texto: "Cancelada" },
 };
 
 const INCIDENCIA_VISUAL: Record<EstadoIncidencia, VisualFila> = {
   ABIERTA: { icono: TriangleAlert, color: PALETTE.inactivo, texto: "Sin atender" },
   EN_ATENCION: { icono: Wrench, color: PALETTE.disponible, texto: "En atención" },
   RESUELTA: { icono: CircleCheck, color: PALETTE.textoSuave, texto: "Resuelta" },
+  ANULADA: { icono: Ban, color: PALETTE.textoSuave, texto: "Anulada" },
 };
 
+const FILA_DESCONOCIDA: VisualFila = { icono: CircleHelp, color: PALETTE.textoSuave, texto: "Sin clasificar" };
+
 const SIN_SIEMBRA: Record<Parcela["estado"], string> = {
-  SEMBRADA: "Sembrada, sin campaña cargada.",
+  EN_PRODUCCION: "Sembrada, sin campaña cargada.",
   DISPONIBLE: "Libre: lista para planificar una siembra.",
   EN_DESCANSO: "En descanso: el suelo se recupera esta temporada.",
 };
@@ -58,9 +65,9 @@ const decimal = (valor: number) => valor.toLocaleString("es-BO", { maximumFracti
 // Todo lo que pasa en una parcela, en una sola tarjeta: qué tiene sembrado, qué trabajo
 // falta, qué problemas hay y cómo le fue en las campañas anteriores.
 export function ParcelaDetalle({ parcela, areaPredio, detalle }: Props) {
-  const visual = ESTADO_VISUAL[parcela.estado];
+  const visual = visualParcela(parcela.estado);
   const { campana, cultivo, labores, proximaLabor, incidencias, historial } = detalle;
-  const sinResolver = incidencias.filter((i) => i.estado !== "RESUELTA").length;
+  const sinResolver = incidencias.filter((i) => i.estado === "ABIERTA" || i.estado === "EN_ATENCION").length;
   const hechas = labores.filter((l) => l.estado === "EJECUTADA").length;
 
   return (
@@ -85,7 +92,7 @@ export function ParcelaDetalle({ parcela, areaPredio, detalle }: Props) {
       {campana && cultivo ? (
         <CampanaProgreso campana={campana} cultivo={cultivo} />
       ) : (
-        <Text style={styles.vacio}>{SIN_SIEMBRA[parcela.estado]}</Text>
+        <Text style={styles.vacio}>{SIN_SIEMBRA[parcela.estado] ?? "Sin campaña cargada."}</Text>
       )}
 
       {labores.length > 0 && (
@@ -99,13 +106,14 @@ export function ParcelaDetalle({ parcela, areaPredio, detalle }: Props) {
             </Text>
           )}
           {labores.map((labor) => {
-            const v = LABOR_VISUAL[labor.estado];
+            const v = LABOR_VISUAL[labor.estado] ?? FILA_DESCONOCIDA;
             return (
               <View key={labor.id} style={styles.fila} accessible accessibilityLabel={`${labor.tipo}: ${v.texto}`}>
                 <v.icono size={16} color={v.color} />
                 <Text style={styles.filaTexto}>{nombreLabor(labor.tipo)}</Text>
                 <Text style={styles.filaFecha}>
                   {formatearFechaIso(labor.fechaEjecucion ?? labor.fechaPlan)} · {v.texto}
+                  {labor.estado !== "EJECUTADA" && esAtrasada(labor.fechaPlan) ? " · Atrasada" : ""}
                 </Text>
               </View>
             );
@@ -118,7 +126,7 @@ export function ParcelaDetalle({ parcela, areaPredio, detalle }: Props) {
         <Text style={styles.vacio}>Sin problemas reportados.</Text>
       ) : (
         incidencias.map((incidencia) => {
-          const v = INCIDENCIA_VISUAL[incidencia.estado];
+          const v = INCIDENCIA_VISUAL[incidencia.estado] ?? FILA_DESCONOCIDA;
           return (
             <View key={incidencia.id} style={styles.fila}>
               <v.icono size={16} color={v.color} />
@@ -143,6 +151,7 @@ export function ParcelaDetalle({ parcela, areaPredio, detalle }: Props) {
               {pasada.fechaFin ? ` → ${formatearFechaIso(pasada.fechaFin)}` : ""}
             </Text>
             <Text style={styles.filaFecha}>
+              {pasada.estado === "PERDIDA" ? "Perdida · " : ""}
               {toneladas === null ? "Sin cosecha" : `${decimal(toneladas)} t${rendimiento === null ? "" : ` · ${decimal(rendimiento)} t/ha`}`}
             </Text>
           </View>

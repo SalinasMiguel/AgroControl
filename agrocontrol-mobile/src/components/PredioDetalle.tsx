@@ -20,7 +20,7 @@ export function PredioDetalle({ predio, parcelas, detalleDe, alVolver }: Props) 
   const areaParcelas = parcelas.reduce((suma, p) => suma + p.areaHa, 0);
   const detalles = parcelas.map((parcela) => ({ parcela, detalle: detalleDe(parcela) }));
   const problemas = detalles.reduce(
-    (suma, { detalle }) => suma + detalle.incidencias.filter((i) => i.estado !== "RESUELTA").length,
+    (suma, { detalle }) => suma + detalle.incidencias.filter((i) => i.estado === "ABIERTA" || i.estado === "EN_ATENCION").length,
     0,
   );
 
@@ -48,7 +48,7 @@ export function PredioDetalle({ predio, parcelas, detalleDe, alVolver }: Props) 
 
       <View style={styles.fila}>
         <MetricCard etiqueta="Parcelas" valor={parcelas.length} />
-        <MetricCard etiqueta="Sembradas" valor={parcelas.filter((p) => p.estado === "SEMBRADA").length} />
+        <MetricCard etiqueta="Sembradas" valor={parcelas.filter((p) => p.estado === "EN_PRODUCCION").length} />
         <MetricCard etiqueta="Problemas" valor={problemas} />
       </View>
 

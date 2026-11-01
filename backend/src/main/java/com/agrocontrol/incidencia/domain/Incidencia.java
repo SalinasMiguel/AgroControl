@@ -1,5 +1,7 @@
 package com.agrocontrol.incidencia.domain;
 
+import com.agrocontrol.shared.domain.Anulacion;
+
 import java.time.LocalDateTime;
 
 public class Incidencia {
@@ -14,6 +16,7 @@ public class Incidencia {
     private EstadoIncidencia estado = EstadoIncidencia.ABIERTA;
     private String resolucion;
     private LocalDateTime resueltaEn;
+    private Anulacion anulacion;
 
     private Incidencia() {
     }
@@ -21,7 +24,7 @@ public class Incidencia {
     // Rehidrata un registro ya guardado (lo usa el mapper de persistencia): no repite las validaciones de alta.
     public static Incidencia reconstruir(Long id, Long parcelaId, Long campanaId, Long laborId, String descripcion,
                                          Long usuarioId, LocalDateTime fecha, EstadoIncidencia estado,
-                                         String resolucion, LocalDateTime resueltaEn) {
+                                         String resolucion, LocalDateTime resueltaEn, Anulacion anulacion) {
         Incidencia i = new Incidencia();
         i.id = id;
         i.parcelaId = parcelaId;
@@ -33,6 +36,7 @@ public class Incidencia {
         i.estado = estado;
         i.resolucion = resolucion;
         i.resueltaEn = resueltaEn;
+        i.anulacion = anulacion;
         return i;
     }
 
@@ -61,8 +65,8 @@ public class Incidencia {
 
     // Se cierra con lo que se hizo para solucionarla; puede resolverse sin pasar por EN_ATENCION
     public void resolver(String resolucion) {
-        if (estado == EstadoIncidencia.RESUELTA) {
-            throw new IllegalStateException("La incidencia ya está resuelta");
+        if (!estaAbierta()) {
+            throw new IllegalStateException("Solo se resuelve una incidencia abierta (estado actual: " + estado + ")");
         }
         if (resolucion == null || resolucion.isBlank()) {
             throw new IllegalArgumentException("Indique cómo se resolvió la incidencia");
@@ -70,6 +74,18 @@ public class Incidencia {
         this.estado = EstadoIncidencia.RESUELTA;
         this.resolucion = resolucion.trim();
         this.resueltaEn = LocalDateTime.now();
+    }
+
+    public void anular(String motivo, Long usuarioId) {
+        if (!estaAbierta()) {
+            throw new IllegalStateException("Solo se anula una incidencia abierta (estado actual: " + estado + ")");
+        }
+        this.anulacion = Anulacion.registrar(motivo, usuarioId);
+        this.estado = EstadoIncidencia.ANULADA;
+    }
+
+    public boolean estaAbierta() {
+        return estado == EstadoIncidencia.ABIERTA || estado == EstadoIncidencia.EN_ATENCION;
     }
 
     public Long getId() { return id; }
@@ -82,4 +98,5 @@ public class Incidencia {
     public EstadoIncidencia getEstado() { return estado; }
     public String getResolucion() { return resolucion; }
     public LocalDateTime getResueltaEn() { return resueltaEn; }
+    public Anulacion getAnulacion() { return anulacion; }
 }

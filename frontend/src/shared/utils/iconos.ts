@@ -1,5 +1,5 @@
 import {
-  ArrowDownToLine, ArrowLeftRight, ArrowUpFromLine, BookOpen, CalendarClock, CalendarDays, CalendarPlus, CalendarRange,
+  ArrowDownToLine, Ban, CloudLightning, KeyRound, SlidersHorizontal, Undo2, ArrowLeftRight, ArrowUpFromLine, BookOpen, CalendarClock, CalendarDays, CalendarPlus, CalendarRange,
   ChartColumn, ChevronLeft, ChevronRight, CircleAlert, CircleCheck, CircleCheckBig, CircleOff, ClipboardList,
   ClipboardPlus, Clock, Eraser, FlaskConical, Flag, Fuel, Grid2x2, Hand, House, Inbox, Layers, Leaf, LandPlot, LogIn,
   LogOut, Moon, Package, PackageX, Pencil, Play, Plus, RotateCw, Save, ScrollText, SearchX, ShieldCheck, SprayCan,
@@ -48,6 +48,9 @@ export const ICONO_ESTADO: Record<string, LucideIcon> = {
   RESUELTA: CircleCheckBig,
   FINALIZADA: CircleCheckBig,
   ABIERTA: CircleAlert,
+  CANCELADA: Ban,
+  PERDIDA: CloudLightning,
+  ANULADO: Ban,
   EN_ATENCION: Wrench,
   EN_DESCANSO: Moon,
   INACTIVO: CircleOff,
@@ -55,7 +58,15 @@ export const ICONO_ESTADO: Record<string, LucideIcon> = {
 
 const REGLAS_BOTON: Regla[] = [
   [/^\+/, Plus],
-  [/^(cerrar|cancelar)/i, X],
+  [/^(cerrar|cancelar)$|^cerrar formulario/i, X],
+  [/^anular/i, Ban],
+  [/^desactivar/i, CircleOff],
+  [/^activar/i, CircleCheck],
+  [/^ajustar/i, SlidersHorizontal],
+  [/^agregar/i, Plus],
+  [/^reabrir/i, Undo2],
+  [/perdid/i, CloudLightning],
+  [/contrase|clave/i, KeyRound],
   [/^salir/i, LogOut],
   [/^ingresar/i, LogIn],
   [/^guardar/i, Save],
@@ -85,6 +96,7 @@ export const iconoBoton = (texto: string) => (texto.endsWith('...') ? undefined 
 const REGLAS_STAT: Regla[] = [
   [/sin stock|agotarse/i, PackageX],
   [/sin operario/i, UserX],
+  [/atrasad/i, CalendarClock],
   [/sin resolver/i, CircleAlert],
   [/inactiv/i, CircleOff],
   [/pendiente/i, Clock],
@@ -110,7 +122,7 @@ export const iconoEstadistica = (etiqueta: string) => buscar(REGLAS_STAT, etique
 
 export type Tono = 'base' | 'ok' | 'aviso' | 'info' | 'alerta';
 export function tonoEstadistica(etiqueta: string, valor: string | number): Tono {
-  if (/sin stock|agotarse|sin operario|sin resolver|inactiv/i.test(etiqueta)) return Number(valor) === 0 ? 'base' : 'alerta';
+  if (/sin stock|agotarse|sin operario|sin resolver|inactiv|atrasad/i.test(etiqueta)) return Number(valor) === 0 ? 'base' : 'alerta';
   if (/pendiente|en curso/i.test(etiqueta)) return 'aviso';
   if (/planificad/i.test(etiqueta)) return 'info';
   if (/ejecutad|finalizad|activos|disponible|avance/i.test(etiqueta)) return 'ok';

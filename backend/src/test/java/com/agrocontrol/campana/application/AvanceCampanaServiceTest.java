@@ -117,4 +117,68 @@ class AvanceCampanaServiceTest {
         assertThat(avance.porcentajeCiclo()).isNull();
         assertThat(avance.rendimientoToneladasPorHa()).isNull();
     }
+
+    @Test
+    void elAvanceIgnoraLoAnuladoYLoCancelado() {
+        LocalDate inicio = LocalDate.of(2026, 9, 1);
+        Campana campana = new Campana(5L, 3L, 1L, inicio);
+        campana.iniciar();
+        when(campanaRepository.buscarPorId(5L)).thenReturn(Optional.of(campana));
+        when(cultivoRepository.buscarPorId(1L)).thenReturn(Optional.of(new Cultivo(1L, "Soya", 120)));
+        when(parcelaRepository.buscarPorId(3L)).thenReturn(Optional.of(new Parcela(3L, 1L, "P-01", new BigDecimal("10"))));
+
+        Labor ejecutada = new Labor(1L, 5L, 3L, "SIEMBRA", inicio);
+        ejecutada.ejecutar(inicio);
+        Labor asignada = new Labor(2L, 5L, 3L, "RIEGO", inicio);
+        asignada.marcarAsignada();
+        Labor cancelada = new Labor(3L, 5L, 3L, "RIEGO", inicio);
+        cancelada.cancelar("Llovió");
+        when(laborRepository.listarPorCampana(5L)).thenReturn(List.of(ejecutada, asignada, cancelada));
+
+        Cosecha cosecha = new Cosecha(1L, 5L, BigDecimal.TEN, "t", 7L);
+        cosecha.anular("Error", 7L);
+        when(cosechaRepository.listarPorCampana(5L)).thenReturn(List.of(cosecha));
+
+        ConsumoLabor consumo = new ConsumoLabor(1L, 1L, 4L, BigDecimal.ONE);
+        consumo.anular("Error", 7L);
+        when(consumoRepository.listarPorLabor(1L)).thenReturn(List.of(consumo));
+        when(consumoRepository.listarPorLabor(2L)).thenReturn(List.of());
+        when(insumoRepository.listarTodos()).thenReturn(List.of());
+
+        Incidencia incidencia = new Incidencia(1L, 3L, 5L, null, "Plaga", 7L);
+        incidencia.anular("Error", 7L);
+        when(incidenciaRepository.listarPorParcela(3L)).thenReturn(List.of(incidencia));
+
+        AvanceCampana avance = service.calcular(5L, inicio.plusDays(1));
+
+        assertThat(avance.laboresTotal()).isEqualTo(2);
+        assertThat(avance.laboresPlanificadas()).isEqualTo(1);
+        assertThat(avance.porcentajeLabores()).isEqualTo(50);
+        assertThat(avance.cosecha()).isEmpty();
+        assertThat(avance.insumos()).isEmpty();
+        assertThat(avance.rendimientoToneladasPorHa()).isNull();
+        assertThat(avance.incidenciasTotal()).isZero();
+        assertThat(avance.incidenciasAbiertas()).isZero();
+    }
+
+    @Test
+    void elRendimientoCuentaQuintales() {
+        LocalDate inicio = LocalDate.of(2026, 9, 1);
+        Campana campana = new Campana(5L, 3L, 1L, inicio);
+        campana.iniciar();
+        when(campanaRepository.buscarPorId(5L)).thenReturn(Optional.of(campana));
+        when(cultivoRepository.buscarPorId(1L)).thenReturn(Optional.of(new Cultivo(1L, "Soya", 120)));
+        when(parcelaRepository.buscarPorId(3L)).thenReturn(Optional.of(new Parcela(3L, 1L, "P-01", new BigDecimal("2"))));
+        when(laborRepository.listarPorCampana(5L)).thenReturn(List.of());
+        when(insumoRepository.listarTodos()).thenReturn(List.of());
+        when(incidenciaRepository.listarPorParcela(3L)).thenReturn(List.of());
+        when(cosechaRepository.listarPorCampana(5L)).thenReturn(List.of(
+                new Cosecha(1L, 5L, new BigDecimal("100"), "qq", 7L),
+                new Cosecha(2L, 5L, new BigDecimal("400"), "kg", 7L)));
+
+        AvanceCampana avance = service.calcular(5L, inicio.plusDays(1));
+
+        assertThat(avance.cosechaToneladas()).isEqualByComparingTo("5.0");
+        assertThat(avance.rendimientoToneladasPorHa()).isEqualByComparingTo("2.50");
+    }
 }

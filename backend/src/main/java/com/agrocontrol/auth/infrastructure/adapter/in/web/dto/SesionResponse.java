@@ -7,7 +7,8 @@ public record SesionResponse(
         Long usuarioId,
         String nombreCompleto,
         String email,
-        String rol
+        String rol,
+        boolean debeCambiarPassword
 ) {
     public static SesionResponse desde(Sesion sesion) {
         return new SesionResponse(
@@ -15,7 +16,8 @@ public record SesionResponse(
                 sesion.usuario().getId(),
                 sesion.usuario().getNombreCompleto(),
                 sesion.usuario().getEmail(),
-                sesion.rol()
+                sesion.rol(),
+                sesion.usuario().isDebeCambiarPassword()
         );
     }
 }

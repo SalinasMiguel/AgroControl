@@ -31,6 +31,34 @@ export const laborService = {
     });
   },
 
+  editar(id: number, data: Pick<Labor, 'tipo' | 'fechaPlan'>): Promise<Labor> {
+    return apiFetch<Labor>(`/labores/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  cancelar(id: number, motivo: string): Promise<Labor> {
+    return apiFetch<Labor>(`/labores/${id}/cancelar`, {
+      method: 'POST',
+      body: JSON.stringify({ motivo }),
+    });
+  },
+
+  reabrir(id: number, motivo: string): Promise<Labor> {
+    return apiFetch<Labor>(`/labores/${id}/reabrir`, {
+      method: 'POST',
+      body: JSON.stringify({ motivo }),
+    });
+  },
+
+  anularConsumo(laborId: number, consumoId: number, motivo: string): Promise<ConsumoLabor> {
+    return apiFetch<ConsumoLabor>(`/labores/${laborId}/consumos/${consumoId}/anular`, {
+      method: 'POST',
+      body: JSON.stringify({ motivo }),
+    });
+  },
+
   listarAsignaciones(signal?: AbortSignal): Promise<AsignacionLabor[]> {
     return apiFetch<AsignacionLabor[]>('/labores/asignaciones', { signal });
   },

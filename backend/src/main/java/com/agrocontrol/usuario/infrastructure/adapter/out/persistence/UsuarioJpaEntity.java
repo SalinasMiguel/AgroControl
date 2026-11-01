@@ -42,11 +42,18 @@ public class UsuarioJpaEntity {
     @Column(name = "creado_en", nullable = false, updatable = false)
     private LocalDateTime creadoEn;
 
+    @Column(name = "token_version", nullable = false)
+    private int tokenVersion;
+
+    @Column(name = "debe_cambiar_password", nullable = false)
+    private boolean debeCambiarPassword;
+
     protected UsuarioJpaEntity() {
     }
 
     public UsuarioJpaEntity(Long id, String nombreCompleto, String email, String passwordHash,
-                            RolJpaEntity rol, boolean activo, LocalDateTime creadoEn) {
+                            RolJpaEntity rol, boolean activo, LocalDateTime creadoEn,
+                            int tokenVersion, boolean debeCambiarPassword) {
         this.id = id;
         this.nombreCompleto = nombreCompleto;
         this.email = email;
@@ -54,6 +61,8 @@ public class UsuarioJpaEntity {
         this.rol = rol;
         this.activo = activo;
         this.creadoEn = creadoEn;
+        this.tokenVersion = tokenVersion;
+        this.debeCambiarPassword = debeCambiarPassword;
     }
 
     public Long getId() { return id; }
@@ -63,4 +72,6 @@ public class UsuarioJpaEntity {
     public RolJpaEntity getRol() { return rol; }
     public boolean isActivo() { return activo; }
     public LocalDateTime getCreadoEn() { return creadoEn; }
+    public int getTokenVersion() { return tokenVersion; }
+    public boolean isDebeCambiarPassword() { return debeCambiarPassword; }
 }

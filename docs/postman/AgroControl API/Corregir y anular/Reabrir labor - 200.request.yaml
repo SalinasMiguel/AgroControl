@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{baseUrl}}/api/labores/1/reabrir"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "motivo": "Cargado por error"
+    }
+order: 3000

@@ -89,6 +89,14 @@ public class IncidenciaService {
         return incidenciaRepository.guardar(incidencia);
     }
 
+    @Auditable(entidad = "INCIDENCIA", accion = "ANULAR")
+    @Transactional
+    public Incidencia anular(Long id, String motivo, Long usuarioId) {
+        Incidencia incidencia = obtener(id);
+        incidencia.anular(motivo, usuarioId);
+        return incidenciaRepository.guardar(incidencia);
+    }
+
     @Transactional(readOnly = true)
     public Incidencia obtener(Long id) {
         return incidenciaRepository.buscarPorId(id)

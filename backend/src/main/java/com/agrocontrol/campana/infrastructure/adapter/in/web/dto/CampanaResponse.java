@@ -11,7 +11,8 @@ public record CampanaResponse(
         Long cultivoId,
         LocalDate fechaInicio,
         LocalDate fechaFin,
-        EstadoCampana estado
+        EstadoCampana estado,
+        String motivoCierre
 ) {
     public static CampanaResponse desde(Campana campana) {
         return new CampanaResponse(
@@ -20,7 +21,8 @@ public record CampanaResponse(
                 campana.getCultivoId(),
                 campana.getFechaInicio(),
                 campana.getFechaFin(),
-                campana.getEstado()
+                campana.getEstado(),
+                campana.getMotivoCierre()
         );
     }
 }

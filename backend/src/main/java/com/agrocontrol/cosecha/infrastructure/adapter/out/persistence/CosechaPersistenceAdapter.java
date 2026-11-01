@@ -6,6 +6,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class CosechaPersistenceAdapter implements CosechaRepository {
@@ -19,6 +20,11 @@ public class CosechaPersistenceAdapter implements CosechaRepository {
     @Override
     public Cosecha guardar(Cosecha cosecha) {
         return CosechaPersistenceMapper.toDomain(jpaRepository.save(CosechaPersistenceMapper.toEntity(cosecha)));
+    }
+
+    @Override
+    public Optional<Cosecha> buscarPorId(Long id) {
+        return jpaRepository.findById(id).map(CosechaPersistenceMapper::toDomain);
     }
 
     @Override

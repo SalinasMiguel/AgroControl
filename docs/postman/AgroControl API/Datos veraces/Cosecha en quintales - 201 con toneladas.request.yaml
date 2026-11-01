@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/api/cosechas"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "campanaId": 1,
+      "cantidad": 100,
+      "unidadMedida": "qq"
+    }
+order: 1000

@@ -1,12 +1,14 @@
 import { useState, type FormEvent } from 'react';
+import MotivoDialog from '../../../components/ui/MotivoDialog';
 import StatusBadge from '../../../components/ui/StatusBadge';
 import { useCarga } from '../../../hooks/useCarga';
 import { useSesion } from '../../auth/context/useAuth';
 import { formatCantidad, formatFecha, validarCantidadPositiva } from '../../../utils/formato';
 import type { Usuario } from '../../usuarios/models/Usuario';
 import { nombreUsuario } from '../../usuarios/services/usuarioService';
-import type { Insumo, MovimientoInsumo, TipoMovimiento } from '../models/Insumo';
+import { esAnulable, type Insumo, type MovimientoInsumo, type TipoMovimiento } from '../models/Insumo';
 import { insumoService } from '../services/insumoService';
+import AjustePanel from './AjustePanel';
 import Button from '../../../components/ui/Button';
 
 interface MovimientosPanelProps {
@@ -20,7 +22,7 @@ interface MovimientosPanelProps {
 
 export default function MovimientosPanel({ insumo, usuarios, puedeRegistrar, onMovimientoRegistrado, onCerrar }: MovimientosPanelProps) {
   const sesion = useSesion();
-  const { datos: movimientos, setDatos: setMovimientos, loading, error } = useCarga<MovimientoInsumo[]>(
+  const { datos: movimientos, setDatos: setMovimientos, loading, error, recargar } = useCarga<MovimientoInsumo[]>(
     (signal) => insumoService.listarMovimientos(insumo.id, signal),
     [],
     insumo.id,
@@ -30,6 +32,15 @@ export default function MovimientosPanel({ insumo, usuarios, puedeRegistrar, onM
   const [motivo, setMotivo] = useState('');
   const [errorForm, setErrorForm] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [anulando, setAnulando] = useState<MovimientoInsumo | null>(null);
+
+  const anular = async (motivoAnulacion: string) => {
+    if (!anulando) return;
+    await insumoService.anularMovimiento(insumo.id, anulando.id, motivoAnulacion);
+    setAnulando(null);
+    recargar();
+    onMovimientoRegistrado();
+  };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -101,6 +112,17 @@ export default function MovimientosPanel({ insumo, usuarios, puedeRegistrar, onM
       </form>
       )}
 
+      {puedeRegistrar && (
+        <AjustePanel
+          key={insumo.stockActual}
+          insumo={insumo}
+          onAjustado={(ajuste) => {
+            setMovimientos((prev) => [ajuste, ...prev]);
+            onMovimientoRegistrado();
+          }}
+        />
+      )}
+
       {loading && <p className="muted">Cargando historial...</p>}
       {error && <div className="form-error">{error}</div>}
       {!loading && !error && movimientos.length === 0 && <p className="muted">Este insumo todavía no tiene movimientos.</p>}
@@ -108,22 +130,38 @@ export default function MovimientosPanel({ insumo, usuarios, puedeRegistrar, onM
         <div className="table-responsive">
           <table className="data-table">
             <thead>
-              <tr><th>Fecha</th><th>Tipo</th><th>Cantidad</th><th>Motivo</th><th>Registrado por</th></tr>
+              <tr><th>Fecha</th><th>Tipo</th><th>Cantidad</th><th>Motivo</th><th>Registrado por</th>{puedeRegistrar && <th>Acciones</th>}</tr>
             </thead>
             <tbody>
               {movimientos.map((movimiento) => (
-                <tr key={movimiento.id}>
+                <tr key={movimiento.id} className={movimiento.anulado ? 'fila-anulada' : undefined} title={movimiento.motivoAnulacion ?? undefined}>
                   <td>{formatFecha(movimiento.fecha)}</td>
                   <td><StatusBadge estado={movimiento.tipo} /></td>
                   <td>{formatCantidad(movimiento.cantidad, insumo.unidadMedida)}</td>
                   <td>{movimiento.motivo ?? '—'}</td>
                   <td>{nombreUsuario(usuarios, movimiento.usuarioId)}</td>
+                  {puedeRegistrar && (
+                    <td>
+                      {esAnulable(movimiento) && (
+                        <Button variant="secondary" size="sm" type="button" onClick={() => setAnulando(movimiento)}>Anular</Button>
+                      )}
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       )}
+
+      <MotivoDialog
+        open={anulando !== null}
+        title="Anular movimiento"
+        confirmLabel="Anular"
+        aviso="Se crea el movimiento contrario y el stock se corrige."
+        onConfirm={anular}
+        onCancel={() => setAnulando(null)}
+      />
     </div>
   );
 }

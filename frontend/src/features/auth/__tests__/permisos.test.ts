@@ -39,4 +39,10 @@ describe('permisos por rol', () => {
     expect(puede('ALMACENERO', 'cosechas.registrar')).toBe(true);
     expect(puede('ALMACENERO', 'labores.planificar')).toBe(false);
   });
+
+  it('anular consumos es del administrador y del jefe de campo', () => {
+    expect(puede('JEFE_DE_CAMPO', 'consumos.anular')).toBe(true);
+    expect(puede('ALMACENERO', 'consumos.anular')).toBe(false);
+    expect(puede('OPERARIO', 'consumos.anular')).toBe(false);
+  });
 });

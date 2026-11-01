@@ -80,10 +80,21 @@ public class ParcelaService {
         }
         parcela.cambiarCodigo(codigoNormalizado);
         parcela.actualizarArea(areaHa);
-        if (estado != null) {
+        if (estado != null && estado != parcela.getEstado()) {
+            exigirCambioManualPermitido(id, estado);
             parcela.cambiarEstado(estado);
         }
         return parcelaRepository.guardar(parcela);
+    }
+
+    // EN_PRODUCCION lo pone la campaña al iniciar, nunca una edición.
+    private void exigirCambioManualPermitido(Long id, EstadoParcela estado) {
+        if (estado == EstadoParcela.EN_PRODUCCION) {
+            throw new ConflictoException("Una parcela pasa a producción al iniciar una campaña");
+        }
+        if (campanaRepository.existeEnCursoEnParcela(id)) {
+            throw new ConflictoException("La parcela " + id + " tiene una campaña en curso");
+        }
     }
 
     @Auditable(entidad = "PARCELA", accion = "ELIMINAR")

@@ -3,7 +3,7 @@ import { ApiError } from '../../../api/apiClient';
 import Button from '../../../components/ui/Button';
 import { parseArea } from '../../../utils/area';
 import type { Predio } from '../../predios/models/Predio';
-import { ESTADOS_PARCELA, type Parcela } from '../models/Parcela';
+import { ESTADOS_MANUALES, type Parcela } from '../models/Parcela';
 import { parcelaService } from '../services/parcelaService';
 import type { ParcelaFormData } from '../types/ParcelaFormData';
 import { validarParcela, type ParcelaFormErrors } from '../utils/parcelaValidation';
@@ -111,11 +111,15 @@ export default function ParcelaForm({ predios, parcela, onSaved, onCancel }: Par
         {editando && (
           <label>
             Estado
-            <select name="estado" value={formData.estado} onChange={handleChange}>
-              {ESTADOS_PARCELA.map((estado) => (
-                <option key={estado} value={estado}>{estado.replace(/_/g, ' ')}</option>
-              ))}
-            </select>
+            {formData.estado === 'EN_PRODUCCION' ? (
+              <input value="En producción" readOnly />
+            ) : (
+              <select name="estado" value={formData.estado} onChange={handleChange}>
+                {ESTADOS_MANUALES.map((estado) => (
+                  <option key={estado} value={estado}>{estado.replace(/_/g, ' ')}</option>
+                ))}
+              </select>
+            )}
             {errors.estado && <small className="field-error">{errors.estado}</small>}
           </label>
         )}

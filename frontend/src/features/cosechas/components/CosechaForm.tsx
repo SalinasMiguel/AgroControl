@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { ApiError } from '../../../api/apiClient';
-import { validarCantidadPositiva } from '../../../utils/formato';
+import { hoyISO, validarCantidadPositiva } from '../../../utils/formato';
 import type { Campana } from '../../campanas/models/Campana';
 import { etiquetaCampana, type Catalogos } from '../../campanas/utils/etiquetas';
 import { useSesion } from '../../auth/context/useAuth';
@@ -16,20 +16,21 @@ interface CosechaFormProps {
   onCreated: (cosecha: Cosecha) => void;
 }
 
-type Errores = Partial<Record<'campanaId' | 'cantidad', string>>;
+type Errores = Partial<Record<'campanaId' | 'cantidad' | 'fecha', string>>;
 
 export default function CosechaForm({ campanas, catalogos, onCreated }: CosechaFormProps) {
   const sesion = useSesion();
   const [campanaId, setCampanaId] = useState('');
   const [cantidad, setCantidad] = useState('');
   const [unidadMedida, setUnidadMedida] = useState('t');
+  const [fecha, setFecha] = useState(hoyISO());
   const [errors, setErrors] = useState<Errores>({});
   const [mensaje, setMensaje] = useState('');
   const [apiError, setApiError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Solo se cosecha una campaña que ya empezó.
-  const cosechables = campanas.filter((campana) => campana.estado !== 'PLANIFICADA');
+  // RN-06: solo se cosecha una campaña en curso; una cosecha tardía exige reabrirla.
+  const cosechables = campanas.filter((campana) => campana.estado === 'EN_CURSO');
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -39,6 +40,8 @@ export default function CosechaForm({ campanas, catalogos, onCreated }: CosechaF
     if (!campanaId) errores.campanaId = 'Debe seleccionar una campaña.';
     const errorCantidad = validarCantidadPositiva(cantidad);
     if (errorCantidad) errores.cantidad = errorCantidad;
+    if (!fecha) errores.fecha = 'La fecha es obligatoria.';
+    else if (fecha > hoyISO()) errores.fecha = 'La fecha no puede ser futura.';
     setErrors(errores);
     if (Object.keys(errores).length > 0) return;
 
@@ -48,6 +51,7 @@ export default function CosechaForm({ campanas, catalogos, onCreated }: CosechaF
         campanaId: Number(campanaId),
         cantidad: Number(cantidad),
         unidadMedida,
+        fecha,
       });
       onCreated(creada);
       setCantidad('');
@@ -66,7 +70,7 @@ export default function CosechaForm({ campanas, catalogos, onCreated }: CosechaF
         <label className="form-span-2">
           Campaña
           <select value={campanaId} onChange={(e) => setCampanaId(e.target.value)}>
-            <option value="">Seleccione una campaña en curso o finalizada</option>
+            <option value="">Seleccione una campaña en curso</option>
             {cosechables.map((campana) => (
               <option key={campana.id} value={campana.id}>{etiquetaCampana(campana, catalogos)}</option>
             ))}
@@ -83,6 +87,11 @@ export default function CosechaForm({ campanas, catalogos, onCreated }: CosechaF
           <select value={unidadMedida} onChange={(e) => setUnidadMedida(e.target.value)}>
             {UNIDADES.map((unidad) => <option key={unidad} value={unidad}>{unidad}</option>)}
           </select>
+        </label>
+        <label>
+          Fecha
+          <input type="date" max={hoyISO()} value={fecha} onChange={(e) => setFecha(e.target.value)} />
+          {errors.fecha && <small className="field-error">{errors.fecha}</small>}
         </label>
         <label>
           Registrado por

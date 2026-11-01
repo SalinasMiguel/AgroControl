@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 public record RegistrarCosechaRequest(
         @NotNull(message = "Debe indicar la campaña.")
@@ -19,6 +20,9 @@ public record RegistrarCosechaRequest(
 
         @NotBlank(message = "La unidad de medida es obligatoria.")
         @Size(max = 20, message = "La unidad admite como máximo 20 caracteres.")
-        String unidadMedida
+        String unidadMedida,
+
+        // Opcional: sin fecha, se registra con la de hoy
+        LocalDate fecha
 ) {
 }

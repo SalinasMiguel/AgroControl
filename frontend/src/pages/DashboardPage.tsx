@@ -6,6 +6,8 @@ import EmptyState from '../components/ui/EmptyState';
 import { useAuth } from '../features/auth/context/useAuth';
 import type { Rol } from '../features/auth/models/Sesion';
 import { NOMBRE_ROL, type Seccion } from '../features/auth/permisos';
+import { campanaAbierta, laborPendiente, sinAnulados } from '../shared/utils/estados';
+import { diasAtraso, insumosPorReponer, siembrasAtrasadas } from '../shared/utils/resumenInicio';
 import type { Campana } from '../features/campanas/models/Campana';
 import { campanaService } from '../features/campanas/services/campanaService';
 import { etiquetaCampana, type Catalogos } from '../features/campanas/utils/etiquetas';
@@ -24,7 +26,7 @@ import { usuarioService } from '../features/usuarios/services/usuarioService';
 import { useCarga } from '../hooks/useCarga';
 import { ICONO_SECCION, iconoLabor } from '../shared/utils/iconos';
 import { formatArea } from '../utils/area';
-import { formatCantidad, formatFecha } from '../utils/formato';
+import { formatCantidad, formatFecha, hoyISO } from '../utils/formato';
 
 // Cada rol pide solo lo que su panel muestra (y lo que el backend le permite leer).
 const cargarResumen = (rol: Rol) => async (signal: AbortSignal) => {
@@ -97,21 +99,24 @@ export default function DashboardPage() {
   const { sesion, puedeVer } = useAuth();
   const rol = sesion?.rol ?? 'SUPERVISOR';
   const { datos, loading, error } = useCarga(cargarResumen(rol), vacio, rol);
-  const { predios, parcelas, cultivos, campanas, labores, insumos, cosechas, usuarios, asignaciones } = datos;
+  const { predios, parcelas, cultivos, campanas, labores, insumos, usuarios, asignaciones } = datos;
+  const cosechas = sinAnulados(datos.cosechas);
   const catalogos: Catalogos = { predios, parcelas, cultivos };
 
   const areaTotal = parcelas.reduce((suma, parcela) => suma + (parcela.areaHa ?? 0), 0);
-  const campanasAbiertas = campanas.filter((campana) => campana.estado !== 'FINALIZADA');
-  const pendientes = labores.filter((labor) => labor.estado !== 'EJECUTADA');
+  const campanasAbiertas = campanas.filter(campanaAbierta);
+  const pendientes = labores.filter(laborPendiente);
   const proximasLabores = [...pendientes].sort((a, b) => a.fechaPlan.localeCompare(b.fechaPlan)).slice(0, 5);
   const sinAsignar = pendientes.filter((labor) => !asignaciones.some((a) => a.laborId === labor.id)).length;
   const insumosSinStock = insumos.filter((insumo) => insumo.stockActual <= 0).length;
-  const stockBajo = [...insumos].sort((a, b) => a.stockActual - b.stockActual).slice(0, 5);
-  const toneladas = cosechas.filter((c) => c.unidadMedida === 't').reduce((suma, c) => suma + c.cantidad, 0);
+  const porReponer = insumosPorReponer(insumos).slice(0, 5);
+  const hoy = hoyISO();
+  const atrasadas = siembrasAtrasadas(campanas, hoy);
+  const toneladas = cosechas.reduce((suma, c) => suma + c.toneladas, 0);
   const avance = labores.length === 0 ? 0 : Math.round(((labores.length - pendientes.length) / labores.length) * 100);
   const campana = (id: number) => campanas.find((item) => item.id === id);
   const contarLabores = (estado: Labor['estado']) => labores.filter((labor) => labor.estado === estado).length;
-  const [hoy] = useState(fechaDeHoy);
+  const [fechaLarga] = useState(fechaDeHoy);
 
   const stats: Record<Rol, { etiqueta: string; valor: string | number }[]> = {
     ADMINISTRADOR: [
@@ -119,12 +124,14 @@ export default function DashboardPage() {
       { etiqueta: 'Predios activos', valor: predios.filter((predio) => predio.activo).length },
       { etiqueta: `Parcelas (${formatArea(areaTotal)})`, valor: parcelas.length },
       { etiqueta: 'Campañas abiertas', valor: campanasAbiertas.length },
+      { etiqueta: 'Siembras atrasadas', valor: atrasadas },
     ],
     JEFE_DE_CAMPO: [
       { etiqueta: 'Campañas abiertas', valor: campanasAbiertas.length },
       { etiqueta: 'Labores pendientes', valor: pendientes.length },
       { etiqueta: 'Pendientes sin operario', valor: sinAsignar },
       { etiqueta: 'Insumos sin stock', valor: insumosSinStock },
+      { etiqueta: 'Siembras atrasadas', valor: atrasadas },
     ],
     OPERARIO: [
       { etiqueta: 'Asignadas a mí', valor: labores.length },
@@ -142,6 +149,7 @@ export default function DashboardPage() {
       { etiqueta: 'Avance de labores', valor: `${avance} %` },
       { etiqueta: 'Cosechado (t)', valor: formatCantidad(toneladas, 't') },
       { etiqueta: 'Insumos sin stock', valor: insumosSinStock },
+      { etiqueta: 'Siembras atrasadas', valor: atrasadas },
     ],
   };
 
@@ -163,7 +171,12 @@ export default function DashboardPage() {
                     {campanaLabor ? etiquetaCampana(campanaLabor, catalogos) : `Campaña ${labor.campanaId}`}
                   </small>
                 </Fila>
-                <span>{formatFecha(labor.fechaPlan)}</span>
+                <span>
+                  {formatFecha(labor.fechaPlan)}
+                  {diasAtraso(labor.fechaPlan, hoy) > 0 && (
+                    <small className="celda-nota field-error">Atrasada · {diasAtraso(labor.fechaPlan, hoy)} días</small>
+                  )}
+                </span>
               </li>
             );
           })}
@@ -175,12 +188,12 @@ export default function DashboardPage() {
 
   const tarjetaStock = (
     <article className="list-card">
-      <h3><Warehouse size={18} aria-hidden />Insumos con menos stock</h3>
-      {stockBajo.length === 0 ? (
-        <EmptyState title="No hay insumos registrados." description="El inventario aparecerá aquí." />
+      <h3><Warehouse size={18} aria-hidden />Por reponer</h3>
+      {porReponer.length === 0 ? (
+        <EmptyState title="Nada por reponer." description="Los insumos con poco stock aparecerán aquí." />
       ) : (
         <ul>
-          {stockBajo.map((insumo) => (
+          {porReponer.map((insumo) => (
             <li key={insumo.id}>
               <Fila icono={categoria(insumo.categoria).icono}>{insumo.nombre}</Fila>
               <strong className={insumo.stockActual <= 0 ? 'field-error' : ''}>
@@ -273,7 +286,7 @@ export default function DashboardPage() {
         <p className="eyebrow">PANEL · {NOMBRE_ROL[rol].toUpperCase()}</p>
         <h1>Hola, {sesion?.nombreCompleto.split(' ')[0]}</h1>
         <p>{SALUDO[rol]}</p>
-        <span className="inicio-hero__fecha"><CalendarDays size={15} aria-hidden />{hoy}</span>
+        <span className="inicio-hero__fecha"><CalendarDays size={15} aria-hidden />{fechaLarga}</span>
         <Sprout className="inicio-hero__dibujo" size={190} strokeWidth={1.25} aria-hidden />
       </div>
 

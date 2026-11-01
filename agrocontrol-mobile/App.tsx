@@ -6,7 +6,7 @@ import { StatusBar } from "expo-status-bar";
 import type { Parcela, Seccion } from "./src/models/agro";
 import { DATOS_DEMO } from "./src/data/demoData";
 import { cargarDatos, iniciarSesion, URL_POR_DEFECTO, type DatosCampo, type Sesion } from "./src/api/cliente";
-import { armarDetalle } from "./src/logic/detalleParcela";
+import { armarDetalle, campanaAbierta } from "./src/logic/detalleParcela";
 import { PALETTE } from "./src/theme/palette";
 import { MetricCard } from "./src/components/MetricCard";
 import { TabSelector } from "./src/components/TabSelector";
@@ -34,6 +34,10 @@ export default function App() {
     setError(null);
     try {
       const nueva = await iniciarSesion(url, email, password);
+      if (nueva.debeCambiarPassword) {
+        setError("Cambie su contraseña en la web antes de usar la app");
+        return;
+      }
       setDatos(await cargarDatos(url, nueva.token));
       setServidor(url);
       setSesion(nueva);
@@ -85,11 +89,11 @@ export default function App() {
   const contarParcelas = (id: number) => PARCELAS.filter((p) => p.predioId === id).length;
   const nombreDePredio = (id: number) =>
     PREDIOS.find((p) => p.id === id)?.nombre ?? "Predio desconocido";
-  const sembradas = PARCELAS.filter((p) => p.estado === "SEMBRADA").length;
+  const sembradas = PARCELAS.filter((p) => p.estado === "EN_PRODUCCION").length;
 
   // Campaña no finalizada de la parcela, con su cultivo (si existe).
   const siembraDe = (parcelaId: number) => {
-    const campana = CAMPANAS.find((c) => c.parcelaId === parcelaId && c.estado !== "FINALIZADA");
+    const campana = CAMPANAS.find((c) => c.parcelaId === parcelaId && campanaAbierta(c));
     const cultivo = campana && CULTIVOS.find((c) => c.id === campana.cultivoId);
     return { campana, cultivo };
   };

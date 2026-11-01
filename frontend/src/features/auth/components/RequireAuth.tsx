@@ -2,11 +2,14 @@ import { Navigate, Outlet, useLocation } from 'react-router';
 import { useAuth } from '../context/useAuth';
 import type { Seccion } from '../permisos';
 
-// Sin sesión → /login, recordando a dónde quería ir.
+// Sin sesión → /login, recordando a dónde quería ir. Con la clave pendiente → /cambiar-password.
 export function RequireAuth() {
   const { sesion } = useAuth();
   const location = useLocation();
   if (!sesion) return <Navigate to="/login" replace state={{ desde: location.pathname }} />;
+  if (sesion.debeCambiarPassword && location.pathname !== '/cambiar-password') {
+    return <Navigate to="/cambiar-password" replace />;
+  }
   return <Outlet />;
 }
 

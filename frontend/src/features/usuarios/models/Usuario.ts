@@ -5,4 +5,5 @@ export interface Usuario {
   rolId: number;
   estado: 'ACTIVO' | 'INACTIVO';
   creadoEn: string;
+  debeCambiarPassword?: boolean;
 }

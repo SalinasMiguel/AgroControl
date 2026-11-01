@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 import type { Campana, Cultivo, Parcela } from "../models/agro";
 import { PALETTE } from "../theme/palette";
-import { ESTADO_VISUAL } from "../theme/estados";
+import { visualParcela } from "../theme/estados";
 import { CampanaProgreso } from "./CampanaProgreso";
 import { EstadoChip } from "./EstadoChip";
 
@@ -13,7 +13,7 @@ type Props = {
 };
 
 export function ParcelaCard({ parcela, nombrePredio, campana, cultivo }: Props) {
-  const visual = ESTADO_VISUAL[parcela.estado];
+  const visual = visualParcela(parcela.estado);
   return (
     <View style={[styles.tarjeta, { borderLeftColor: visual.color }]}>
       <View style={styles.cabecera}>

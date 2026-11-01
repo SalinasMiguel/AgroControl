@@ -7,4 +7,6 @@ export interface Sesion {
   nombreCompleto: string;
   email: string;
   rol: Rol;
+  // Opcional: localStorage puede guardar sesiones de antes de este campo
+  debeCambiarPassword?: boolean;
 }

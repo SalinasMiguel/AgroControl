@@ -19,6 +19,13 @@ export const incidenciaService = {
     });
   },
 
+  anular(id: number, motivo: string): Promise<Incidencia> {
+    return apiFetch<Incidencia>(`/incidencias/${id}/anular`, {
+      method: 'POST',
+      body: JSON.stringify({ motivo }),
+    });
+  },
+
   registrar(data: IncidenciaCreateRequest): Promise<Incidencia> {
     return apiFetch<Incidencia>('/incidencias', {
       method: 'POST',

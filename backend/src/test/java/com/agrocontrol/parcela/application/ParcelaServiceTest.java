@@ -131,4 +131,50 @@ class ParcelaServiceTest {
         assertThatThrownBy(() -> service.eliminar(10L)).isInstanceOf(ConflictoException.class);
         verify(parcelaRepository, never()).eliminar(any());
     }
+
+    private Parcela existenteEn(EstadoParcela estado) {
+        Parcela parcela = Parcela.reconstruir(10L, 1L, "P-01", null, estado);
+        when(parcelaRepository.buscarPorId(10L)).thenReturn(Optional.of(parcela));
+        return parcela;
+    }
+
+    @Test
+    void mandarElMismoEstadoEsValido() {
+        existenteEn(EstadoParcela.EN_PRODUCCION);
+        when(parcelaRepository.guardar(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        Parcela parcela = service.actualizar(10L, 1L, "P-02", null, EstadoParcela.EN_PRODUCCION);
+
+        assertThat(parcela.getCodigo()).isEqualTo("P-02");
+        verify(campanaRepository, never()).existeEnCursoEnParcela(any());
+    }
+
+    @Test
+    void pedirEnProduccionAManoDa409() {
+        existenteEn(EstadoParcela.DISPONIBLE);
+
+        assertThatThrownBy(() -> service.actualizar(10L, 1L, "P-01", null, EstadoParcela.EN_PRODUCCION))
+                .isInstanceOf(ConflictoException.class);
+        verify(parcelaRepository, never()).guardar(any());
+    }
+
+    @Test
+    void cambiarEstadoConCampanaEnCursoDa409() {
+        existenteEn(EstadoParcela.EN_PRODUCCION);
+        when(campanaRepository.existeEnCursoEnParcela(10L)).thenReturn(true);
+
+        assertThatThrownBy(() -> service.actualizar(10L, 1L, "P-01", null, EstadoParcela.EN_DESCANSO))
+                .isInstanceOf(ConflictoException.class);
+        verify(parcelaRepository, never()).guardar(any());
+    }
+
+    @Test
+    void pasarADescansoSinCampanaEnCursoGuarda() {
+        existenteEn(EstadoParcela.DISPONIBLE);
+        when(campanaRepository.existeEnCursoEnParcela(10L)).thenReturn(false);
+        when(parcelaRepository.guardar(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        assertThat(service.actualizar(10L, 1L, "P-01", null, EstadoParcela.EN_DESCANSO).getEstado())
+                .isEqualTo(EstadoParcela.EN_DESCANSO);
+    }
 }

@@ -9,11 +9,12 @@ public final class CampanaPersistenceMapper {
 
     public static Campana toDomain(CampanaJpaEntity entity) {
         return Campana.reconstruir(entity.getId(), entity.getParcelaId(), entity.getCultivoId(),
-                                   entity.getFechaInicio(), entity.getFechaFin(), entity.getEstado());
+                                   entity.getFechaInicio(), entity.getFechaFin(), entity.getEstado(),
+                                   entity.getMotivoCierre());
     }
 
     public static CampanaJpaEntity toEntity(Campana c) {
         return new CampanaJpaEntity(c.getId(), c.getParcelaId(), c.getCultivoId(), c.getFechaInicio(), c.getFechaFin(),
-                                    c.getEstado());
+                                    c.getEstado(), c.getMotivoCierre());
     }
 }

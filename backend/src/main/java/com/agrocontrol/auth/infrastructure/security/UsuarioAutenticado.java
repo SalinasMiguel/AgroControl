@@ -17,6 +17,12 @@ public final class UsuarioAutenticado {
         return jwt.getClaimAsString("rol");
     }
 
+    // Un token emitido antes de V8 no trae "ver": cuenta como versión 0.
+    public static int version(Jwt jwt) {
+        Number version = jwt.getClaim("ver");
+        return version == null ? 0 : version.intValue();
+    }
+
     public static boolean esOperario(Jwt jwt) {
         return Roles.OPERARIO.equals(rol(jwt));
     }

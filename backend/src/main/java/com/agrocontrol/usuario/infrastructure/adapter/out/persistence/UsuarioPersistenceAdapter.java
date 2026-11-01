@@ -1,5 +1,6 @@
 package com.agrocontrol.usuario.infrastructure.adapter.out.persistence;
 
+import com.agrocontrol.auth.domain.Roles;
 import com.agrocontrol.rol.infrastructure.adapter.out.persistence.RolJpaEntity;
 import com.agrocontrol.rol.infrastructure.adapter.out.persistence.RolJpaRepository;
 import com.agrocontrol.usuario.domain.Usuario;
@@ -48,5 +49,15 @@ public class UsuarioPersistenceAdapter implements UsuarioRepository {
     @Override
     public boolean existePorEmail(String email) {
         return jpaRepository.existsByEmailIgnoreCase(email);
+    }
+
+    @Override
+    public boolean existeEmailEnOtroUsuario(String email, Long idExcluido) {
+        return jpaRepository.existsByEmailIgnoreCaseAndIdNot(email, idExcluido);
+    }
+
+    @Override
+    public long contarAdministradoresActivos() {
+        return jpaRepository.countByActivoTrueAndRol_Nombre(Roles.ADMINISTRADOR);
     }
 }

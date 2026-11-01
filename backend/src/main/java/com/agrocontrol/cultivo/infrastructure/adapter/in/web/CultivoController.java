@@ -7,7 +7,9 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,5 +35,10 @@ public class CultivoController {
     public ResponseEntity<CultivoResponse> crear(@Valid @RequestBody CrearCultivoRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(CultivoResponse.desde(service.crear(request.nombre(), request.cicloDias())));
+    }
+
+    @PutMapping("/{id}")
+    public CultivoResponse actualizar(@PathVariable Long id, @Valid @RequestBody CrearCultivoRequest request) {
+        return CultivoResponse.desde(service.actualizar(id, request.nombre(), request.cicloDias()));
     }
 }

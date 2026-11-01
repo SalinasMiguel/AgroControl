@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { ApiError } from '../../../api/apiClient';
+import { campanaAbierta } from '../../../shared/utils/estados';
 import { hoyISO } from '../../../utils/formato';
 import type { Campana } from '../../campanas/models/Campana';
 import { etiquetaCampana, type Catalogos } from '../../campanas/utils/etiquetas';
@@ -10,21 +11,25 @@ import Button from '../../../components/ui/Button';
 interface LaborFormProps {
   campanas: Campana[];
   catalogos: Catalogos;
-  onCreated: (labor: Labor) => void;
+  // Con labor se corrige el plan; sin labor se crea una nueva
+  labor?: Labor;
+  onGuardado: (labor: Labor) => void;
+  onCerrar?: () => void;
 }
 
 type Errores = Partial<Record<'campanaId' | 'tipo' | 'fechaPlan', string>>;
 
-export default function LaborForm({ campanas, catalogos, onCreated }: LaborFormProps) {
-  const [campanaId, setCampanaId] = useState('');
-  const [tipo, setTipo] = useState('');
-  const [fechaPlan, setFechaPlan] = useState(hoyISO());
+export default function LaborForm({ campanas, catalogos, labor, onGuardado, onCerrar }: LaborFormProps) {
+  const editando = Boolean(labor);
+  const [campanaId, setCampanaId] = useState(labor ? String(labor.campanaId) : '');
+  const [tipo, setTipo] = useState(labor?.tipo ?? '');
+  const [fechaPlan, setFechaPlan] = useState(labor?.fechaPlan ?? hoyISO());
   const [errors, setErrors] = useState<Errores>({});
   const [mensaje, setMensaje] = useState('');
   const [apiError, setApiError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const campanasAbiertas = campanas.filter((campana) => campana.estado !== 'FINALIZADA');
+  const campanasAbiertas = campanas.filter(campanaAbierta);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -39,14 +44,18 @@ export default function LaborForm({ campanas, catalogos, onCreated }: LaborFormP
 
     try {
       setSubmitting(true);
+      if (labor) {
+        onGuardado(await laborService.editar(labor.id, { tipo, fechaPlan }));
+        return;
+      }
       // La parcela no se envía: el backend la toma de la campaña.
       const creada = await laborService.planificar({ campanaId: Number(campanaId), tipo, fechaPlan });
-      onCreated(creada);
+      onGuardado(creada);
       setTipo('');
       setMensaje('Labor planificada correctamente.');
     } catch (err) {
       if (err instanceof ApiError) setErrors(err.campos);
-      setApiError(err instanceof Error ? err.message : 'No se pudo crear');
+      setApiError(err instanceof Error ? err.message : 'No se pudo guardar');
     } finally {
       setSubmitting(false);
     }
@@ -57,7 +66,7 @@ export default function LaborForm({ campanas, catalogos, onCreated }: LaborFormP
       <div className="form-grid">
         <label className="form-span-2">
           Campaña
-          <select value={campanaId} onChange={(e) => setCampanaId(e.target.value)}>
+          <select value={campanaId} disabled={editando} onChange={(e) => setCampanaId(e.target.value)}>
             <option value="">Seleccione una campaña abierta</option>
             {campanasAbiertas.map((campana) => (
               <option key={campana.id} value={campana.id}>{etiquetaCampana(campana, catalogos)}</option>
@@ -84,8 +93,11 @@ export default function LaborForm({ campanas, catalogos, onCreated }: LaborFormP
       {mensaje && <div className="form-success">{mensaje}</div>}
       {apiError && <div className="form-error">{apiError}</div>}
       <div className="form-actions">
+        {onCerrar && (
+          <Button variant="secondary" type="button" onClick={onCerrar}>Cancelar</Button>
+        )}
         <Button type="submit" disabled={submitting}>
-          {submitting ? 'Guardando...' : 'Planificar labor'}
+          {submitting ? 'Guardando...' : editando ? 'Guardar cambios' : 'Planificar labor'}
         </Button>
       </div>
     </form>

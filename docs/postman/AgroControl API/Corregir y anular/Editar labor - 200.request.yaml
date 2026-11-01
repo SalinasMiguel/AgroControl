@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/api/labores/1"
+method: PUT
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "tipo": "RIEGO",
+      "fechaPlan": "2026-11-05"
+    }
+order: 1000

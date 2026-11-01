@@ -13,6 +13,7 @@ export type Sesion = Readonly<{
   nombreCompleto: string;
   email: string;
   rol: string;
+  debeCambiarPassword: boolean;
 }>;
 
 export type DatosCampo = Readonly<{
@@ -64,7 +65,7 @@ export function iniciarSesion(baseUrl: string, email: string, password: string):
 // Formas tal como llegan del backend (BigDecimal puede ser null, fechas con hora, etc.)
 type PredioApi = Omit<Predio, "ubicacion" | "areaHa"> & { ubicacion: string | null; areaHa: number | null };
 type ParcelaApi = Omit<Parcela, "areaHa"> & { areaHa: number | null };
-type CosechaApi = Omit<Cosecha, "unidadMedida"> & { unidadMedida: string };
+type CosechaApi = Cosecha & { anulado: boolean };
 type IncidenciaApi = Incidencia;
 
 // Trae todo lo que muestra la app en paralelo. Las cosechas no las ve el operario (403):
@@ -89,7 +90,7 @@ export async function cargarDatos(baseUrl: string, token: string): Promise<Datos
     campanas,
     labores,
     incidencias: incidencias.map((i) => ({ ...i, fecha: i.fecha.slice(0, 10) })),
-    cosechas: cosechas.map((c) => ({ ...c, unidadMedida: c.unidadMedida.toLowerCase() === "kg" ? "kg" : "t" })),
+    cosechas: cosechas.filter((c) => !c.anulado),
   };
 }
 

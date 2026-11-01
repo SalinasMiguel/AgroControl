@@ -19,15 +19,25 @@ public class Cultivo {
     }
 
     public Cultivo(Long id, String nombre, Integer cicloDias) {
+        validar(nombre, cicloDias);
+        this.id = id;
+        this.nombre = nombre;
+        this.cicloDias = cicloDias;
+    }
+
+    public void actualizar(String nombre, Integer cicloDias) {
+        validar(nombre, cicloDias);
+        this.nombre = nombre;
+        this.cicloDias = cicloDias;
+    }
+
+    private static void validar(String nombre, Integer cicloDias) {
         if (nombre == null || nombre.isBlank()) {
             throw new IllegalArgumentException("El nombre del cultivo no puede estar vacío");
         }
         if (cicloDias != null && cicloDias <= 0) {
             throw new IllegalArgumentException("El ciclo del cultivo debe ser mayor que cero");
         }
-        this.id = id;
-        this.nombre = nombre;
-        this.cicloDias = cicloDias;
     }
 
     public Long getId() { return id; }

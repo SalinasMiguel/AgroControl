@@ -141,18 +141,78 @@ public class InventarioService {
     @Transactional
     public ConsumoLabor registrarConsumo(Long laborId, Long insumoId, BigDecimal cantidad, Long usuarioId) {
         Labor labor = obtenerLabor(laborId);
-        boolean campanaFinalizada = campanaRepository.buscarPorId(labor.getCampanaId())
-                .map(campana -> campana.estaFinalizada()).orElse(false);
-        if (campanaFinalizada) {
-            throw new ConflictoException("No se registran consumos en labores de una campaña finalizada");
+        boolean campanaCerrada = campanaRepository.buscarPorId(labor.getCampanaId())
+                .map(campana -> campana.estaCerrada()).orElse(false);
+        if (campanaCerrada) {
+            throw new ConflictoException("No se registran consumos en labores de una campaña cerrada");
+        }
+        if (labor.estaCancelada()) {
+            throw new ConflictoException("No se registran consumos en una labor cancelada");
         }
         Insumo insumo = obtenerInsumoParaActualizar(insumoId);
         verificarUsuario(usuarioId);
         insumo.registrarSalida(cantidad);
         insumoRepository.guardar(insumo);
+        ConsumoLabor consumo = consumoRepository.guardar(new ConsumoLabor(null, laborId, insumoId, cantidad));
         String motivo = "Consumo en labor " + labor.getId() + " (" + labor.getTipo() + ")";
-        movimientoRepository.guardar(new MovimientoInsumo(null, insumoId, TipoMovimiento.SALIDA, cantidad, motivo, usuarioId));
-        return consumoRepository.guardar(new ConsumoLabor(null, laborId, insumoId, cantidad));
+        movimientoRepository.guardar(MovimientoInsumo.deConsumo(insumoId, cantidad, motivo, usuarioId, consumo.getId()));
+        return consumo;
+    }
+
+    // Orden de bloqueo: primero el registro que se anula, después el insumo. Así, de dos anulaciones
+    // simultáneas, la segunda espera y lee anulado = true antes de tocar el stock.
+    @Auditable(entidad = "MOVIMIENTO_INSUMO", accion = "ANULAR")
+    @Transactional
+    public MovimientoInsumo anularMovimiento(Long insumoId, Long movimientoId, String motivo, Long usuarioId) {
+        MovimientoInsumo movimiento = movimientoRepository.buscarMovimientoParaActualizar(movimientoId)
+                .filter(m -> m.getInsumoId().equals(insumoId))
+                .orElseThrow(() -> new RecursoNoEncontradoException("No existe el movimiento con id: " + movimientoId));
+        if (!movimiento.esAnulableDirecto()) {
+            throw new ConflictoException("Este movimiento no se anula directamente");
+        }
+        movimiento.anular(motivo, usuarioId);
+        Insumo insumo = obtenerInsumoParaActualizar(insumoId);
+        MovimientoInsumo inverso = MovimientoInsumo.inversoDe(movimiento, motivo, usuarioId);
+        aplicar(insumo, inverso.getTipo(), inverso.getCantidad());
+        insumoRepository.guardar(insumo);
+        MovimientoInsumo anulado = movimientoRepository.guardar(movimiento);
+        movimientoRepository.guardar(inverso);
+        return anulado;
+    }
+
+    @Auditable(entidad = "CONSUMO_LABOR", accion = "ANULAR")
+    @Transactional
+    public ConsumoLabor anularConsumo(Long laborId, Long consumoId, String motivo, Long usuarioId) {
+        ConsumoLabor consumo = consumoRepository.buscarConsumoParaActualizar(consumoId)
+                .filter(c -> c.getLaborId().equals(laborId))
+                .orElseThrow(() -> new RecursoNoEncontradoException("No existe el consumo con id: " + consumoId));
+        consumo.anular(motivo, usuarioId);
+        MovimientoInsumo salida = movimientoRepository.buscarPorConsumo(consumoId)
+                .orElseThrow(() -> new ConflictoException("Este consumo no tiene su salida enlazada: corrija el stock con un ajuste"));
+        salida.anular(motivo, usuarioId);
+        Insumo insumo = obtenerInsumoParaActualizar(consumo.getInsumoId());
+        MovimientoInsumo inverso = MovimientoInsumo.inversoDe(salida, motivo, usuarioId);
+        aplicar(insumo, inverso.getTipo(), inverso.getCantidad());
+        insumoRepository.guardar(insumo);
+        movimientoRepository.guardar(salida);
+        movimientoRepository.guardar(inverso);
+        return consumoRepository.guardar(consumo);
+    }
+
+    // Conteo físico: registra la diferencia, no pisa el stock.
+    @Auditable(entidad = "INSUMO", accion = "AJUSTAR")
+    @Transactional
+    public MovimientoInsumo ajustarStock(Long insumoId, BigDecimal stockContado, String motivo, Long usuarioId) {
+        Insumo insumo = obtenerInsumoParaActualizar(insumoId);
+        verificarUsuario(usuarioId);
+        BigDecimal diferencia = stockContado.subtract(insumo.getStockActual());
+        if (diferencia.signum() == 0) {
+            throw new ConflictoException("El stock contado es igual al stock actual");
+        }
+        TipoMovimiento tipo = diferencia.signum() > 0 ? TipoMovimiento.ENTRADA : TipoMovimiento.SALIDA;
+        aplicar(insumo, tipo, diferencia.abs());
+        insumoRepository.guardar(insumo);
+        return movimientoRepository.guardar(MovimientoInsumo.deAjuste(insumoId, tipo, diferencia.abs(), motivo, usuarioId));
     }
 
     private static void aplicar(Insumo insumo, TipoMovimiento tipo, BigDecimal cantidad) {

@@ -171,6 +171,7 @@ button, input, select, textarea { font: inherit; }
 /* ===== Estados, acciones y paneles (módulos de campañas, labores e insumos) ===== */
 .status-planned { background: var(--color-info-bg); color: var(--color-info-text); }
 .status-progress { background: var(--color-warning-bg); color: var(--color-warning-text); }
+.fila-anulada td { text-decoration: line-through; color: var(--color-text-muted); }
 .status-done { background: var(--color-border); color: var(--color-neutral-text); }
 .table-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .btn-link {

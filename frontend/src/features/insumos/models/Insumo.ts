@@ -42,6 +42,8 @@ export interface SalidaDeAlmacen {
 
 export type TipoMovimiento = 'ENTRADA' | 'SALIDA';
 
+export type OrigenMovimiento = 'MANUAL' | 'CONSUMO' | 'ANULACION' | 'AJUSTE';
+
 export interface MovimientoInsumo {
   id: number;
   insumoId: number;
@@ -50,4 +52,13 @@ export interface MovimientoInsumo {
   motivo: string | null;
   usuarioId: number;
   fecha: string;
+  origen: OrigenMovimiento;
+  anulado: boolean;
+  motivoAnulacion: string | null;
+  anuladoPor: number | null;
+  anuladoEn: string | null;
 }
+
+// Un consumo se anula desde su labor y una reversión no se revierte.
+export const esAnulable = (movimiento: MovimientoInsumo) =>
+  !movimiento.anulado && (movimiento.origen === 'MANUAL' || movimiento.origen === 'AJUSTE');

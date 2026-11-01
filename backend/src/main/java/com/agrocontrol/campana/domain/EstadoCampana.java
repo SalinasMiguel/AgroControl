@@ -3,5 +3,7 @@ package com.agrocontrol.campana.domain;
 public enum EstadoCampana {
     PLANIFICADA,
     EN_CURSO,
-    FINALIZADA
+    FINALIZADA,
+    CANCELADA,
+    PERDIDA
 }

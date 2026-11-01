@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/api/cultivos/1"
+method: PUT
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "nombre": "Soya",
+      "cicloDias": 120
+    }
+order: 8000

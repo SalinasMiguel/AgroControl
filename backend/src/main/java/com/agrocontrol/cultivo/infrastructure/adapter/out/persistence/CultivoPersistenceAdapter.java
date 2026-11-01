@@ -41,4 +41,9 @@ public class CultivoPersistenceAdapter implements CultivoRepository {
     public boolean existePorNombre(String nombre) {
         return jpaRepository.existsByNombreIgnoreCase(nombre);
     }
+
+    @Override
+    public boolean existePorNombreEnOtro(String nombre, Long idExcluido) {
+        return jpaRepository.existsByNombreIgnoreCaseAndIdNot(nombre, idExcluido);
+    }
 }

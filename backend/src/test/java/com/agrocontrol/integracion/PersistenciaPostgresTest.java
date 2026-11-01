@@ -2,6 +2,8 @@ package com.agrocontrol.integracion;
 
 import com.agrocontrol.auditoria.application.AuditoriaService;
 import com.agrocontrol.auditoria.domain.Auditoria;
+import com.agrocontrol.auth.application.AuthService;
+import com.agrocontrol.auth.application.command.CambiarPasswordCommand;
 import com.agrocontrol.bitacora.application.BitacoraService;
 import com.agrocontrol.campana.application.AvanceCampanaService;
 import com.agrocontrol.campana.application.CampanaService;
@@ -12,6 +14,9 @@ import com.agrocontrol.insumo.application.InventarioService;
 import com.agrocontrol.insumo.domain.Insumo;
 import com.agrocontrol.insumo.domain.TipoMovimiento;
 import com.agrocontrol.parcela.domain.ParcelaRepository;
+import com.agrocontrol.usuario.domain.CodificadorPassword;
+import com.agrocontrol.usuario.domain.Usuario;
+import com.agrocontrol.usuario.domain.UsuarioRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -58,6 +63,12 @@ class PersistenciaPostgresTest {
     @Autowired
     private AvanceCampanaService avanceCampanaService;
     @Autowired
+    private AuthService authService;
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+    @Autowired
+    private CodificadorPassword codificadorPassword;
+    @Autowired
     private JdbcTemplate jdbc;
 
     @Test
@@ -65,7 +76,74 @@ class PersistenciaPostgresTest {
         assertThat(parcelaRepository.listarTodas()).isNotEmpty();
         BigDecimal version = jdbc.queryForObject(
                 "SELECT max(version::numeric) FROM flyway_schema_history WHERE success", BigDecimal.class);
-        assertThat(version).isEqualByComparingTo("7.1");
+        assertThat(version).isEqualByComparingTo("10");
+    }
+
+    @Test
+    void elUsuarioGuardaVersionYClavePendiente() {
+        Usuario usuario = usuarioRepository.buscarPorEmail("supervisor@agrocontrol.com").orElseThrow();
+        int version = usuario.getTokenVersion();
+
+        usuario.restablecerPassword(usuario.getPasswordHash());
+        usuarioRepository.guardar(usuario);
+
+        Usuario leido = usuarioRepository.buscarPorId(usuario.getId()).orElseThrow();
+        assertThat(leido.getTokenVersion()).isEqualTo(version + 1);
+        assertThat(leido.isDebeCambiarPassword()).isTrue();
+
+        // deshacer para no bloquear a otras pruebas de esta misma base
+        leido.cambiarPassword(leido.getPasswordHash());
+        usuarioRepository.guardar(leido);
+    }
+
+    @Test
+    void laClaveNoApareceEnLaAuditoria() {
+        Usuario usuario = usuarioRepository.guardar(new Usuario(null, "Temporal", "temporal@agrocontrol.com",
+                codificadorPassword.codificar("ClaveActual1"), usuarioRepository.buscarPorEmail("supervisor@agrocontrol.com")
+                .orElseThrow().getRolId()));
+
+        authService.cambiarPassword(usuario.getId(), new CambiarPasswordCommand("ClaveActual1", "ClaveNueva2"));
+
+        assertThat(jdbc.queryForList("SELECT coalesce(detalle, '') FROM agrocontrol.auditoria WHERE accion = 'CAMBIAR_PASSWORD'", String.class))
+                .isNotEmpty().allSatisfy(detalle -> assertThat(detalle).doesNotContain("ClaveActual1", "ClaveNueva2"));
+    }
+
+    @Test
+    void laCanceladaLiberaLaParcela() {
+        Long parcelaId = jdbc.queryForObject(
+                "SELECT min(id_parcela) FROM agrocontrol.parcela p WHERE NOT EXISTS "
+                        + "(SELECT 1 FROM agrocontrol.campana c WHERE c.id_parcela = p.id_parcela AND c.estado IN ('PLANIFICADA', 'EN_CURSO'))",
+                Long.class);
+        Long cultivoId = jdbc.queryForObject("SELECT min(id_cultivo) FROM agrocontrol.cultivo", Long.class);
+        Campana primera = campanaService.crear(parcelaId, cultivoId, LocalDate.now());
+
+        campanaService.cancelar(primera.getId(), "Sin semilla");
+
+        Campana segunda = campanaService.crear(parcelaId, cultivoId, LocalDate.now());
+        assertThat(segunda.getEstado()).isEqualTo(EstadoCampana.PLANIFICADA);
+        campanaService.cancelar(segunda.getId(), "Fin de la prueba");
+        assertThat(campanaService.obtener(primera.getId()).getMotivoCierre()).isEqualTo("Sin semilla");
+    }
+
+    @Test
+    void iniciarCambiaLaParcelaEnLaBase() {
+        Long parcelaId = jdbc.queryForObject(
+                "SELECT min(id_parcela) FROM agrocontrol.parcela p WHERE estado = 'DISPONIBLE' AND NOT EXISTS "
+                        + "(SELECT 1 FROM agrocontrol.campana c WHERE c.id_parcela = p.id_parcela AND c.estado IN ('PLANIFICADA', 'EN_CURSO'))",
+                Long.class);
+        Long cultivoId = jdbc.queryForObject("SELECT min(id_cultivo) FROM agrocontrol.cultivo", Long.class);
+        Campana campana = campanaService.crear(parcelaId, cultivoId, LocalDate.now());
+
+        campanaService.iniciar(campana.getId());
+
+        assertThat(jdbc.queryForObject("SELECT estado FROM agrocontrol.parcela WHERE id_parcela = ?", String.class, parcelaId))
+                .isEqualTo("EN_PRODUCCION");
+        campanaService.finalizar(campana.getId(), LocalDate.now());
+    }
+
+    @Test
+    void elUsuarioDeDemoEntraConAgro123() {
+        assertThat(authService.iniciarSesion("sergio@agrocontrol.com", "agro123").rol()).isEqualTo("ADMINISTRADOR");
     }
 
     @Test
@@ -91,7 +169,7 @@ class PersistenciaPostgresTest {
     void elCambioDeEstadoSeGuardaEnLaBase() {
         Long parcelaId = jdbc.queryForObject(
                 "SELECT min(id_parcela) FROM agrocontrol.parcela p WHERE NOT EXISTS "
-                        + "(SELECT 1 FROM agrocontrol.campana c WHERE c.id_parcela = p.id_parcela AND c.estado <> 'FINALIZADA')",
+                        + "(SELECT 1 FROM agrocontrol.campana c WHERE c.id_parcela = p.id_parcela AND c.estado IN ('PLANIFICADA', 'EN_CURSO'))",
                 Long.class);
         Long cultivoId = jdbc.queryForObject("SELECT min(id_cultivo) FROM agrocontrol.cultivo", Long.class);
         Campana creada = campanaService.crear(parcelaId, cultivoId, LocalDate.now());
@@ -133,7 +211,7 @@ class PersistenciaPostgresTest {
     void laBitacoraDeUnaParcelaReuneLasObservacionesDeSusLabores() {
         Long laborId = jdbc.queryForObject(
                 "SELECT min(l.id_labor) FROM agrocontrol.labor l JOIN agrocontrol.campana c ON c.id_campana = l.id_campana "
-                        + "WHERE c.estado <> 'FINALIZADA'", Long.class);
+                        + "WHERE c.estado IN ('PLANIFICADA', 'EN_CURSO')", Long.class);
         Long parcelaId = jdbc.queryForObject(
                 "SELECT id_parcela FROM agrocontrol.labor WHERE id_labor = ?", Long.class, laborId);
         Long usuarioId = jdbc.queryForObject("SELECT min(id_usuario) FROM agrocontrol.usuario", Long.class);

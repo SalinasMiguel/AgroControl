@@ -449,3 +449,84 @@ Content-Type: application/json
 ### Lo que salió del almacén este mes (o con ?desde=2026-10-01&hasta=2026-10-31)
 GET http://localhost:8080/api/insumos/salidas
 Authorization: Bearer {{token}}
+
+### ---------- Cuentas ----------
+
+### Cambiar la contraseña propia -> 200 con token nuevo; clave actual incorrecta -> 400
+POST http://localhost:8080/api/auth/cambiar-password
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "passwordActual": "agro123",
+  "passwordNueva": "ClaveNueva22"
+}
+
+### Editar usuario -> 200; email de otro -> 409
+PUT http://localhost:8080/api/usuarios/3
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "rolId": 3,
+  "nombreCompleto": "Luis Choque",
+  "email": "operario1@agrocontrol.com"
+}
+
+### Desactivar -> 200; a sí mismo o al último administrador -> 409
+POST http://localhost:8080/api/usuarios/3/desactivar
+Authorization: Bearer {{token}}
+
+### Activar -> 200
+POST http://localhost:8080/api/usuarios/3/activar
+Authorization: Bearer {{token}}
+
+### Restablecer -> 200 con passwordTemporal (Cache-Control: no-store)
+POST http://localhost:8080/api/usuarios/3/restablecer-password
+Authorization: Bearer {{token}}
+
+### ---------- Corregir y anular ----------
+
+### Cancelar una labor -> 200; ejecutada -> 409
+POST http://localhost:8080/api/labores/1/cancelar
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "motivo": "Llovió" }
+
+### Marcar perdida una campaña en curso -> 200
+POST http://localhost:8080/api/campanas/1/marcar-perdida
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "motivo": "Granizo", "fechaFin": "2026-10-30" }
+
+### Anular un consumo -> 200 y el stock vuelve; dos veces -> 409
+POST http://localhost:8080/api/labores/1/consumos/1/anular
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "motivo": "Cantidad mal cargada" }
+
+### Ajustar por conteo físico -> 201; igual al stock -> 409
+POST http://localhost:8080/api/insumos/1/ajustes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "stockContado": 80, "motivo": "Conteo de fin de mes" }
+
+### ---------- Datos veraces ----------
+
+### Cosecha en quintales: la respuesta trae toneladas; otra unidad -> 400; campaña no en curso -> 409
+POST http://localhost:8080/api/cosechas
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "campanaId": 1, "cantidad": 100, "unidadMedida": "qq" }
+
+### Pedir EN_PRODUCCION a mano -> 409
+PUT http://localhost:8080/api/parcelas/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "predioId": 1, "codigo": "P-01", "areaHa": 10, "estado": "EN_PRODUCCION" }

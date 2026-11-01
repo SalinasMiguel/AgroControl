@@ -1,6 +1,8 @@
 package com.agrocontrol.auth.infrastructure.adapter.in.web;
 
 import com.agrocontrol.auth.application.AuthService;
+import com.agrocontrol.auth.application.command.CambiarPasswordCommand;
+import com.agrocontrol.auth.infrastructure.adapter.in.web.dto.CambiarPasswordRequest;
 import com.agrocontrol.auth.infrastructure.adapter.in.web.dto.LoginRequest;
 import com.agrocontrol.auth.infrastructure.adapter.in.web.dto.SesionResponse;
 import com.agrocontrol.auth.infrastructure.security.UsuarioAutenticado;
@@ -32,5 +34,12 @@ public class AuthController {
     @GetMapping("/me")
     public SesionResponse yo(@AuthenticationPrincipal Jwt jwt) {
         return SesionResponse.desde(service.sesionActual(UsuarioAutenticado.id(jwt), jwt.getTokenValue()));
+    }
+
+    @PostMapping("/cambiar-password")
+    public SesionResponse cambiarPassword(@AuthenticationPrincipal Jwt jwt,
+                                          @Valid @RequestBody CambiarPasswordRequest request) {
+        return SesionResponse.desde(service.cambiarPassword(UsuarioAutenticado.id(jwt),
+                new CambiarPasswordCommand(request.passwordActual(), request.passwordNueva())));
     }
 }

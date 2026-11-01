@@ -4,6 +4,7 @@ import com.agrocontrol.bitacora.domain.BitacoraCampo;
 import com.agrocontrol.bitacora.domain.BitacoraRepository;
 import com.agrocontrol.campana.domain.Campana;
 import com.agrocontrol.campana.domain.CampanaRepository;
+import com.agrocontrol.campana.domain.EstadoCampana;
 import com.agrocontrol.labor.domain.Labor;
 import com.agrocontrol.labor.domain.LaborRepository;
 import com.agrocontrol.parcela.domain.ParcelaRepository;
@@ -59,6 +60,7 @@ class BitacoraServiceTest {
     @Test
     void laBitacoraDeUnaCampanaFinalizadaQuedaCerrada() {
         Campana finalizada = new Campana(5L, 3L, 1L, LocalDate.of(2026, 1, 1));
+        finalizada.iniciar();
         finalizada.finalizar(LocalDate.of(2026, 5, 1));
         laborDeCampana(finalizada);
 
@@ -71,5 +73,13 @@ class BitacoraServiceTest {
         when(parcelaRepository.buscarPorId(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.listarPorParcela(99L)).isInstanceOf(RecursoNoEncontradoException.class);
+    }
+
+    @Test
+    void laCampanaPerdidaCierraLaBitacora() {
+        Campana perdida = Campana.reconstruir(5L, 3L, 1L, LocalDate.now(), LocalDate.now(), EstadoCampana.PERDIDA, "Granizo");
+        laborDeCampana(perdida);
+
+        assertThatThrownBy(() -> service.registrar(9L, 1L, "Sin agua")).isInstanceOf(ConflictoException.class);
     }
 }

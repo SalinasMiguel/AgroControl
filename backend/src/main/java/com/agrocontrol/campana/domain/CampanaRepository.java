@@ -10,4 +10,5 @@ public interface CampanaRepository {
     List<Campana> listarPorParcela(Long parcelaId);
     boolean existePorParcela(Long parcelaId);
     boolean existeAbiertaEnParcela(Long parcelaId);
+    boolean existeEnCursoEnParcela(Long parcelaId);
 }

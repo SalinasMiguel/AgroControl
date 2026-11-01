@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/api/auth/cambiar-password"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "passwordActual": "agro123",
+      "passwordNueva": "ClaveNueva22"
+    }
+order: 1000

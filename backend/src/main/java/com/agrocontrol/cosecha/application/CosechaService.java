@@ -13,6 +13,7 @@ import com.agrocontrol.usuario.domain.exception.UsuarioNoEncontradoException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 public class CosechaService {
@@ -38,15 +39,32 @@ public class CosechaService {
 
     @Auditable(entidad = "COSECHA", accion = "REGISTRAR")
     @Transactional
-    public Cosecha registrar(Long campanaId, BigDecimal cantidad, String unidadMedida, Long usuarioId) {
+    public Cosecha registrar(Long campanaId, BigDecimal cantidad, String unidadMedida, LocalDate fecha, Long usuarioId) {
         Campana campana = campanaRepository.buscarPorId(campanaId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("No existe la campaña con id: " + campanaId));
-        if (campana.getEstado() == EstadoCampana.PLANIFICADA) {
-            throw new ConflictoException("No se puede cosechar una campaña que todavía no se inició");
+        // RN-06: una cosecha tardía exige reabrir la campaña
+        if (campana.getEstado() != EstadoCampana.EN_CURSO) {
+            throw new ConflictoException("Solo se cosecha una campaña en curso (estado actual: " + campana.getEstado() + ")");
+        }
+        LocalDate fechaCosecha = fecha != null ? fecha : LocalDate.now();
+        if (fechaCosecha.isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException("La fecha de cosecha no puede ser futura");
+        }
+        if (fechaCosecha.isBefore(campana.getFechaInicio())) {
+            throw new IllegalArgumentException("La fecha de cosecha no puede ser anterior al inicio de la campaña");
         }
         if (usuarioRepository.buscarPorId(usuarioId).isEmpty()) {
             throw new UsuarioNoEncontradoException(usuarioId);
         }
-        return cosechaRepository.guardar(new Cosecha(null, campanaId, cantidad, unidadMedida.trim(), usuarioId));
+        return cosechaRepository.guardar(new Cosecha(null, campanaId, cantidad, unidadMedida.trim(), fechaCosecha, usuarioId));
+    }
+
+    @Auditable(entidad = "COSECHA", accion = "ANULAR")
+    @Transactional
+    public Cosecha anular(Long id, String motivo, Long usuarioId) {
+        Cosecha cosecha = cosechaRepository.buscarPorId(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("No existe la cosecha con id: " + id));
+        cosecha.anular(motivo, usuarioId);
+        return cosechaRepository.guardar(cosecha);
     }
 }

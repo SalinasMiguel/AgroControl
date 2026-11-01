@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import FechaAccionPanel from '../../../components/common/FechaAccionPanel';
+import { useNavigate } from 'react-router';
 import PageHeading from '../../../components/common/PageHeading';
 import StatsGrid from '../../../components/common/StatsGrid';
 import EmptyState from '../../../components/ui/EmptyState';
 import MotivoDialog from '../../../components/ui/MotivoDialog';
+import { formatFecha } from '../../../utils/formato';
+import ExportarBotones from '../../../components/ui/ExportarBotones';
 import SearchInput from '../../../components/ui/SearchInput';
 import SelectFilter from '../../../components/ui/SelectFilter';
 import { useCarga } from '../../../hooks/useCarga';
@@ -55,6 +58,7 @@ const DIALOGO: Record<Accion, { titulo: string; boton: string; aviso?: string; c
 };
 
 export default function CampanasPage() {
+  const navigate = useNavigate();
   const { datos, setDatos, loading, error, recargar } = useCarga(cargarDatos, {
     campanas: [] as Campana[],
     catalogos: { predios: [], parcelas: [], cultivos: [] },
@@ -105,6 +109,7 @@ export default function CampanasPage() {
     { value: '', label: 'Todos los cultivos' },
     ...catalogos.cultivos.map((cultivo) => ({ value: String(cultivo.id), label: cultivo.nombre })),
   ];
+  const porCampana = rendimientos(campanas, cosechas, catalogos.parcelas, catalogos.cultivos);
   const hectareasEnCurso = campanas
     .filter((campana) => campana.estado === 'EN_CURSO')
     .reduce((suma, campana) => suma + (superficie(campana, catalogos.parcelas) ?? 0), 0);
@@ -177,6 +182,20 @@ export default function CampanasPage() {
             <SearchInput label="Buscar campaña" value={busqueda} onChange={setBusqueda} placeholder="Parcela, cultivo o variedad" />
             <SelectFilter label="Estado" value={estadoFiltro} onChange={(valor) => setEstadoFiltro(valor as EstadoCampana | '')} options={OPCIONES_ESTADO} />
             <SelectFilter label="Cultivo" value={cultivoFiltro} onChange={setCultivoFiltro} options={opcionesCultivo} />
+            <ExportarBotones
+              titulo="Campañas"
+              filas={visibles}
+              columnas={[
+                { titulo: 'Cultivo', valor: (c) => nombreCultivo(c.cultivoId, catalogos) },
+                { titulo: 'Variedad', valor: (c) => c.variedad },
+                { titulo: 'Parcela', valor: (c) => etiquetaParcela(c.parcelaId, catalogos) },
+                { titulo: 'Hectáreas', valor: (c) => superficie(c, catalogos.parcelas) },
+                { titulo: 'Inicio', valor: (c) => formatFecha(c.fechaInicio) },
+                { titulo: 'Cosecha', valor: (c) => formatFecha(c.fechaFin ?? c.fechaCosechaEstimada) },
+                { titulo: 'Rendimiento t/ha', valor: (c) => porCampana[c.id]?.toFixed(2) ?? null },
+                { titulo: 'Estado', valor: (c) => c.estado },
+              ]}
+            />
           </div>
           {conAvance && (
             <AvancePanel
@@ -192,8 +211,9 @@ export default function CampanasPage() {
           <CampanaTable
             campanas={visibles}
             catalogos={catalogos}
-            rendimientos={rendimientos(campanas, cosechas, catalogos.parcelas)}
+            rendimientos={porCampana}
             onAvance={setConAvance}
+            onFicha={(campana) => navigate(`/campanas/${campana.id}`)}
             onEditar={puedeGestionar ? setEditando : undefined}
             onIniciar={puedeGestionar ? iniciar : undefined}
             onCancelar={puedeGestionar ? (campana) => setDialogo({ accion: 'cancelar', campana }) : undefined}

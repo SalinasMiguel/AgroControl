@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router';
 import PageHeading from '../../../components/common/PageHeading';
 import StatsGrid from '../../../components/common/StatsGrid';
 import Button from '../../../components/ui/Button';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import EmptyState from '../../../components/ui/EmptyState';
 import Modal from '../../../components/ui/Modal';
+import ExportarBotones from '../../../components/ui/ExportarBotones';
 import Pagination from '../../../components/ui/Pagination';
 import SearchInput from '../../../components/ui/SearchInput';
 import SelectFilter from '../../../components/ui/SelectFilter';
@@ -37,6 +39,7 @@ export default function ParcelasPage() {
   const [editando, setEditando] = useState<Parcela | null>(null);
   const [accionError, setAccionError] = useState('');
   const [cargandoDetalle, setCargandoDetalle] = useState(false);
+  const navigate = useNavigate();
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Parcela | null>(null);
   const [busqueda, setBusqueda] = useState('');
@@ -206,6 +209,16 @@ export default function ParcelasPage() {
             />
             <SelectFilter label="Predio" value={predioFiltro} onChange={cambiarPredioFiltro} options={opcionesPredio} />
             <SelectFilter label="Estado" value={estadoFiltro} onChange={cambiarEstadoFiltro} options={OPCIONES_ESTADO} />
+            <ExportarBotones
+              titulo="Parcelas"
+              filas={parcelasFiltradas}
+              columnas={[
+                { titulo: 'Código', valor: (p) => p.codigo },
+                { titulo: 'Predio', valor: (p) => prediosPorId.get(p.predioId)?.nombre },
+                { titulo: 'Hectáreas', valor: (p) => p.areaHa },
+                { titulo: 'Estado', valor: (p) => p.estado.replace(/_/g, ' ') },
+              ]}
+            />
           </div>
           {total === 0 ? (
             <EmptyState title="No hay parcelas registradas." description={puedeEditar ? 'Crea la primera con «+ Nueva parcela».' : 'El administrador aún no registró parcelas.'} />
@@ -219,6 +232,7 @@ export default function ParcelasPage() {
                 onEditar={puedeEditar ? editar : undefined}
                 onEliminar={puedeEditar ? setPendingDelete : undefined}
                 onBitacora={puedeVerBitacora ? setBitacoraDe : undefined}
+                onFicha={(parcela) => navigate(`/parcelas/${parcela.id}`)}
                 deletingId={deletingId}
               />
               <Pagination

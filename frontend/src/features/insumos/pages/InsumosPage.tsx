@@ -11,6 +11,9 @@ import MovimientosPanel from '../components/MovimientosPanel';
 import SalidasDelMes from '../components/SalidasDelMes';
 import { TriangleAlert } from 'lucide-react';
 import CategoriaIcono from '../components/CategoriaIcono';
+import CompraPanel from '../components/CompraPanel';
+import EquivalenciasPanel from '../components/EquivalenciasPanel';
+import ExportarBotones from '../../../components/ui/ExportarBotones';
 import { CATEGORIAS, type CategoriaInsumo, type Insumo } from '../models/Insumo';
 import { insumoService } from '../services/insumoService';
 import Button from '../../../components/ui/Button';
@@ -35,6 +38,8 @@ export default function InsumosPage() {
   const puedeVerMovimientos = puede('insumos.verMovimientos');
   const [seleccionadoId, setSeleccionadoId] = useState<number | null>(null);
   const [editando, setEditando] = useState<Insumo | null>(null);
+  const [comprando, setComprando] = useState(false);
+  const [conEquivalentes, setConEquivalentes] = useState<Insumo | null>(null);
   const [filtro, setFiltro] = useState<CategoriaInsumo | 'TODOS' | 'POR_AGOTARSE'>('TODOS');
   const [busqueda, setBusqueda] = useState('');
   // Sube con cada movimiento para que el resumen del mes se vuelva a calcular
@@ -67,15 +72,39 @@ export default function InsumosPage() {
         descripcion="Todo lo que entra y sale del almacén: semillas, fertilizantes, agroquímicos, combustible, aceites y repuestos."
         accion={
           puedeGestionar ? (
-            <Button type="button" onClick={() => setMostrarFormulario((prev) => !prev)}>
-              {mostrarFormulario ? 'Cerrar formulario' : '+ Nuevo insumo'}
-            </Button>
+            <div className="table-actions">
+              <Button variant="secondary" type="button" onClick={() => setComprando((prev) => !prev)}>Registrar compra</Button>
+              <Button type="button" onClick={() => setMostrarFormulario((prev) => !prev)}>
+                {mostrarFormulario ? 'Cerrar formulario' : '+ Nuevo insumo'}
+              </Button>
+            </div>
           ) : undefined
         }
       />
 
       {puedeGestionar && mostrarFormulario && (
         <InsumoForm onGuardado={(nuevo) => setDatos((prev) => ({ ...prev, insumos: [...prev.insumos, nuevo] }))} />
+      )}
+
+      {comprando && (
+        <CompraPanel
+          insumos={insumos}
+          onRegistrada={() => {
+            recargar();
+            setVersionSalidas((v) => v + 1);
+          }}
+          onCerrar={() => setComprando(false)}
+        />
+      )}
+
+      {conEquivalentes && (
+        <EquivalenciasPanel
+          key={conEquivalentes.id}
+          insumo={conEquivalentes}
+          insumos={insumos}
+          puedeGestionar={puedeGestionar}
+          onCerrar={() => setConEquivalentes(null)}
+        />
       )}
 
       {editando && (
@@ -127,6 +156,21 @@ export default function InsumosPage() {
             onChange={setBusqueda}
             placeholder="Código, marca o nombre"
           />
+          <div className="barra-resultados">
+            <ExportarBotones
+              titulo="Insumos"
+              filas={visibles}
+              columnas={[
+                { titulo: 'Insumo', valor: (i) => i.nombre },
+                { titulo: 'Código', valor: (i) => i.codigo },
+                { titulo: 'Marca', valor: (i) => i.marca },
+                { titulo: 'Categoría', valor: (i) => i.categoria },
+                { titulo: 'Stock', valor: (i) => i.stockActual },
+                { titulo: 'Unidad', valor: (i) => i.unidadMedida },
+                { titulo: 'Mínimo', valor: (i) => i.stockMinimo },
+              ]}
+            />
+          </div>
           <div className="chips" role="tablist" aria-label="Filtrar por categoría">
             <button type="button" className={`chip${filtro === 'TODOS' ? ' chip--activo' : ''}`} onClick={() => setFiltro('TODOS')}>
               Todos ({insumos.length})
@@ -175,6 +219,7 @@ export default function InsumosPage() {
                                 <Button variant="secondary" size="sm" type="button" onClick={() => abrirMovimientos(insumo)}>
                                   {puedeGestionar ? 'Entrada / salida' : 'Movimientos'}
                                 </Button>
+                                <Button variant="secondary" size="sm" type="button" onClick={() => setConEquivalentes(insumo)}>Equivalentes</Button>
                                 {puedeGestionar && (
                                   <Button variant="secondary" size="sm" type="button" onClick={() => abrirEdicion(insumo)}>Editar</Button>
                                 )}

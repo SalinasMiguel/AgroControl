@@ -22,6 +22,7 @@ interface CampanaTableProps {
   onMarcarPerdida?: (campana: Campana) => void;
   onReabrir?: (campana: Campana) => void;
   onAvance?: (campana: Campana) => void;
+  onFicha?: (campana: Campana) => void;
 }
 
 export default function CampanaTable({
@@ -35,6 +36,7 @@ export default function CampanaTable({
   onMarcarPerdida,
   onReabrir,
   onAvance,
+  onFicha,
 }: CampanaTableProps) {
   const conAcciones = Boolean(onIniciar || onFinalizar || onAvance);
 
@@ -101,6 +103,9 @@ export default function CampanaTable({
                     )}
                     {onReabrir && (campana.estado === 'FINALIZADA' || campana.estado === 'PERDIDA') && (
                       <Button variant="secondary" size="sm" type="button" onClick={() => onReabrir(campana)}>Reabrir</Button>
+                    )}
+                    {onFicha && (
+                      <Button variant="secondary" size="sm" type="button" onClick={() => onFicha(campana)}>Ficha</Button>
                     )}
                     {onAvance && (
                       <Button variant="secondary" size="sm" type="button" onClick={() => onAvance(campana)}>Avance</Button>

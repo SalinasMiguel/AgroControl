@@ -12,11 +12,12 @@ interface ParcelaTableProps {
   onEditar?: (parcela: Parcela) => void;
   onEliminar?: (parcela: Parcela) => void;
   onBitacora?: (parcela: Parcela) => void;
+  onFicha?: (parcela: Parcela) => void;
   deletingId?: number | null;
 }
 
-export default function ParcelaTable({ parcelas, prediosPorId, onEditar, onEliminar, onBitacora, deletingId = null }: ParcelaTableProps) {
-  const conAcciones = Boolean(onEditar || onEliminar || onBitacora);
+export default function ParcelaTable({ parcelas, prediosPorId, onEditar, onEliminar, onBitacora, onFicha, deletingId = null }: ParcelaTableProps) {
+  const conAcciones = Boolean(onEditar || onEliminar || onBitacora || onFicha);
   const obtenerNombrePredio = (predioId: number) => prediosPorId.get(predioId)?.nombre ?? `Predio #${predioId}`;
 
   return (
@@ -42,6 +43,7 @@ export default function ParcelaTable({ parcelas, prediosPorId, onEditar, onElimi
                 {conAcciones && (
                   <td>
                     <div className="table-actions">
+                      {onFicha && <Button variant="secondary" size="sm" onClick={() => onFicha(parcela)}>Ficha</Button>}
                       {onBitacora && <Button variant="secondary" size="sm" onClick={() => onBitacora(parcela)}>Bitácora</Button>}
                       {onEditar && <Button variant="secondary" size="sm" onClick={() => onEditar(parcela)}>Editar</Button>}
                       {onEliminar && (

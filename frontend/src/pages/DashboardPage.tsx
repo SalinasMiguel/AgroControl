@@ -1,4 +1,4 @@
-import { ArrowRight, CalendarDays, ChartPie, Sprout, Tractor, Warehouse, Wheat, type LucideIcon } from 'lucide-react';
+import { ArrowRight, CalendarDays, ChartPie, Sprout, Tractor, TriangleAlert, Warehouse, Wheat, type LucideIcon } from 'lucide-react';
 import { Fragment, useState, type CSSProperties, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import StatsGrid from '../components/common/StatsGrid';
@@ -7,13 +7,15 @@ import { useAuth } from '../features/auth/context/useAuth';
 import type { Rol } from '../features/auth/models/Sesion';
 import { NOMBRE_ROL, type Seccion } from '../features/auth/permisos';
 import { campanaAbierta, laborPendiente, sinAnulados } from '../shared/utils/estados';
-import { diasAtraso, insumosPorReponer, siembrasAtrasadas } from '../shared/utils/resumenInicio';
+import { cosechasPorVenir, diasAtraso, incidenciasGraves, insumosPorReponer, laboresAtrasadas, siembrasAtrasadas } from '../shared/utils/resumenInicio';
 import type { Campana } from '../features/campanas/models/Campana';
 import { campanaService } from '../features/campanas/services/campanaService';
-import { etiquetaCampana, type Catalogos } from '../features/campanas/utils/etiquetas';
+import { etiquetaCampana, etiquetaParcela, type Catalogos } from '../features/campanas/utils/etiquetas';
 import type { Cosecha } from '../features/cosechas/models/Cosecha';
 import { cosechaService } from '../features/cosechas/services/cosechaService';
 import { cultivoService } from '../features/cultivos/services/cultivoService';
+import { nombreTipoIncidencia, type Incidencia } from '../features/incidencias/models/Incidencia';
+import { incidenciaService } from '../features/incidencias/services/incidenciaService';
 import { CATEGORIAS, categoria, type Insumo } from '../features/insumos/models/Insumo';
 import { insumoService } from '../features/insumos/services/insumoService';
 import type { AsignacionLabor, Labor } from '../features/labores/models/Labor';
@@ -32,7 +34,8 @@ import { formatCantidad, formatFecha, hoyISO } from '../utils/formato';
 const cargarResumen = (rol: Rol) => async (signal: AbortSignal) => {
   const vePlanificacion = rol !== 'ALMACENERO';
   const veCosechas = rol !== 'OPERARIO';
-  const [predios, parcelas, cultivos, campanas, labores, insumos, cosechas, usuarios, asignaciones] = await Promise.all([
+  const veIncidencias = rol !== 'ALMACENERO';
+  const [predios, parcelas, cultivos, campanas, labores, insumos, cosechas, usuarios, asignaciones, incidencias] = await Promise.all([
     predioService.listar(signal),
     parcelaService.listar(signal),
     cultivoService.listar(signal),
@@ -42,8 +45,9 @@ const cargarResumen = (rol: Rol) => async (signal: AbortSignal) => {
     veCosechas ? cosechaService.listar(signal) : Promise.resolve<Cosecha[]>([]),
     rol === 'ADMINISTRADOR' ? usuarioService.listar(signal) : Promise.resolve<Usuario[]>([]),
     rol === 'JEFE_DE_CAMPO' ? laborService.listarAsignaciones(signal) : Promise.resolve<AsignacionLabor[]>([]),
+    veIncidencias ? incidenciaService.listar(signal) : Promise.resolve<Incidencia[]>([]),
   ]);
-  return { predios, parcelas, cultivos, campanas, labores, insumos, cosechas, usuarios, asignaciones };
+  return { predios, parcelas, cultivos, campanas, labores, insumos, cosechas, usuarios, asignaciones, incidencias };
 };
 
 const vacio = {
@@ -56,6 +60,7 @@ const vacio = {
   cosechas: [] as Cosecha[],
   usuarios: [] as Usuario[],
   asignaciones: [] as AsignacionLabor[],
+  incidencias: [] as Incidencia[],
 };
 
 const SALUDO: Record<Rol, string> = {
@@ -99,7 +104,7 @@ export default function DashboardPage() {
   const { sesion, puedeVer } = useAuth();
   const rol = sesion?.rol ?? 'SUPERVISOR';
   const { datos, loading, error } = useCarga(cargarResumen(rol), vacio, rol);
-  const { predios, parcelas, cultivos, campanas, labores, insumos, usuarios, asignaciones } = datos;
+  const { predios, parcelas, cultivos, campanas, labores, insumos, usuarios, asignaciones, incidencias } = datos;
   const cosechas = sinAnulados(datos.cosechas);
   const catalogos: Catalogos = { predios, parcelas, cultivos };
 
@@ -152,6 +157,41 @@ export default function DashboardPage() {
       { etiqueta: 'Siembras atrasadas', valor: atrasadas },
     ],
   };
+
+  const graves = incidenciasGraves(incidencias);
+  const laboresTarde = laboresAtrasadas(labores, hoy);
+  const cosechasCerca = rol === 'OPERARIO' || rol === 'ALMACENERO' ? [] : cosechasPorVenir(campanas, hoy);
+  const avisos: { clave: string; icono: LucideIcon; titulo: string; detalle: string; a: string }[] = [
+    ...graves.map((incidencia) => ({
+      clave: `i${incidencia.id}`,
+      icono: TriangleAlert,
+      titulo: `${nombreTipoIncidencia(incidencia.tipo)} grave · ${incidencia.parcelaId ? etiquetaParcela(incidencia.parcelaId, catalogos) : 'sin parcela'}`,
+      detalle: incidencia.responsableId === null ? 'Sin responsable' : incidencia.estado === 'ABIERTA' ? 'Sin atender' : 'En atención',
+      a: '/incidencias',
+    })),
+    ...laboresTarde.map((labor) => {
+      const campanaLabor = campana(labor.campanaId);
+      return {
+        clave: `l${labor.id}`,
+        icono: iconoLabor(labor.tipo),
+        titulo: `${labor.tipo.replace(/_/g, ' ')} atrasada${campanaLabor ? ` · ${etiquetaCampana(campanaLabor, catalogos)}` : ''}`,
+        detalle: `${diasAtraso(labor.fechaPlan, hoy)} días`,
+        a: '/labores',
+      };
+    }),
+    ...cosechasCerca.map((campanaCerca) => {
+      const fecha = campanaCerca.fechaCosechaEstimada ?? hoy;
+      return {
+        clave: `c${campanaCerca.id}`,
+        icono: Wheat,
+        titulo: `Cosecha ${fecha < hoy ? 'atrasada' : 'próxima'} · ${etiquetaCampana(campanaCerca, catalogos)}`,
+        detalle: formatFecha(fecha),
+        a: `/campanas/${campanaCerca.id}`,
+      };
+    }),
+  ];
+  const seccionDe: Record<string, 'incidencias' | 'labores' | 'campanas'> = { i: 'incidencias', l: 'labores', c: 'campanas' };
+  const avisosVisibles = avisos.filter((aviso) => puedeVer(seccionDe[aviso.clave[0]]));
 
   const tarjetaLabores = (
     <article className="list-card">
@@ -295,6 +335,20 @@ export default function DashboardPage() {
       {!loading && !error && (
         <>
           <StatsGrid stats={stats[rol]} />
+          {avisosVisibles.length > 0 && (
+            <section className="atencion" aria-label="Requiere atención">
+              <h2><TriangleAlert size={18} aria-hidden />Requiere atención ({avisosVisibles.length})</h2>
+              <ul>
+                {avisosVisibles.slice(0, 8).map((aviso) => (
+                  <li key={aviso.clave}>
+                    <Fila icono={aviso.icono}><Link to={aviso.a}>{aviso.titulo}</Link></Fila>
+                    <small className="muted">{aviso.detalle}</small>
+                  </li>
+                ))}
+              </ul>
+              {avisosVisibles.length > 8 && <small className="muted">y {avisosVisibles.length - 8} más</small>}
+            </section>
+          )}
           <h2 className="inicio-titulo">Accesos rápidos</h2>
           <nav className="accesos-grid" aria-label="Accesos rápidos">
             {ACCESOS.filter((acceso) => puedeVer(acceso.seccion)).map(({ seccion, nombre, detalle }) => {

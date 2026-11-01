@@ -4,6 +4,9 @@ import type { Cosecha } from '../models/Cosecha';
 // usuarioId no se envía: el backend lo toma del token
 export type CosechaCreateRequest = Pick<Cosecha, 'campanaId' | 'cantidad' | 'unidadMedida' | 'fecha' | 'humedadPct' | 'impurezasPct' | 'numeroBoleta'>;
 
+// Sin campaña: la corrección queda en la misma
+export type CosechaCorreccionRequest = Omit<CosechaCreateRequest, 'campanaId'> & { motivo: string };
+
 export const cosechaService = {
   listar(signal?: AbortSignal): Promise<Cosecha[]> {
     return apiFetch<Cosecha[]>('/cosechas', { signal });
@@ -11,6 +14,13 @@ export const cosechaService = {
 
   registrar(data: CosechaCreateRequest): Promise<Cosecha> {
     return apiFetch<Cosecha>('/cosechas', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  corregir(id: number, data: CosechaCorreccionRequest): Promise<Cosecha> {
+    return apiFetch<Cosecha>(`/cosechas/${id}/corregir`, {
       method: 'POST',
       body: JSON.stringify(data),
     });

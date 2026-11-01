@@ -14,9 +14,12 @@ interface CosechaFormProps {
   campanas: Campana[];
   catalogos: Catalogos;
   onCreated: (cosecha: Cosecha) => void;
+  // Con esta cosecha, el formulario la corrige: la anula y registra los datos nuevos
+  corrigiendo?: Cosecha;
+  onCerrar?: () => void;
 }
 
-type Errores = Partial<Record<'campanaId' | 'cantidad' | 'fecha' | 'humedadPct' | 'impurezasPct' | 'numeroBoleta', string>>;
+type Errores = Partial<Record<'motivo' | 'campanaId' | 'cantidad' | 'fecha' | 'humedadPct' | 'impurezasPct' | 'numeroBoleta', string>>;
 
 const porcentajeInvalido = (valor: string) => {
   if (!valor.trim()) return false;
@@ -24,28 +27,31 @@ const porcentajeInvalido = (valor: string) => {
   return !Number.isFinite(numero) || numero < 0 || numero > 100;
 };
 
-export default function CosechaForm({ campanas, catalogos, onCreated }: CosechaFormProps) {
+export default function CosechaForm({ campanas, catalogos, onCreated, corrigiendo, onCerrar }: CosechaFormProps) {
   const sesion = useSesion();
-  const [campanaId, setCampanaId] = useState('');
-  const [cantidad, setCantidad] = useState('');
-  const [unidadMedida, setUnidadMedida] = useState('t');
-  const [fecha, setFecha] = useState(hoyISO());
-  const [humedad, setHumedad] = useState('');
-  const [impurezas, setImpurezas] = useState('');
-  const [numeroBoleta, setNumeroBoleta] = useState('');
+  const [campanaId, setCampanaId] = useState(corrigiendo ? String(corrigiendo.campanaId) : '');
+  const [cantidad, setCantidad] = useState(corrigiendo ? String(corrigiendo.cantidad) : '');
+  const [unidadMedida, setUnidadMedida] = useState(corrigiendo?.unidadMedida ?? 't');
+  const [fecha, setFecha] = useState(corrigiendo?.fecha ?? hoyISO());
+  const [humedad, setHumedad] = useState(corrigiendo?.humedadPct != null ? String(corrigiendo.humedadPct) : '');
+  const [impurezas, setImpurezas] = useState(corrigiendo?.impurezasPct != null ? String(corrigiendo.impurezasPct) : '');
+  const [numeroBoleta, setNumeroBoleta] = useState(corrigiendo?.numeroBoleta ?? '');
+  const [motivo, setMotivo] = useState('');
   const [errors, setErrors] = useState<Errores>({});
   const [mensaje, setMensaje] = useState('');
   const [apiError, setApiError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   // RN-06: solo se cosecha una campaña en curso; una cosecha tardía exige reabrirla.
-  const cosechables = campanas.filter((campana) => campana.estado === 'EN_CURSO');
+  const cosechables = campanas.filter((campana) => (corrigiendo ? campana.id === corrigiendo.campanaId : campana.estado === 'EN_CURSO'));
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setMensaje('');
     setApiError('');
     const errores: Errores = {};
+    if (corrigiendo && !motivo.trim()) errores.motivo = 'Indique por qué se corrige.';
+    else if (motivo.trim().length > 200) errores.motivo = 'Use como máximo 200 caracteres.';
     if (!campanaId) errores.campanaId = 'Debe seleccionar una campaña.';
     const errorCantidad = validarCantidadPositiva(cantidad);
     if (errorCantidad) errores.cantidad = errorCantidad;
@@ -59,16 +65,19 @@ export default function CosechaForm({ campanas, catalogos, onCreated }: CosechaF
 
     try {
       setSubmitting(true);
-      const creada = await cosechaService.registrar({
-        campanaId: Number(campanaId),
+      const datos = {
         cantidad: Number(cantidad),
         unidadMedida,
         fecha,
         humedadPct: humedad.trim() ? Number(humedad) : null,
         impurezasPct: impurezas.trim() ? Number(impurezas) : null,
         numeroBoleta: numeroBoleta.trim() || null,
-      });
-      onCreated(creada);
+      };
+      if (corrigiendo) {
+        onCreated(await cosechaService.corregir(corrigiendo.id, { ...datos, motivo: motivo.trim() }));
+        return;
+      }
+      onCreated(await cosechaService.registrar({ ...datos, campanaId: Number(campanaId) }));
       setCantidad('');
       setHumedad('');
       setImpurezas('');
@@ -84,10 +93,19 @@ export default function CosechaForm({ campanas, catalogos, onCreated }: CosechaF
 
   return (
     <form className="entity-form" onSubmit={handleSubmit} noValidate>
+      {corrigiendo && <h3 className="panel-title">Corregir cosecha</h3>}
       <div className="form-grid">
+        {corrigiendo && (
+          <label className="form-span-2">
+            Motivo de la corrección
+            <input value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder="Ej.: la boleta decía 12 t" maxLength={200} />
+            <small className="muted">La carga original queda anulada en el historial.</small>
+            {errors.motivo && <small className="field-error">{errors.motivo}</small>}
+          </label>
+        )}
         <label className="form-span-2">
           Campaña
-          <select value={campanaId} onChange={(e) => setCampanaId(e.target.value)}>
+          <select disabled={Boolean(corrigiendo)} value={campanaId} onChange={(e) => setCampanaId(e.target.value)}>
             <option value="">Seleccione una campaña en curso</option>
             {cosechables.map((campana) => (
               <option key={campana.id} value={campana.id}>{etiquetaCampana(campana, catalogos)}</option>
@@ -134,8 +152,9 @@ export default function CosechaForm({ campanas, catalogos, onCreated }: CosechaF
       {mensaje && <div className="form-success">{mensaje}</div>}
       {apiError && <div className="form-error">{apiError}</div>}
       <div className="form-actions">
+        {onCerrar && <Button variant="secondary" type="button" onClick={onCerrar}>Cancelar</Button>}
         <Button type="submit" disabled={submitting}>
-          {submitting ? 'Guardando...' : 'Registrar cosecha'}
+          {submitting ? 'Guardando...' : corrigiendo ? 'Guardar corrección' : 'Registrar cosecha'}
         </Button>
       </div>
     </form>

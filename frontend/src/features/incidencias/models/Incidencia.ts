@@ -32,4 +32,14 @@ export interface Incidencia {
   anuladoEn: string | null;
   tipo: TipoIncidencia;
   gravedad: GravedadIncidencia;
+  responsableId: number | null;
+}
+
+export interface FotoIncidencia {
+  id: number;
+  incidenciaId: number;
+  tipoContenido: string;
+  tamano: number;
+  usuarioId: number;
+  fecha: string;
 }

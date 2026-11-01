@@ -9,6 +9,8 @@ import PrediosPage from '../features/predios/pages/PrediosPage';
 import ParcelasPage from '../features/parcelas/pages/ParcelasPage';
 import CultivosPage from '../features/cultivos/pages/CultivosPage';
 import CampanasPage from '../features/campanas/pages/CampanasPage';
+import FichaCampanaPage from '../features/campanas/pages/FichaCampanaPage';
+import FichaParcelaPage from '../features/parcelas/pages/FichaParcelaPage';
 import LaboresPage from '../features/labores/pages/LaboresPage';
 import InsumosPage from '../features/insumos/pages/InsumosPage';
 import CosechasPage from '../features/cosechas/pages/CosechasPage';
@@ -29,12 +31,14 @@ export default function AppRouter() {
           </Route>
           <Route element={<RequireSeccion seccion="parcelas" />}>
             <Route path="parcelas" element={<ParcelasPage />} />
+            <Route path="parcelas/:id" element={<FichaParcelaPage />} />
           </Route>
           <Route element={<RequireSeccion seccion="cultivos" />}>
             <Route path="cultivos" element={<CultivosPage />} />
           </Route>
           <Route element={<RequireSeccion seccion="campanas" />}>
             <Route path="campanas" element={<CampanasPage />} />
+            <Route path="campanas/:id" element={<FichaCampanaPage />} />
           </Route>
           <Route element={<RequireSeccion seccion="labores" />}>
             <Route path="labores" element={<LaboresPage />} />

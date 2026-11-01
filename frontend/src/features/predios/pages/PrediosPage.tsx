@@ -5,6 +5,7 @@ import Button from '../../../components/ui/Button';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import EmptyState from '../../../components/ui/EmptyState';
 import Modal from '../../../components/ui/Modal';
+import ExportarBotones from '../../../components/ui/ExportarBotones';
 import Pagination from '../../../components/ui/Pagination';
 import SearchInput from '../../../components/ui/SearchInput';
 import SelectFilter from '../../../components/ui/SelectFilter';
@@ -173,6 +174,16 @@ export default function PrediosPage() {
               placeholder="Nombre o ubicación"
             />
             <SelectFilter label="Estado" value={estadoFiltro} onChange={cambiarEstadoFiltro} options={OPCIONES_ESTADO} />
+            <ExportarBotones
+              titulo="Predios"
+              filas={prediosFiltrados}
+              columnas={[
+                { titulo: 'Predio', valor: (p) => p.nombre },
+                { titulo: 'Ubicación', valor: (p) => p.ubicacion },
+                { titulo: 'Hectáreas', valor: (p) => p.areaHa },
+                { titulo: 'Activo', valor: (p) => (p.activo ? 'Sí' : 'No') },
+              ]}
+            />
           </div>
           {total === 0 ? (
             <EmptyState title="No hay predios registrados." description={puedeEditar ? 'Crea el primero con «+ Nuevo predio».' : 'El administrador aún no registró predios.'} />

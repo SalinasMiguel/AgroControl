@@ -11,11 +11,12 @@ interface CultivoFormProps {
   onCerrar?: () => void;
 }
 
-type Errores = Partial<Record<'nombre' | 'cicloDias', string>>;
+type Errores = Partial<Record<'nombre' | 'cicloDias' | 'humedadEstandarPct', string>>;
 
 export default function CultivoForm({ cultivo, onGuardado, onCerrar }: CultivoFormProps) {
   const [nombre, setNombre] = useState(cultivo?.nombre ?? '');
   const [cicloDias, setCicloDias] = useState(cultivo?.cicloDias ? String(cultivo.cicloDias) : '');
+  const [humedad, setHumedad] = useState(cultivo?.humedadEstandarPct != null ? String(cultivo.humedadEstandarPct) : '');
   const [errors, setErrors] = useState<Errores>({});
   const [mensaje, setMensaje] = useState('');
   const [apiError, setApiError] = useState('');
@@ -27,6 +28,9 @@ export default function CultivoForm({ cultivo, onGuardado, onCerrar }: CultivoFo
     else if (nombre.trim().length > 80) errores.nombre = 'El nombre admite como maximo 80 caracteres.';
     if (cicloDias && (!Number.isInteger(Number(cicloDias)) || Number(cicloDias) <= 0)) {
       errores.cicloDias = 'El ciclo debe ser un numero entero de dias mayor que cero.';
+    }
+    if (humedad && (Number(humedad) < 0 || Number(humedad) >= 100)) {
+      errores.humedadEstandarPct = 'Use un valor entre 0 y 99,99.';
     }
     return errores;
   };
@@ -41,7 +45,7 @@ export default function CultivoForm({ cultivo, onGuardado, onCerrar }: CultivoFo
 
     try {
       setSubmitting(true);
-      const datos = { nombre: nombre.trim(), cicloDias: cicloDias ? Number(cicloDias) : null };
+      const datos = { nombre: nombre.trim(), cicloDias: cicloDias ? Number(cicloDias) : null, humedadEstandarPct: humedad ? Number(humedad) : null };
       if (cultivo) {
         onGuardado(await cultivoService.actualizar(cultivo.id, datos));
         return;
@@ -49,6 +53,7 @@ export default function CultivoForm({ cultivo, onGuardado, onCerrar }: CultivoFo
       onGuardado(await cultivoService.crear(datos));
       setNombre('');
       setCicloDias('');
+      setHumedad('');
       setMensaje('Cultivo creado correctamente.');
     } catch (err) {
       if (err instanceof ApiError) setErrors(err.campos);
@@ -70,6 +75,12 @@ export default function CultivoForm({ cultivo, onGuardado, onCerrar }: CultivoFo
           Ciclo (dias)
           <input type="number" min="1" value={cicloDias} onChange={(e) => setCicloDias(e.target.value)} />
           {errors.cicloDias && <small className="field-error">{errors.cicloDias}</small>}
+        </label>
+        <label>
+          Humedad estándar % (opcional)
+          <input type="number" step="0.01" min="0" max="99.99" value={humedad} onChange={(e) => setHumedad(e.target.value)} placeholder="Ej.: 13" />
+          <small className="muted">A esta humedad se paga el grano; ajusta el rendimiento.</small>
+          {errors.humedadEstandarPct && <small className="field-error">{errors.humedadEstandarPct}</small>}
         </label>
       </div>
       {mensaje && <div className="form-success">{mensaje}</div>}

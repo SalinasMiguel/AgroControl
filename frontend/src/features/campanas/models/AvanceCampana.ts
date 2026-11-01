@@ -17,6 +17,7 @@ export interface AvanceCampana {
   insumos: { insumoId: number; nombre: string; categoria: CategoriaInsumo; unidadMedida: string; cantidad: number }[];
   cosecha: { unidadMedida: string; cantidad: number }[];
   cosechaToneladas: number;
+  cosechaToneladasNetas: number;
   rendimientoToneladasPorHa: number | null;
   incidenciasAbiertas: number;
   incidenciasTotal: number;

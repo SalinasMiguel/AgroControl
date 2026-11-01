@@ -30,12 +30,24 @@ interface ProblemDetailBody {
   errores?: Record<string, string>;
 }
 
+// Para archivos protegidos: un <img src> no puede enviar el token.
+export async function apiBlob(endpoint: string, signal?: AbortSignal): Promise<Blob> {
+  const token = leerSesion()?.token;
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    signal,
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
+  if (!response.ok) throw new ApiError(response.status, 'No se pudo abrir el archivo');
+  return response.blob();
+}
+
 export async function apiFetch<T>(
   endpoint: string,
   options: RequestInit = {},
 ): Promise<T> {
   const headers = new Headers(options.headers);
-  if (options.body && !headers.has('Content-Type')) {
+  // Con FormData el navegador pone el Content-Type y el separador
+  if (options.body && !(options.body instanceof FormData) && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
   const token = leerSesion()?.token;

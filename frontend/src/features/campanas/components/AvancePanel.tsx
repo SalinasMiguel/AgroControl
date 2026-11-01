@@ -78,6 +78,7 @@ export default function AvancePanel({ campana, titulo, onCerrar }: AvancePanelPr
                     <li key={total.unidadMedida}>{formatCantidad(total.cantidad, total.unidadMedida)}</li>
                   ))}
                   <li>Total: <strong>{formatCantidad(avance.cosechaToneladas, 't')}</strong></li>
+                  <li>Neto (humedad e impurezas): <strong>{formatCantidad(avance.cosechaToneladasNetas, 't')}</strong></li>
                   {avance.rendimientoToneladasPorHa !== null && (
                     <li>Rendimiento: <strong>{formatCantidad(avance.rendimientoToneladasPorHa, 't/ha')}</strong></li>
                   )}

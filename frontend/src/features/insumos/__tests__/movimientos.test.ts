@@ -3,7 +3,7 @@ import { esAnulable, type MovimientoInsumo, type OrigenMovimiento } from '../mod
 
 const movimiento = (origen: OrigenMovimiento, anulado = false): MovimientoInsumo => ({
   id: 1, insumoId: 1, tipo: 'SALIDA', cantidad: 1, motivo: null, usuarioId: 1, fecha: '2026-01-01T00:00:00',
-  origen, anulado, motivoAnulacion: null, anuladoPor: null, anuladoEn: null,
+  origen, anulado, motivoAnulacion: null, anuladoPor: null, anuladoEn: null, proveedor: null, numeroFactura: null,
 });
 
 describe('esAnulable', () => {

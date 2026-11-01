@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import PageHeading from '../../../components/common/PageHeading';
 import StatsGrid from '../../../components/common/StatsGrid';
+import ExportarBotones from '../../../components/ui/ExportarBotones';
+import SearchInput from '../../../components/ui/SearchInput';
+import { coincideBusqueda } from '../../../shared/utils/texto';
 import StatusBadge from '../../../components/ui/StatusBadge';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import Modal from '../../../components/ui/Modal';
@@ -58,6 +61,7 @@ export default function UsuariosPage() {
   const [pendiente, setPendiente] = useState<{ accion: Accion; usuario: Usuario } | null>(null);
   const [procesando, setProcesando] = useState(false);
   const [errorAccion, setErrorAccion] = useState('');
+  const [busqueda, setBusqueda] = useState('');
   const [temporal, setTemporal] = useState<{ clave: string; nombre: string } | null>(null);
 
   const reemplazar = (actualizado: Usuario) =>
@@ -91,6 +95,7 @@ export default function UsuariosPage() {
     return nombre ? (NOMBRE_ROL[nombre as Rol] ?? nombre) : `Rol ${rolId}`;
   };
   const activos = usuarios.filter((usuario) => usuario.estado === 'ACTIVO').length;
+  const visibles = usuarios.filter((usuario) => coincideBusqueda(busqueda, usuario.nombreCompleto, usuario.email, nombreRol(usuario.rolId)));
 
   return (
     <section className="feature-page">
@@ -124,6 +129,20 @@ export default function UsuariosPage() {
               { etiqueta: 'Roles', valor: roles.length },
             ]}
           />
+          <div className="filter-bar">
+            <SearchInput label="Buscar usuario" value={busqueda} onChange={setBusqueda} placeholder="Nombre, email o rol" />
+            <ExportarBotones
+              titulo="Usuarios"
+              filas={visibles}
+              columnas={[
+                { titulo: 'Nombre', valor: (u) => u.nombreCompleto },
+                { titulo: 'Email', valor: (u) => u.email },
+                { titulo: 'Rol', valor: (u) => nombreRol(u.rolId) },
+                { titulo: 'Alta', valor: (u) => formatFecha(u.creadoEn) },
+                { titulo: 'Estado', valor: (u) => u.estado },
+              ]}
+            />
+          </div>
           <div className="table-card">
             <div className="table-responsive">
               <table className="data-table">
@@ -131,7 +150,7 @@ export default function UsuariosPage() {
                   <tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Alta</th><th>Estado</th><th>Acciones</th></tr>
                 </thead>
                 <tbody>
-                  {usuarios.map((usuario) => (
+                  {visibles.map((usuario) => (
                     <tr key={usuario.id}>
                       <td>{usuario.nombreCompleto}</td>
                       <td>{usuario.email}</td>

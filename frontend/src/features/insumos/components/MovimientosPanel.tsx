@@ -130,7 +130,7 @@ export default function MovimientosPanel({ insumo, usuarios, puedeRegistrar, onM
         <div className="table-responsive">
           <table className="data-table">
             <thead>
-              <tr><th>Fecha</th><th>Tipo</th><th>Cantidad</th><th>Motivo</th><th>Registrado por</th>{puedeRegistrar && <th>Acciones</th>}</tr>
+              <tr><th>Fecha</th><th>Tipo</th><th>Cantidad</th><th>Motivo</th><th>Proveedor</th><th>Factura</th><th>Registrado por</th>{puedeRegistrar && <th>Acciones</th>}</tr>
             </thead>
             <tbody>
               {movimientos.map((movimiento) => (
@@ -139,6 +139,8 @@ export default function MovimientosPanel({ insumo, usuarios, puedeRegistrar, onM
                   <td><StatusBadge estado={movimiento.tipo} /></td>
                   <td>{formatCantidad(movimiento.cantidad, insumo.unidadMedida)}</td>
                   <td>{movimiento.motivo ?? '—'}</td>
+                  <td>{movimiento.proveedor ?? '—'}</td>
+                  <td>{movimiento.numeroFactura ?? '—'}</td>
                   <td>{nombreUsuario(usuarios, movimiento.usuarioId)}</td>
                   {puedeRegistrar && (
                     <td>

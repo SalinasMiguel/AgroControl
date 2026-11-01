@@ -2,8 +2,15 @@ import { useMemo, useState } from 'react';
 import FechaAccionPanel from '../../../components/common/FechaAccionPanel';
 import PageHeading from '../../../components/common/PageHeading';
 import StatsGrid from '../../../components/common/StatsGrid';
+import ExportarBotones from '../../../components/ui/ExportarBotones';
+import Pagination from '../../../components/ui/Pagination';
+import SearchInput from '../../../components/ui/SearchInput';
+import SelectFilter from '../../../components/ui/SelectFilter';
 import MotivoDialog from '../../../components/ui/MotivoDialog';
 import { useCarga } from '../../../hooks/useCarga';
+import { usePaginacion } from '../../../hooks/usePaginacion';
+import { coincideBusqueda } from '../../../shared/utils/texto';
+import { formatFecha, hoyISO } from '../../../utils/formato';
 import { laborPendiente } from '../../../shared/utils/estados';
 import { useAuth } from '../../auth/context/useAuth';
 import type { Campana } from '../../campanas/models/Campana';
@@ -22,6 +29,7 @@ import AsignarPanel from '../components/AsignarPanel';
 import BitacoraLaborPanel from '../../bitacora/components/BitacoraLaborPanel';
 import ConsumosPanel from '../components/ConsumosPanel';
 import LaborForm from '../components/LaborForm';
+import LaborSemana from '../components/LaborSemana';
 import LaborTable from '../components/LaborTable';
 import type { AsignacionLabor, Labor } from '../models/Labor';
 import { laborService } from '../services/laborService';
@@ -45,6 +53,16 @@ const cargarDatos = (planifica: boolean) => async (signal: AbortSignal) => {
   return { labores, campanas, insumos, usuarios, roles, asignaciones, catalogos: { predios, parcelas, cultivos } };
 };
 
+const OPCIONES_ESTADO = [
+  { value: '', label: 'Todos' },
+  { value: 'ATRASADA', label: 'Atrasadas' },
+  { value: 'PLANIFICADA', label: 'Planificada' },
+  { value: 'ASIGNADA', label: 'Asignada' },
+  { value: 'EN_CURSO', label: 'En curso' },
+  { value: 'EJECUTADA', label: 'Ejecutada' },
+  { value: 'CANCELADA', label: 'Cancelada' },
+];
+
 const AVISO_INSUMOS = 'Los insumos ya registrados no vuelven al almacén; anúlelos por separado';
 
 export default function LaboresPage() {
@@ -66,6 +84,9 @@ export default function LaboresPage() {
   const { labores, campanas, insumos, usuarios, roles, asignaciones, catalogos } = datos;
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [filtroCampana, setFiltroCampana] = useState('');
+  const [busqueda, setBusqueda] = useState('');
+  const [filtroEstado, setFiltroEstado] = useState('');
+  const [vista, setVista] = useState<'tabla' | 'semana'>('tabla');
   const [ejecutando, setEjecutando] = useState<Labor | null>(null);
   const [conInsumos, setConInsumos] = useState<Labor | null>(null);
   const [asignando, setAsignando] = useState<Labor | null>(null);
@@ -93,7 +114,17 @@ export default function LaboresPage() {
         !asignaciones.some((a) => a.laborId === labor.id && a.usuarioId === usuario.id),
     );
 
-  const visibles = filtroCampana ? labores.filter((labor) => labor.campanaId === Number(filtroCampana)) : labores;
+  const nombreCampana = (labor: Labor) => {
+    const campana = campanas.find((item) => item.id === labor.campanaId);
+    return campana ? etiquetaCampana(campana, catalogos) : `Campaña ${labor.campanaId}`;
+  };
+  const operarios = (labor: Labor) => asignadosPorLabor.get(labor.id)?.join(', ') ?? '';
+  const hoy = hoyISO();
+  const visibles = labores.filter((labor) =>
+    (!filtroCampana || labor.campanaId === Number(filtroCampana))
+    && (filtroEstado === 'ATRASADA' ? laborPendiente(labor) && labor.fechaPlan < hoy : !filtroEstado || labor.estado === filtroEstado)
+    && coincideBusqueda(busqueda, labor.tipo.replace(/_/g, ' '), nombreCampana(labor), operarios(labor)));
+  const { pagina, props: paginacion } = usePaginacion(visibles, `${filtroCampana}|${filtroEstado}|${busqueda}`);
   const pendientes = visibles.filter(laborPendiente).length;
   const [accionError, setAccionError] = useState('');
 
@@ -232,20 +263,43 @@ export default function LaboresPage() {
               { etiqueta: 'Ejecutadas', valor: visibles.filter((labor) => labor.estado === 'EJECUTADA').length },
             ]}
           />
-          <div className="toolbar">
-            <label htmlFor="filtro-campana" className="muted">Campaña:</label>
-            <select id="filtro-campana" value={filtroCampana} onChange={(e) => setFiltroCampana(e.target.value)}>
-              <option value="">Todas</option>
-              {campanas.map((campana) => (
-                <option key={campana.id} value={campana.id}>{etiquetaCampana(campana, catalogos)}</option>
-              ))}
-            </select>
+          <div className="filter-bar">
+            <SearchInput label="Buscar" value={busqueda} onChange={setBusqueda} placeholder="Tipo, parcela u operario" />
+            <div className="filter-field">
+              <label htmlFor="filtro-campana">Campaña</label>
+              <select id="filtro-campana" value={filtroCampana} onChange={(e) => setFiltroCampana(e.target.value)}>
+                <option value="">Todas</option>
+                {campanas.map((campana) => (
+                  <option key={campana.id} value={campana.id}>{etiquetaCampana(campana, catalogos)}</option>
+                ))}
+              </select>
+            </div>
+            <SelectFilter label="Estado" value={filtroEstado} onChange={setFiltroEstado} options={OPCIONES_ESTADO} />
+            <div className="chips" role="group" aria-label="Vista">
+              <button type="button" className={`chip${vista === 'tabla' ? ' chip--activo' : ''}`} onClick={() => setVista('tabla')}>Tabla</button>
+              <button type="button" className={`chip${vista === 'semana' ? ' chip--activo' : ''}`} onClick={() => setVista('semana')}>Semana</button>
+            </div>
+            <ExportarBotones
+              titulo="Labores"
+              filas={visibles}
+              columnas={[
+                { titulo: 'Tipo', valor: (l) => l.tipo.replace(/_/g, ' ') },
+                { titulo: 'Campaña', valor: nombreCampana },
+                { titulo: 'Fecha plan', valor: (l) => formatFecha(l.fechaPlan) },
+                { titulo: 'Ejecución', valor: (l) => formatFecha(l.fechaEjecucion) },
+                { titulo: 'Operarios', valor: operarios },
+                { titulo: 'Estado', valor: (l) => l.estado.replace(/_/g, ' ') },
+              ]}
+            />
           </div>
           {esOperario && labores.length === 0 ? (
             <EmptyState title="Todavía no tiene labores asignadas." />
+          ) : vista === 'semana' ? (
+            <LaborSemana labores={visibles} detalle={nombreCampana} />
           ) : (
+            <>
             <LaborTable
-              labores={visibles}
+              labores={pagina.items}
               campanas={campanas}
               catalogos={catalogos}
               asignados={puedePlanificar ? asignadosPorLabor : undefined}
@@ -258,6 +312,8 @@ export default function LaboresPage() {
               onInsumos={(labor) => abrirPanel('insumos', labor)}
               onBitacora={(labor) => abrirPanel('bitacora', labor)}
             />
+            <Pagination {...paginacion} />
+            </>
           )}
         </>
       )}

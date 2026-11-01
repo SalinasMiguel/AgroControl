@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import PageHeading from '../../../components/common/PageHeading';
+import ExportarBotones from '../../../components/ui/ExportarBotones';
 import { useCarga } from '../../../hooks/useCarga';
 import { useAuth } from '../../auth/context/useAuth';
 import CultivoForm from '../components/CultivoForm';
@@ -56,6 +57,18 @@ export default function CultivosPage() {
       {!loading && error && <div className="state-card error">{error}</div>}
       {!loading && !error && cultivos.length === 0 && <EmptyState title="No hay cultivos registrados." />}
       {!loading && !error && cultivos.length > 0 && (
+        <>
+        <div className="barra-resultados">
+          <ExportarBotones
+            titulo="Cultivos"
+            filas={cultivos}
+            columnas={[
+              { titulo: 'Cultivo', valor: (c) => c.nombre },
+              { titulo: 'Ciclo (días)', valor: (c) => c.cicloDias },
+              { titulo: 'Humedad estándar %', valor: (c) => c.humedadEstandarPct },
+            ]}
+          />
+        </div>
         <div className="table-card">
           <div className="table-responsive">
             <table className="data-table">
@@ -64,6 +77,7 @@ export default function CultivosPage() {
                   <th>ID</th>
                   <th>Cultivo</th>
                   <th>Ciclo</th>
+                  <th>Humedad estándar</th>
                   {puedeCrear && <th>Acciones</th>}
                 </tr>
               </thead>
@@ -73,6 +87,7 @@ export default function CultivosPage() {
                     <td>{cultivo.id}</td>
                     <td>{cultivo.nombre}</td>
                     <td>{cultivo.cicloDias ? `${cultivo.cicloDias} días` : '—'}</td>
+                    <td>{cultivo.humedadEstandarPct != null ? `${String(cultivo.humedadEstandarPct).replace('.', ',')} %` : '—'}</td>
                     {puedeCrear && (
                       <td>
                         <Button variant="secondary" size="sm" type="button" onClick={() => setEditando(cultivo)}>Editar</Button>
@@ -84,6 +99,7 @@ export default function CultivosPage() {
             </table>
           </div>
         </div>
+        </>
       )}
     </section>
   );

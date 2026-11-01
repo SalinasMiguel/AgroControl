@@ -57,6 +57,8 @@ export interface MovimientoInsumo {
   motivoAnulacion: string | null;
   anuladoPor: number | null;
   anuladoEn: string | null;
+  proveedor: string | null;
+  numeroFactura: string | null;
 }
 
 // Un consumo se anula desde su labor y una reversión no se revierte.
